@@ -1,0 +1,9 @@
+1 - Ver diferenças entre a golden da gwzinbr e a da gwnbr
+
+2 - Entender a golden e escrever em formato de instruções
+
+3 - Fazer versão R da golden, baseando-se mais nas instruções escritas no passo 3, usando o SAS apenas para consulta
+
+4 - Testar a golden o R e comparar com a do SAS (usando dados que o Alan passou)
+
+*Obs.: usar ChatGPT para consultas.
