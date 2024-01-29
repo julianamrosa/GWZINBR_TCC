@@ -310,7 +310,44 @@ Golden <- function(data, formula, xvarinf, weight,
   COORD <<- matrix(c(long, lat), ncol=2)
   distance <<- dist(COORD,"euclidean") # _dist_ <- distance
   sequ <<- 1:N # seq <- sequ
+  #funcao cv aqui
   
+  # DEFINING GOLDEN SECTION SEARCH PARAMETERS 
+  if(method=="fixed_g" | method=="fixed_bsq"){
+    ax <- 0
+    bx <- as.integer(max(distance)+1)
+    if(distancekm=="yes"){
+      bx <- bx*111
+    }
+  }  
+  if(method=="adaptive_bsq"){
+    ax <- 5
+    bx <- n
+  }
+  r <- 0.61803399
+  tol <- 0.1
+  %IF %UPCASE(&globalmin)=NO %THEN %DO;
+  lower=ax;
+  upper=bx;
+  xmin=j(1,2,0);
+  do GMY=1 to 1;
+  ax1=lower[GMY];
+  bx1=upper[GMY];
+  %END;
+  %ELSE %DO;
+  lower=ax||(1-r)*bx||r*bx;
+  upper=(1-r)*bx||r*bx||bx;
+  xmin=j(3,2,0);
+  do GMY=1 to 3;
+  ax1=lower[GMY];
+  bx1=upper[GMY];
+  %END;
+  h0=ax1;
+  h3=bx1;
+  h1=bx1-r*(bx1-ax1);
+  h2=ax1+r*(bx1-ax1);
+  print h0 h1 h2 h3;
+  /***************************************/
 } # fecha golden 
 
                                                                                                                                                                                      
