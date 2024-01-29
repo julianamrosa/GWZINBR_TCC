@@ -278,88 +278,91 @@ cv <- function(h){
       #print(c(i, j, b, alpha, lambda, llike, dllike))
       j <- j+1
     }
-    if (method=="fixed_g" | method=="fixed_bsq" | method=="adaptive_bsq"){
-    yhat[i]=uj[i];
-    pihat[i]=njl[i];
-    alphai[i]= alpha;
-    if det(x`*(w#Ai#x#wt))=0 then S[i]=0;
-    else S[i]= (x[i,]*inv(x`*(w#Ai#x#wt))*(x#w#Ai#wt)`)[i];
-    %if %upcase(&model)=ZIP or %upcase(&model)=ZINB %then %do;
-    yhat[i]=(uj#(1-exp(njl)/(1+exp(njl))))[i];
-    yhat2[i]=uj[i];
-    if det(G`*(w#Aii#G#wt))=0 then Si[i]=0;
-    else Si[i]= (G[i,]*inv(G`*(w#Aii#G#wt))*(G#w#Aii#wt)`)[i];
-    if any(lambda)=0 then Si[i]=0;
-    %end;
+    yhat[i] <- uj[i]
+    pihat[i] <- njl[i]
+    alphai[i] <-  alpha
+    if (det(t(x)%*%(w*Ai*x*wt))==0){
+      S[i] <- 0
+    }
+    else {
+      S[i] <- (x[i,]*solve(t(x)%*%(w*Ai*x*wt))%*%t(x*w*Ai*wt))[i]
+    }
+    if(model=="zip" | model==zinb){
+      yhat[i] <- (uj*(1-exp(njl)/(1+exp(njl))))[i]
+      yhat2[i] <- uj[i]
+      if (det(t(G)%*%(w*Aii*G*wt))==0){
+        Si[i] <- 0
+      }
+      else{
+        Si[i] <- (G[i,]%*%solve(t(G)%*%(w*Aii*G*wt))%*%t(G*w*Aii*wt))[i]
+        if (any(lambda)==0){
+          Si[i] <- 0
+        } 
+      } 
+    }  
+  }  
+  CV <- t((y-yhat)*wt)%*%(y-yhat)
+  par_ <- 1/alphai
+  if(model=="zinb" | model == "zip"){
+    if (any(lambda)==0){
+      ll <- sum(-log(0+exp(pihat[pos0]))+log(0*exp(pihat[pos0])+(par_[pos0]/(par_[pos0]+yhat2[pos0]))^par_[pos0]))+
+      sum(-log(0+exp(pihat[pos1]))+lgamma(par_[pos1]+y[pos1,])-lgamma(y[pos1,]+1)-lgamma(par_[pos1])+
+      y[pos1]*log(yhat2[pos1]/(par_[pos1]+yhat2[pos1]))+par_[pos1]*log(par_[pos1]/(par_[pos1]+yhat2[pos1])))
+      
+      llnull1 <- sum(-log(1+zk[pos0])+log(zk[pos0]+(par_[pos0]/(par_[pos0]+y[pos0,]))^par_[pos0]))+
+      sum(-log(1+zk[pos1])+lgamma(par_[pos1]+y[pos1,])-lgamma(y[pos1,]+1)-lgamma(par_[pos1])+
+      y[pos1]*log(y[pos1,]/(par_[pos1]+y[pos1,]))+par_[pos1]*log(par_[pos1]/(par_[pos1]+y[pos1,])))
+      
+      llnull2 <- sum(-log(1+0)+log(0+(par_/(par_+mean(y)))^par_))+
+      sum(-log(1+0)+lgamma(par_+y)-lgamma(y+1)-lgamma(par_)+y*log(mean(y)/(par_+mean(y)))+par_*log(par_/(par_+mean(y)))) 
+    }
+    else{
+      ll <- sum(-log(1+exp(pihat[pos0]))+log(exp(pihat[pos0])+(par_[pos0]/(par_[pos0]+yhat2[pos0]))^par_[pos0]))+
+      sum(-log(1+exp(pihat[pos1]))+lgamma(par_[pos1]+y[pos1])-lgamma(y[pos1]+1)-lgamma(par_[pos1])+
+      y[pos1]*log(yhat2[pos1]/(par_[pos1]+yhat2[pos1]))+par_[pos1]*log(par_[pos1]/(par_[pos1]+yhat2[pos1])))
+      
+      llnull1 <- sum(-log(1+zk[pos0])+log(zk[pos0]+(par_[pos0]/(par_[pos0]+y[pos0]))^par_[pos0]))+
+      sum(-log(1+zk[pos1])+lgamma(par_[pos1]+y[pos1])-lgamma(y[pos1]+1)-lgamma(par_[pos1])+
+      y[pos1]*log(y[pos1]/(par_[pos1]+y[pos1]))+par_[pos1]*log(par_[pos1]/(par_[pos1]+y[pos1])))
+    }
+    dev <- 2*(llnull1-ll)
+    npar <- sum(S)+sum(Si)
+    AIC <- 2*npar-2*ll
+    AICc <- AIC+2*(npar*(npar+1)/(n-npar-1))
+    if(model=="zinb"){
+      AIC <- 2*(npar+npar/(ncol(x)+ncol(G)))-2*ll
+      AICc <- AIC+2*((npar+npar/(ncol(x)+ncol(G)))*((npar+npar/(ncol(x)+ncol(G)))+1)/(n-(npar+npar/(ncol(x)+ncol(G)))-1))
+    }
+  }  
+  else if(model=="poisson" | model=="negbin"){
+    if (ncol(pos02)==0){
+      pos0 <- pos1
+      pos0x <- 1
+      pos0xl <- 1
+    } 
+    else {
+      pos0x <- (par_[pos0]/(par_[pos0]+yhat[pos0]))^par_[pos0]
+      pos0xl <- (par_[pos0]/(par_[pos0]+y[pos0,]))^par_[pos0]
+    }
+    ll <- sum(-log(0+exp(pihat[pos0]))+log(0*exp(pihat[pos0])+pos0x))+
+    sum(-log(0+exp(pihat[pos1]))+lgamma(par_[pos1]+y[pos1,])-lgamma(y[pos1,]+1)-lgamma(par_[pos1])+
+    y[pos1]*log(yhat[pos1]/(par_[pos1]+yhat[pos1]))+
+    par_[pos1]*log(par_[pos1]/(par_[pos1]+yhat[pos1])))
+    
+    llnull1 <- sum(-log(1+zk)+log(zk+pos0xl))+ sum(-log(1+zk)+lgamma(par_[pos1]+y[pos1,])-lgamma(y[pos1,]+1)-lgamma(par_[pos1])+
+    y[pos1]*log(y[pos1,]/(par_[pos1]+y[pos1,]))+par_[pos1]*log(par_[pos1]/(par_[pos1]+y[pos1,])))
+    dev <- 2*(llnull1-ll)
+    npar <- sum(S)
+    AIC <- 2*npar-2*ll
+    AICc <- AIC+2*(npar*(npar+1)/(n-npar-1))
+    if(model == "negbin"){
+      AIC <- 2*(npar+npar/ncol(x))-2*ll
+      AICc <-AIC+2*(npar+npar/ncol(x))*(npar+npar/ncol(x)+1)/(n-(npar+npar/ncol(x))-1)
+    } 
   }
-  CV=((y-yhat)#wt)`*(y-yhat);
-  
-  _par_=1/alphai;
-  
-  %IF %UPCASE(&model)=ZINB or %UPCASE(&model)=ZIP %THEN %DO;
-  if any(lambda)=0 then do;
-  ll=sum(-log(0+exp(pihat[pos0]))+log(0*exp(pihat[pos0])+(_par_[pos0]/(_par_[pos0]+yhat2[pos0]))##_par_[pos0]))+
-  sum(-log(0+exp(pihat[pos1]))+lgamma(_par_[pos1]+y[pos1,])-lgamma(y[pos1,]+1)-lgamma(_par_[pos1])+
-  y[pos1]#log(yhat2[pos1]/(_par_[pos1]+yhat2[pos1]))+_par_[pos1]#log(_par_[pos1]/(_par_[pos1]+yhat2[pos1])));
-  llnull1=sum(-log(1+zk[pos0])+log(zk[pos0]+(_par_[pos0]/(_par_[pos0]+y[pos0,]))##_par_[pos0]))+
-  sum(-log(1+zk[pos1])+lgamma(_par_[pos1]+y[pos1,])-lgamma(y[pos1,]+1)-lgamma(_par_[pos1])+
-  y[pos1]#log(y[pos1,]/(_par_[pos1]+y[pos1,]))+_par_[pos1]#log(_par_[pos1]/(_par_[pos1]+y[pos1,])));
-  llnull2=sum(-log(1+0)+log(0+(_par_/(_par_+y[:]))##_par_))+
-  sum(-log(1+0)+lgamma(_par_+y)-lgamma(y+1)-lgamma(_par_)+
-  y#log(y[:]/(_par_+y[:]))+_par_#log(_par_/(_par_+y[:])));
-  end;
-  else do;
-  ll=sum(-log(1+exp(pihat[pos0]))+log(exp(pihat[pos0])+(_par_[pos0]/(_par_[pos0]+yhat2[pos0]))##_par_[pos0]))+
-  sum(-log(1+exp(pihat[pos1]))+lgamma(_par_[pos1]+y[pos1])-lgamma(y[pos1]+1)-lgamma(_par_[pos1])+
-  y[pos1]#log(yhat2[pos1]/(_par_[pos1]+yhat2[pos1]))+_par_[pos1]#log(_par_[pos1]/(_par_[pos1]+yhat2[pos1])));
-  llnull1=sum(-log(1+zk[pos0])+log(zk[pos0]+(_par_[pos0]/(_par_[pos0]+y[pos0]))##_par_[pos0]))+
-  sum(-log(1+zk[pos1])+lgamma(_par_[pos1]+y[pos1])-lgamma(y[pos1]+1)-lgamma(_par_[pos1])+
-  y[pos1]#log(y[pos1]/(_par_[pos1]+y[pos1]))+_par_[pos1]#log(_par_[pos1]/(_par_[pos1]+y[pos1])));
-  end;
-  dev=2*(llnull1-ll);
-  npar=sum(S)+sum(Si);
-  AIC=2*npar-2*ll;
-  AICc=AIC+2*(npar*(npar+1)/(n-npar-1));
-  %IF %UPCASE(&model)=ZINB %THEN %DO;
-  AIC=2*(npar+npar/(ncol(x)+ncol(G)))-2*ll;
-  AICc=AIC+2*((npar+npar/(ncol(x)+ncol(G)))*((npar+npar/(ncol(x)+ncol(G)))+1)/(n-(npar+npar/(ncol(x)+ncol(G)))-1));
-  %END;
-  %END;
-  %IF %UPCASE(&model)=POISSON or %UPCASE(&model)=NEGBIN %THEN %DO;
-  if ncol(pos02)=0 then do;
-  pos0=pos1;
-  pos0x=1;
-  pos0xl=1;
-  end;
-  else do;
-  pos0x=(_par_[pos0]/(_par_[pos0]+yhat[pos0]))##_par_[pos0];
-  pos0xl=(_par_[pos0]/(_par_[pos0]+y[pos0,]))##_par_[pos0];
-  end;
-  ll=sum(-log(0+exp(pihat[pos0]))+log(0*exp(pihat[pos0])+pos0x))+
-  sum(-log(0+exp(pihat[pos1]))+lgamma(_par_[pos1]+y[pos1,])-lgamma(y[pos1,]+1)-lgamma(_par_[pos1])+
-  y[pos1]#log(yhat[pos1]/(_par_[pos1]+yhat[pos1]))+
-  _par_[pos1]#log(_par_[pos1]/(_par_[pos1]+yhat[pos1])));
-  llnull1=sum(-log(1+zk)+log(zk+pos0xl))+
-  sum(-log(1+zk)+lgamma(_par_[pos1]+y[pos1,])-lgamma(y[pos1,]+1)-lgamma(_par_[pos1])+
-  y[pos1]#log(y[pos1,]/(_par_[pos1]+y[pos1,]))+_par_[pos1]#log(_par_[pos1]/(_par_[pos1]+y[pos1,])));
-  dev=2*(llnull1-ll);
-  npar=sum(S);
-  AIC=2*npar-2*ll;
-  AICc=AIC+2*(npar*(npar+1)/(n-npar-1));
-  %IF %UPCASE(&model)=NEGBIN %THEN %DO;
-  AIC=2*(npar+npar/ncol(x))-2*ll;
-  AICc=AIC+2*(npar+npar/ncol(x))*(npar+npar/ncol(x)+1)/(n-(npar+npar/ncol(x))-1);
-  %END;
-  %END;
-  
-  %if %UPCASE(&bandwidth)=AIC %THEN %DO;CV=AICC;%END;
-  %END;
-  %ELSE %IF %UPCASE(&method)=ADAPTIVEN %THEN %DO;
-  yhat[1]=x[i,]*b;
-  CV=((y[i]-yhat)#wt)`*(y[i]-yhat);
-  %END;
-  
-  free dist w;
-  res=cv||npar;
-  return (res);
+  if(bandwidth == "aic"){
+    CV <- AICC
+  }
+  res <- cbind(cv,npar)
+  return (res)
 }
