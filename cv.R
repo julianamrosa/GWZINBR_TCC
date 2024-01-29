@@ -200,76 +200,85 @@ cv <- function(h){
       }
       ddpar <- par-parold
       #end
-      
       ## PARAMOS AQUI ##
-      
-      %if %upcase(&model)=ZIP or %upcase(&model)=ZINB %then %do;
-      
-      if j=1 then do;alphatemp=alpha;lambdatemp=lambda[1];end;
-      else do;alphatemp=alphatemp//alpha;lambdatemp=lambdatemp//lambda[1];end;
-      alphatemp=round(alphatemp,0.0000001);
-      lambdatemp=round(lambdatemp,0.0000001);
-      *print i j alphatemp (nrow(alphatemp)) (ncol(unique(alphatemp)));
-      %if %upcase(&model)=ZINB %then %do;
-      if j>300 & nrow(alphatemp)>ncol(unique(alphatemp)) & 
-      nrow(lambdatemp)>ncol(unique(lambdatemp))then do;
-      %end;
-      %if %upcase(&model)=ZIP %then %do;
-      *print i j lambdatemp (nrow(lambdatemp)) (ncol(unique(lambdatemp)));
-      if j>300 & nrow(lambdatemp)>ncol(unique(lambdatemp))then do;
-      %end;
-      lambda=j(ncol(G),1,0);
-      njl=G*lambda;
-      zk=j(n,1,0);
-      end;
-      else do;
-      
-      aux3=1;
-      dev=0;
-      ddev=1;
-      njl=G*lambda;
-      njl=choose(njl>&maxg,&maxg,njl);
-      njl=choose(njl<-&maxg,-&maxg,njl);
-      pi=exp(njl)/(1+exp(njl));
-      do while (abs(ddev)>0.000001 & aux3<100);
-      Aii=pi#(1-pi);
-      Aii=choose(Aii<=0,1E-5,Aii);	
-      zj=njl+(zk-pi)/Aii;
-      if det((G#Aii#w#wt)`*G)=0 then lambda=j(ncol(G),1,0);
-      else lambda=inv((G#Aii#w#wt)`*G)*(G#Aii#w#wt)`*zj;
-      njl=G*lambda;
-      njl=choose(njl>&maxg,&maxg,njl);
-      njl=choose(njl<-&maxg,-&maxg,njl);
-      pi=exp(njl)/(1+exp(njl));
-      olddev=dev;
-      dev=sum(zk#njl-log(1+exp(njl)));
-      ddev=dev-olddev;
-      *print lambda aux3 dev olddev ddev;
-      aux3=aux3+1;
-      end;
-      
-      end;
-      %end;
-      
-      njl=G*lambda;
-      njl=choose(njl>&maxg,&maxg,njl);
-      njl=choose(njl<-&maxg,-&maxg,njl);
-      zk=1/(1+exp(-njl)#(par/(par+uj))##par);
-      zk=choose(y>0,0,zk);
-      if any(lambda)=0 then zk=j(n,1,0);
-      
-      %if %upcase(&model) ne ZIP and %upcase(&model) ne ZINB %then %do;
-      zk=0;
-      %end;
-      
-      oldllike=llike;
-      llike=sum(zk#(njl)-log(1+exp(njl))+(1-zk)#(log(gamma1)));
-      dllike=llike-oldllike;
-      *print i j b alpha lambda llike dllike;
-      j=j+1;
+      if (model=="zip" | model=="zinb"){
+        if (j==1){
+          alphatemp <- alpha
+          lambdatemp <- lambda[1]
+        }
+        else{
+          alphatemp <- rbind(alphatemp, alpha)
+          lambdatemp <- rbind(lambdatemp, lambda[1])
+        }
+        alphatemp <- round(alphatemp, 7)
+        lambdatemp <- round(lambdatemp, 7)
+        #print(c('i', 'j', 'alphatemp', 'nrow(alphatemp)', 'ncol(unique(alphatemp))'))
+        #print(c(i, j, alphatemp, nrow(alphatemp), ncol(unique(alphatemp))))
+        if (model=="zinb"){
+          condition <- (j>300 & nrow(alphatemp)>ncol(unique(alphatemp)) & nrow(lambdatemp)>ncol(unique(lambdatemp)))
+        }
+        else if (model=="zip"){
+          #print i j lambdatemp (nrow(lambdatemp)) (ncol(unique(lambdatemp)));
+          condition <- (j>300 & nrow(lambdatemp)>ncol(unique(lambdatemp)))
+        }
+        if (condition){
+          #lambda <- matrix(0, ncol(G), 1)
+          lambda <- rep(0, ncol(G))
+          njl <- G*lambda
+          #zk <- matrix(0, n, 1)
+          zk <- rep(0, n)
+        }
+        else{
+          aux3 <- 1
+          dev <- 0
+          ddev <- 1
+          njl <- G*lambda
+          njl <- ifelse(njl>maxg, maxg, njl)
+          njl <- ifelse(njl<-maxg, -maxg, njl)
+          pi <- exp(njl)/(1+exp(njl))
+          while (abs(ddev)>0.000001 & aux3<100){
+            Aii <- pi*(1-pi)
+            Aii <- ifelse(Aii<=0, E^-5, Aii)	
+            zj <- njl+(zk-pi)/Aii
+            if (det(t(G*Aii*w*wt)%*%G)=0){ #multiplicador
+              lambda <- matrix(0, ncol(G), 1)
+            }
+            else{
+              lambda <- solve(t(G*Aii*w*wt)%*%G)%*%t(G*Aii*w*wt)%*%zj
+            }
+            njl <- G*lambda
+            njl <- ifelse(njl>maxg, maxg, njl)
+            njl <- ifelse(njl<-maxg, -maxg, njl)
+            pi <- exp(njl)/(1+exp(njl))
+            olddev <- dev
+            dev <- sum(zk*njl-log(1+exp(njl)))
+            ddev <- dev-olddev
+            #print(c("lambda", "aux3", "dev", "olddev", "ddev"))
+            #print(c(lambda, aux3, dev, olddev, ddev))
+            aux3 <- aux3+1
+          }
+        }
+      }
+      njl <- G*lambda
+      njl <- ifelse(njl>maxg, maxg, njl)
+      njl <- ifelse(njl<-maxg, -maxg, njl)
+      zk <- 1/(1+exp(-njl)*(par/(par+uj))^par)
+      zk <- ifelse(y>0, 0, zk)
+      if (any(lambda)==0){
+        #zk <- matrix(0, n, 1)
+        zk <- rep(0, n)
+      }
+      if (model!="zip" & model!="zinb"){
+        zk <- 0
+      }
+      oldllike <- llike
+      llike <- sum(zk*(njl)-log(1+exp(njl))+(1-zk)*(log(gamma1)))
+      dllike <- llike-oldllike
+      #print(c("i", "j", "b", "alpha", "lambda", "llike", "dllike"))
+      #print(c(i, j, b, alpha, lambda, llike, dllike))
+      j <- j+1
     }
-    
-    %IF %UPCASE(&method)=FIXED_G or %UPCASE(&method)=FIXED_BSQ or %UPCASE(&method)=ADAPTIVE_BSQ %THEN %DO;
+    if (method=="fixed_g" | method=="fixed_bsq" | method=="adaptive_bsq"){
     yhat[i]=uj[i];
     pihat[i]=njl[i];
     alphai[i]= alpha;
