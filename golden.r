@@ -327,141 +327,97 @@ Golden <- function(data, formula, xvarinf, weight,
   r <- 0.61803399
   tol <- 0.1
   %IF %UPCASE(&globalmin)=NO %THEN %DO;
-  lower=ax;
-  upper=bx;
-  xmin=j(1,2,0);
-  do GMY=1 to 1;
-  ax1=lower[GMY];
-  bx1=upper[GMY];
-  %END;
-  %ELSE %DO;
-  lower=ax||(1-r)*bx||r*bx;
-  upper=(1-r)*bx||r*bx||bx;
-  xmin=j(3,2,0);
-  do GMY=1 to 3;
-  ax1=lower[GMY];
-  bx1=upper[GMY];
-  %END;
-  h0=ax1;
-  h3=bx1;
-  h1=bx1-r*(bx1-ax1);
-  h2=ax1+r*(bx1-ax1);
-  print h0 h1 h2 h3;
-  /***************************************/
-} # fecha golden 
-
-                                                                                                                                                                                     
-/*****************************************/
- 
-
- 
-
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   
-/**** DEFINING GOLDEN SECTION SEARCH PARAMETERS *****/
- %IF %UPCASE(&method)=FIXED_G or %UPCASE(&method)=FIXED_BSQ %THEN %DO;
-ax=0;
-bx=int(max(_dist_)+1);
-%IF %UPCASE(&distancekm)=YES %THEN %DO;bx=bx*111;%END;
-%END;
-%IF %UPCASE(&method)=ADAPTIVE_BSQ %THEN %DO;
-ax=5;
-bx=n;
-%END;
-r=0.61803399;
-tol=0.1;
-%IF %UPCASE(&globalmin)=NO %THEN %DO;
-lower=ax;
-upper=bx;
-xmin=j(1,2,0);
-do GMY=1 to 1;
-ax1=lower[GMY];
-bx1=upper[GMY];
-%END;
-%ELSE %DO;
-lower=ax||(1-r)*bx||r*bx;
-upper=(1-r)*bx||r*bx||bx;
-xmin=j(3,2,0);
-do GMY=1 to 3;
-ax1=lower[GMY];
-bx1=upper[GMY];
-%END;
-h0=ax1;
-h3=bx1;
-h1=bx1-r*(bx1-ax1);
-h2=ax1+r*(bx1-ax1);
-print h0 h1 h2 h3;
-/***************************************/
- 
- res1=cv(h1);CV1=res1[1];
-res2=cv(h2);CV2=res2[1];
-
-%IF %UPCASE(&method)=FIXED_G or %UPCASE(&method)=FIXED_BSQ or %UPCASE(&method)=ADAPTIVE_BSQ %THEN %DO;
-if GMY=1 then create &output var{GMY h1 cv1 h2 cv2};
-%END;
-
-int=1;
-do while(abs(h3-h0) > tol*(abs(h1)+abs(h2)) & int<200);
-if CV2<CV1 then do;
-h0=h1;
-h1=h3-r*(h3-h0);
-h2=h0+r*(h3-h0);
-CV1=CV2;
-res2=cv(h2);CV2=res2[1];
-end;
-else do;
-h3=h2;
-h1=h3-r*(h3-h0);
-h2=h0+r*(h3-h0);
-CV2=CV1;
-res1=cv(h1);CV1=res1[1];
-end;
-%IF %UPCASE(&method)=FIXED_G or %UPCASE(&method)=FIXED_BSQ or %UPCASE(&method)=ADAPTIVE_BSQ %THEN %DO;
-append;
-%END;
-int=int+1;
-end;
-if CV1<CV2 then do;
-golden=CV1;
-xmin[GMY,1]=golden;
-xmin[GMY,2]=h1;
-npar=res1[2];
-%IF %UPCASE(&method)=ADAPTIVE_BSQ %THEN %DO;
-xmin[GMY,2]=floor(h1);
-%end;
-end;
-else do;
-golden=CV2;
-xmin[GMY,1]=golden;
-xmin[GMY,2]=h2;
-npar=res2[2];
-%IF %UPCASE(&method)=ADAPTIVE_BSQ %THEN %DO;
-xmin[GMY,2]=floor(h2);
-%end;
-end;
-%IF %UPCASE(&method)=FIXED_G or %UPCASE(&method)=FIXED_BSQ or %UPCASE(&method)=ADAPTIVE_BSQ %THEN %DO;
-print golden (xmin[GMY,2])[label='xmin'] %if %UPCASE(&bandwidth)=AIC %THEN %DO;npar%END;;
-%END;
-%ELSE %IF %UPCASE(&method)=ADAPTIVEN %THEN %DO;
-hv[1]=xmin[GMY,2];
-append from hv;
-end;
-%END;
-end;
-create _min_bandwidth_ from xmin[colname={'golden' 'bandwidth'}];
-append from xmin;
-%IF %UPCASE(&globalmin)=YES %THEN %DO;
-print xmin[colname={'golden' 'bandwidth'}];
-xming=xmin[loc(xmin[,1]=min(xmin[,1])),2];
-print 'Global Minimum', xming[label='(Da Silva and Mendes, 2018)'];
-%END;
-quit;
-
-%IF %UPCASE(&method)=FIXED_G or %UPCASE(&method)=FIXED_BSQ or %UPCASE(&method)=ADAPTIVE_BSQ %THEN %DO;
-%global _h_;
-proc sql noprint;
-select bandwidth into:_h_ from _min_bandwidth_
-having golden=min(golden);
-quit;
-%put h=&_h_;
-%END;
-%mend Golden;
+  if (!globalmin){
+    lower <- ax
+    upper <- bx
+    #xmin <- matrix(0, 1, 2)
+    xmin <- rep(0, 2)
+  }
+  #do GMY=1 to 1;
+  #ax1=lower[GMY];
+  #bx1=upper[GMY];
+  else{
+    lower <- cbind(ax, (1-r)*bx, r*bx)
+    upper <- cbind((1-r)*bx, r*bx, bx)
+    xmin <- matrix(0, 3, 2)
+  }
+  for (GMY in 1:3){
+    ax1 <- lower[GMY]
+    bx1 <- upper[GMY]
+    h0 <- ax1
+    h3 <- bx1
+    h1 <- bx1-r*(bx1-ax1)
+    h2 <- ax1+r*(bx1-ax1)
+    print(c('h0', 'h1', 'h2', 'h3'))
+    print(c(h0, h1, h2, h3))
+   ################################
+    res1 <- cv(h1)
+    CV1 <- res1[1]
+    res2 <- cv(h2)
+    CV2 <- res2[1]
+    if (GMY==1){
+      output <<- cbind(GMY, h1, cv1, h2, cv2)
+      names(output) <<- c('GMY', 'h1', 'cv1', 'h2', 'cv2')
+    }
+    int <- 1
+    while(abs(h3-h0) > tol*(abs(h1)+abs(h2)) & int<200){
+      if (CV2<CV1){
+        h0 <- h1
+        h1 <- h3-r*(h3-h0)
+        h2 <- h0+r*(h3-h0)
+        CV1 <- CV2
+        res2 <- cv(h2)
+        CV2 <- res2[1]
+      }
+      else{
+        h3 <- h2
+        h1 <- h3-r*(h3-h0)
+        h2 <- h0+r*(h3-h0)
+        CV2 <- CV1
+        res1 <- cv(h1)
+        CV1 <- res1[1]
+      }
+      output <<- rbind(output, c(GMY, h1, cv1, h2, cv2))
+      int <- int+1
+    }
+    if (CV1<CV2){
+      golden <- CV1
+      xmin[GMY,1] <- golden
+      xmin[GMY,2] <- h1
+      npar <- res1[2]
+      if (method=="adaptive_bsq"){
+        xmin[GMY,2] <- floor(h1)
+      }
+    }
+    else{
+      golden <- CV2
+      xmin[GMY,1] <- golden
+      xmin[GMY,2] <- h2
+      npar <- res2[2]
+      if (method=="adaptive_bsq"){
+        xmin[GMY,2] <- floor(h2)
+      }
+    }
+    if (bandwidth=="aic"){
+      print(c('golden', 'xmin', 'npar'))
+      print(c(golden, xmin[GMY,2], npar))
+    }
+    else{
+      print(c('golden', 'xmin'))
+      print(c(golden, xmin[GMY,2]))
+    }
+    if (!globalmin){
+      break
+    }
+  }
+  min_bandwidth <<- as.data.frame(xmin)
+  names(min_bandwidth) <<- c('golden', 'bandwidth')
+  if (globalmin){
+    print(c('golden', 'bandwidth'))
+    print(xmin)
+    xming <- xmin[which(xmin[,1]==min(xmin[,1])), 2]
+    print('(Da Silva and Mendes, 2018)')
+    print(c('Global Minimum', xming))
+  }
+  h <<- min_bandwidth[which(min_bandwidth$golden==min(min_bandwidth$golden)), 'bandwidth']
+} # fecha golden
