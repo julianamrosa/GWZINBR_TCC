@@ -285,7 +285,7 @@ Golden <- function(data, formula, xvarinf, weight,
           #lambdag <<- rep(0, ncol(G))
         }  
         else {
-          lambdag <<- solve(t(G*Ai)%*%G)%*%t(G*Ai)*zj 
+          lambdag <<- solve(t(G*Ai)%*%G)%*%t(G*Ai)%*%zj
         }
         njl <- G%*%lambdag
         njl <- ifelse(njl > maxg, maxg, njl)
@@ -383,7 +383,6 @@ Golden <- function(data, formula, xvarinf, weight,
       else{
         lambda0 <- (length(pos0)-sum((parg/(uj+parg))^parg))/N
         #print(lambda0)
-        print(class(pos0))
         if (lambda0>0){
           lambda0 <- log(lambda0/(1-lambda0))
           #lambda <- rbind(lambda0, matrix(0, ncol(G)-1, 1))
@@ -409,7 +408,7 @@ Golden <- function(data, formula, xvarinf, weight,
           par <- 1/alpha
         }
         else{
-          if (par<=E^-5){
+          if (par<=E^-5){ #verificar se entra aqui 16/02
             if (i>1){
               par <- 1/alphai[i-1,2]
             }
@@ -521,24 +520,22 @@ Golden <- function(data, formula, xvarinf, weight,
         if (model=="zip" | model=="zinb"){
           if (j==1){
             alphatemp <- alpha
-            lambdatemp <- lambda[1]
+            lambdatemp <- lambda[1] 
           }
           else{
-            alphatemp <- rbind(alphatemp, alpha)
-            lambdatemp <- rbind(lambdatemp, lambda[1])
+            alphatemp <- c(alphatemp, alpha)
+            lambdatemp <- c(lambdatemp, lambda[1])
           }
           alphatemp <- round(alphatemp, 7)
           lambdatemp <- round(lambdatemp, 7)
-          print(alphatemp)
-          print(lambdatemp)
           #print(c('i', 'j', 'alphatemp', 'nrow(alphatemp)', 'ncol(unique(alphatemp))'))
           #print(c(i, j, alphatemp, nrow(alphatemp), ncol(unique(alphatemp))))
           if (model=="zinb"){
-            condition <- (j>300 & nrow(alphatemp)>ncol(unique(alphatemp)) & nrow(lambdatemp)>ncol(unique(lambdatemp)))
+            condition <- (j>300 & length(alphatemp)>length(unique(alphatemp)) & length(lambdatemp)>length(unique(lambdatemp)))
           }
           else if (model=="zip"){
             #print i j lambdatemp (nrow(lambdatemp)) (ncol(unique(lambdatemp)));
-            condition <- (j>300 & nrow(lambdatemp)>ncol(unique(lambdatemp)))
+            condition <- (j>300 & length(lambdatemp)>length(unique(lambdatemp)))
           }
           if (condition){
             #lambda <- matrix(0, ncol(G), 1)
@@ -599,14 +596,14 @@ Golden <- function(data, formula, xvarinf, weight,
       }
       yhat[i] <- uj[i]
       pihat[i] <- njl[i]
-      alphai[i] <-  alpha
+      alphai[i] <<-  alpha
       if (det(t(x)%*%(w*Ai*x*wt))==0){
         S[i] <- 0
       }
       else {
         S[i] <- (x[i,]*solve(t(x)%*%(w*Ai*x*wt))%*%t(x*w*Ai*wt))[i]
       }
-      if(model=="zip" | model==zinb){
+      if(model=="zip" | model=="zinb"){
         yhat[i] <- (uj*(1-exp(njl)/(1+exp(njl))))[i]
         yhat2[i] <- uj[i]
         if (det(t(G)%*%(w*Aii*G*wt))==0){
