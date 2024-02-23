@@ -63,7 +63,7 @@ Golden <- function(data, formula, xvarinf, weight,
   uj <- (y+mean(y))/2 
   nj <- log(uj)
   parg <<- sum((y-uj)^2/uj)/(N-nvar)
-  #print(parg)
+  # print(parg) ok 
   ddpar <- 1
   cont <- 1
   cont3 <- 0
@@ -78,7 +78,7 @@ Golden <- function(data, formula, xvarinf, weight,
     if (model == "zinb" | model == "negbin"){
       if (cont>1){ 
         parg <<- 1/(sum((y-uj)^2/uj)/(N-nvar))
-        #print(parg)
+        # print(parg) ok
       }  
       while (abs(dpar)>0.0001 & cont1<200){
         if (parg<0){
@@ -91,7 +91,7 @@ Golden <- function(data, formula, xvarinf, weight,
         par0 <- parg
         #parg <<- par0-solve(hess)%*%gf
         parg <<- par0-as.vector(solve(hess))*gf
-        #print(parg)
+        # print(parg) ok
         if (parg>E^5){
           dpar <- 0.0001
           cont3 <- cont3+1
@@ -121,8 +121,10 @@ Golden <- function(data, formula, xvarinf, weight,
     cont2 <- 0
     while (abs(ddev)>0.000001 & cont2<100){
       Ai <- (uj/(1+alphag*uj))+(y-uj)*(alphag*uj/(1+2*alphag*uj+alphag^2*uj*uj))
+      # print(Ai) ok
       Ai <- ifelse(Ai<=0,E^-5,Ai)
       zj <- nj+(y-uj)/(Ai*(1+alphag*uj))-Offset
+      #print(zj)
       if (det(t(x)%*%(Ai*x))==0) {
         # bg <<- matrix(0, ncol(x),1)
         bg <<- rep(0,ncol(x))
@@ -130,14 +132,11 @@ Golden <- function(data, formula, xvarinf, weight,
       else{
         bg <<- solve(t(x)%*%(Ai*x))%*%t(x)%*%(Ai*zj)
       }
-      print(bg)
-      #esse print ficou igual ao sas nas 6 primeiras iterações
-      #entra sempre no else na hora de alterar o bg
-      #o problema deve estar no while (externo)
-      #investigar Ai e zj aqui dentro
+      # print(bg) ok 
       nj <- as.vector(x%*%bg+Offset)
       nj <- ifelse(nj>700,700,nj)
       uj <- exp(nj)
+      # print(uj) ok
       olddev <- devg
       uj <- ifelse(uj<E^-150,E^-150,uj)
       uj <- ifelse(uj>100000,100000,uj)
@@ -181,11 +180,13 @@ Golden <- function(data, formula, xvarinf, weight,
     }
   }
   njl <- G%*%lambdag
+  # print(njl) ok
   if (model!="zip" & model!="zinb"){
     zkg <- 0
   }
   else{
     zkg <- 1/(1+exp(-G%*%lambdag)*(parg/(parg+uj))^parg)
+    # print(zkg) ok
     zkg <- ifelse(y>0,0,zkg)
   }
   dllike <- 1
@@ -207,10 +208,10 @@ Golden <- function(data, formula, xvarinf, weight,
         parg <<- 1/alphag
       }
       else{
-        #print(uj)
+        #print(uj) errado!!!
         if (j>0){
           parg <<- 1/(sum((y-uj)^2/uj)/(N-nvar))
-          #print(parg)
+          # print(parg) errado!!!
         }
         while (abs(dpar)>0.0001 & aux2<200){
           if (parg<0){
@@ -249,12 +250,16 @@ Golden <- function(data, formula, xvarinf, weight,
       devg <- 0
       ddev <- 1
       nj <- x%*%bg+Offset
-      #print(bg)
+      # print(bg) errado!!!
       uj <- exp(nj)
-      #print(uj)
+      #print(uj) errado!!!
       while (abs(ddev)>0.000001 & aux1<100){
         uj <- ifelse(uj>E^100, E^100, uj)
-        Ai <- as.vector((1-zkg)*((uj/(1+alphag*uj)+(y-uj)*(alphag*uj/(1+2*alphag*uj+alphag**2*uj^2)))))
+        Ai <- as.vector((1-zkg)*((uj/(1+alphag*uj)+(y-uj)*(alphag*uj/(1+2*alphag*uj+alphag^2*uj^2)))))
+        # print(Ai) errado!
+        # print(zkg) errado!
+        # print(alphag) errado!
+          # alphag certo apenas nas duas primeiras iterações
         Ai <- ifelse(Ai<=0, E^-5, Ai)
         uj <- ifelse(uj<E^-150, E^-150, uj)
         zj <- (nj+(y-uj)/(((uj/(1+alphag*uj)+(y-uj)*(alphag*uj/(1+2*alphag*uj+alphag^2*uj^2))))*(1+alphag*uj)))-Offset
@@ -265,6 +270,10 @@ Golden <- function(data, formula, xvarinf, weight,
         else{
           bg <<- solve(t(x)%*%(Ai*x))%*%t(x)%*%(Ai*zj)
         }
+        # print(bg) errado!
+        # certo so na primeira iteração
+        # depois retorna vetor de zeros e os valores de bg ficam errados nas demais
+        # suspeita de erro no Ai
         nj <- x%*%bg+Offset
         nj <- ifelse(nj>700, 700, nj)
         nj <- ifelse(nj<-700, -700, nj)
@@ -287,6 +296,9 @@ Golden <- function(data, formula, xvarinf, weight,
       njl <- G%*%lambdag
       njl <- ifelse(njl > maxg, maxg, njl)
       njl <- ifelse(njl < maxg,-maxg, njl)
+      # print(njl) errado!!
+      # suspeita de problemas com maxg (G ou lambdag tambem)
+      # investigar maxg no SAS
       pig <- exp(njl)/(1+exp(njl))
       while (abs(ddev)>0.000001 & aux3<100){
         Ai <- pig*(1-pig)
@@ -311,6 +323,8 @@ Golden <- function(data, formula, xvarinf, weight,
       }
     }
     zkg <- 1/(1+exp(-njl)*(parg/(parg+uj))^parg)
+    # print(zkg) errado!!!
+    # print(njl) erradíssimo!! 
     zkg <- ifelse(y>0, 0, zkg)
     if (model != 'zip' & model != 'zinb'){
       zkg <- 0
@@ -385,6 +399,7 @@ Golden <- function(data, formula, xvarinf, weight,
       nj <- x%*%b+Offset #checar multiplicador
       uj <- exp(nj)
       par <- parg
+      # print(par)
       lambda <- lambdag
       njl <- G%*%lambda
       njl <- ifelse(njl>maxg, maxg, njl)
@@ -420,7 +435,7 @@ Golden <- function(data, formula, xvarinf, weight,
         }
         else{
           #print(par)
-          if (par<=E^-5){ #verificar se entra aqui 16/02
+          if (par<=E^-5){ 
             if (i>1){
               par <- 1/alphai[i-1,2]
             }
@@ -811,8 +826,8 @@ Golden <- function(data, formula, xvarinf, weight,
 #------------------------------ testes ------------------------------#
 
 library(readr)
-#korea_base_artigo <- read_csv("UnB/2024/TCC2/korea_base_artigo.csv")
-korea_base_artigo <- read_csv("C:/Users/Juliana Rosa/OneDrive/Documents/TCC2/GWZINBR-main/korea_base_artigo.csv")
+korea_base_artigo <- read_csv("UnB/2024/TCC2/korea_base_artigo.csv")
+#korea_base_artigo <- read_csv("C:/Users/Juliana Rosa/OneDrive/Documents/TCC2/GWZINBR-main/korea_base_artigo.csv")
 View(korea_base_artigo)
 
 startTime <- Sys.time()
@@ -831,8 +846,3 @@ endTime <- Sys.time()
 # %Golden(DATA=Korea_base,YVAR=n_covid1,XVAR=Morbidity high_sch_p
 #         Healthcare_access diff_sd crowding Migration Health_behavior,LONG=x,LAT=y,OUTPUT=band,
 #         OFFSET=ln_total,MODEL=ZINB,METHOD=ADAPTIVE_BSQ,BANDWIDTH=CV, GLOBALMIN = NO,DISTANCEKM=YES);
-
-
-
-
-
