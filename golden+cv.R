@@ -156,12 +156,14 @@ Golden <- function(data, formula, xvarinf, weight,
   }
   if (!is.null(xvarinf)){
     lambda0 <- (length(pos0)-sum((parg/(uj+parg))^parg))/N
+    #print(lambda0) nao entra aqui no SAS tbm
     if (lambda0 <= 0) {
       #lambdag <<- matrix(0, ncol(G),1) 
       lambdag <<- rep(0, ncol(G))
     }
     else {
       lambda0 <<- log(lambda0/(1-lambda0))
+      # print(lambda0) nao entra aqui no SAS tbm
       #lambdag <<- rbind(lambda0, matrix(0,ncol(G)-1,1))
       lambdag <<- rbind(lambda0, rep(0,ncol(G)-1))
     }
@@ -178,7 +180,7 @@ Golden <- function(data, formula, xvarinf, weight,
         model <- "negbin"
       }
     }
-  }
+  } #para o teste que estamos rodando, o SAS e o R nao entram aqui
   njl <- G%*%lambdag
   # print(njl) ok
   if (model!="zip" & model!="zinb"){
@@ -259,7 +261,7 @@ Golden <- function(data, formula, xvarinf, weight,
         # print(Ai) errado!
         # print(zkg) errado!
         # print(alphag) errado!
-          # alphag certo apenas nas duas primeiras iterações
+        # alphag certo apenas nas duas primeiras iterações
         Ai <- ifelse(Ai<=0, E^-5, Ai)
         uj <- ifelse(uj<E^-150, E^-150, uj)
         zj <- (nj+(y-uj)/(((uj/(1+alphag*uj)+(y-uj)*(alphag*uj/(1+2*alphag*uj+alphag^2*uj^2))))*(1+alphag*uj)))-Offset
@@ -293,6 +295,9 @@ Golden <- function(data, formula, xvarinf, weight,
     if (model == "zip" |model == 'zinb'){
       devg <- 0
       ddev <- 1
+      # print(G) 1/2 certo
+      # As matrizes sao iguais no R e no SAS, mas no SAS saem muito mais resultados do que no R
+      # print(lambdag) errado!! só o 1o resultado esta certo
       njl <- G%*%lambdag
       njl <- ifelse(njl > maxg, maxg, njl)
       njl <- ifelse(njl < maxg,-maxg, njl)
@@ -306,10 +311,13 @@ Golden <- function(data, formula, xvarinf, weight,
         zj <- njl+(zkg-pig)*1/Ai
         if (det(t(G*Ai)%*%G)==0){
           lambdag <<- matrix(0, ncol(G), 1)
+          #print(lambdag) inicialmente nao entra aqui
           #lambdag <<- rep(0, ncol(G))
         }  
         else {
           lambdag <<- solve(t(G*Ai)%*%G)%*%t(G*Ai)%*%zj
+          # print(lambdag) #O ERRO ESTÁ AQUI! 
+          # Talvez o operador entre Ge Ai deva ser matricial
         }
         njl <- G%*%lambdag
         njl <- ifelse(njl > maxg, maxg, njl)
