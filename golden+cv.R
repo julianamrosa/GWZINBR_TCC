@@ -124,7 +124,6 @@ Golden <- function(data, formula, xvarinf, weight,
       # print(Ai) ok
       Ai <- ifelse(Ai<=0,E^-5,Ai)
       zj <- nj+(y-uj)/(Ai*(1+alphag*uj))-Offset
-      #print(zj)
       if (det(t(x)%*%(Ai*x))==0) {
         # bg <<- matrix(0, ncol(x),1)
         bg <<- rep(0,ncol(x))
@@ -196,12 +195,7 @@ Golden <- function(data, formula, xvarinf, weight,
   j <- 0
   contador <- 0
   while (abs(dllike)>0.00001 & j<600){
-    # problema atual (03/3) com zj, Ai, njl e lambdag
-    # investigar as duas alterações sofridas por zj dentro desse looping
     contador <- contador + 1
-    if(contador==1){
-      #print(zj)
-    }
     ddpar <- 1
     cont <- 1
     contador2 <- 0
@@ -219,12 +213,8 @@ Golden <- function(data, formula, xvarinf, weight,
         parg <<- 1/alphag
       }
       else{
-        if(contador==1){
-          #print(uj) #problema no looping interno a partir da 2a iteracao
-        }
         if (j>0){
           parg <<- 1/(sum((y-uj)^2/uj)/(N-nvar))
-          # print(parg) errado!!!
         }
         while (abs(dpar)>0.0001 & aux2<200){
           if (parg<0){
@@ -264,60 +254,23 @@ Golden <- function(data, formula, xvarinf, weight,
       ddev <- 1
       nj <- x%*%bg+Offset
       uj <- exp(nj)
-      if(contador==1){
-        #print(uj)
-      }
-      #print(uj) errado a partir da segunda iteracao
       while (abs(ddev)>0.000001 & aux1<100){
-        if(contador==1 & contador2==1){
-          #print("nj1:")
-          #print(nj)
-        }
         uj <- ifelse(uj>E^100, E^100, uj)
         Ai <- as.vector((1-zkg)*((uj/(1+alphag*uj)+(y-uj)*(alphag*uj/(1+2*alphag*uj+alphag^2*uj^2)))))
-        if(contador==1 & contador2==1){
-          #print(Ai)
-          #print(zkg) totalmente ok
-          # print(alphag) ok 
-        }
         Ai <- ifelse(Ai<=0, E^-5, Ai)
         uj <- ifelse(uj<E^-150, E^-150, uj)
         zj <- (nj+(y-uj)/(((uj/(1+alphag*uj)+(y-uj)*(alphag*uj/(1+2*alphag*uj+alphag^2*uj^2))))*(1+alphag*uj)))-Offset
-        if(contador==1 & contador2==1){
-          #print("zj2") #aqui ta tudo certo!
-          #print(zj)  
-        }
         if (det(t(x)%*%(Ai*x))==0){
           #bg <<- matrix(0, nvar, 1)
           bg <<- rep(0, nvar)
-          #print("alguma coisa")
         }
         else{
           bg <<- solve(t(x)%*%(Ai*x))%*%t(x)%*%(Ai*zj)
         }
-        if(contador==1 & contador2==1){
-          #print(bg)
-        }
         nj <- x%*%bg+Offset
-        if(contador==1 & contador2==1){
-          #print("nj2")
-          #print(nj)
-        }
         nj <- ifelse(nj>700, 700, nj)
-        if(contador==1 & contador2==1){
-          #print("nj3:")
-          #print(nj)
-        }
         nj <- ifelse(nj<(-700), -700, nj)
-        if(contador==1 & contador2==1){
-          #print("nj4:")
-          #print(nj)
-        }
         uj <- exp(nj)
-        if(contador==1){
-          #print(uj)
-          #print("alguma coisa")
-        }
         olddev <- devg
         gamma1 <- (uj/(uj+parg))^y*(parg/(uj+parg))^parg #(gamma(par+y)/(gamma(y+1)#gamma(par)))#
         gamma1 <- ifelse(gamma1<=0, E^-10, gamma1)
@@ -337,42 +290,23 @@ Golden <- function(data, formula, xvarinf, weight,
       njl <- ifelse(njl > maxg, maxg, njl)
       njl <- ifelse(njl < (-maxg),-maxg, njl)
       pig <- exp(njl)/(1+exp(njl))
-      if(contador==1){
-        # print(Ai)  
-      }
       contador3 <- 0
       while (abs(ddev)>0.000001 & aux3<100){
         contador3 <- contador3 + 1
         Ai <- pig*(1-pig)
         Ai <- ifelse(Ai<=0, E^-5, Ai)
         zj <- njl+(zkg-pig)*1/Ai
-        if(contador==1){
-          #print("zj3")
-          #print(zj)
-          #print(njl)
-        }
         if (det(t(G*Ai)%*%G)==0){
           lambdag <<- matrix(0, ncol(G), 1)
-          #print("entrou no if")
           #lambdag <<- rep(0, ncol(G))
         }  
         else {
           lambdag <<- solve(t(G*Ai)%*%G)%*%t(G*Ai)%*%zj
-          #print("entrou no else")
-          if(contador==1 & contador3==3){
-            print(lambdag)
-          }
         }
         njl <- G%*%lambdag
         njl <- ifelse(njl > maxg, maxg, njl)
         njl <- ifelse(njl < (-maxg),-maxg, njl)
-        if(contador==1 & contador3==1){
-          #print(njl)
-        }
         pig <- exp(njl)/(1+exp(njl))
-        if(contador==1 & contador3==1){
-          #print(pig)
-        }
         olddev <- devg
         devg <- sum(zkg*njl-log(1+exp(njl)))
         ddev <- devg-olddev
@@ -457,7 +391,6 @@ Golden <- function(data, formula, xvarinf, weight,
       par <- parg
       lambda <- lambdag
       njl <- G%*%lambda
-      #print(njl)
       njl <- ifelse(njl>maxg, maxg, njl)
       njl <- ifelse(njl<(-maxg), -maxg, njl)
       if (model!="zip" & model!="zinb"){
@@ -471,14 +404,15 @@ Golden <- function(data, formula, xvarinf, weight,
           lambda <- rbind(lambda0, rep(0, ncol(G)-1))
           njl <- G%*%lambda
         }
-        #print(njl)
         zk <- 1/(1+exp(-njl)*(par/(par+uj))^par)
-        zk <- ifelse(y>0, 0, zk)
+        #zk <- ifelse(y>0, 0, zk)
       }
       dllike <- 1
       llike <- 0
       j <- 1
+      contador4 <- 0
       while (abs(dllike)>0.00001 & j<=600){
+        contador4 <- contador4+1
         ddpar <- 1
         #while (abs(ddpar)>0.000001)
         dpar <- 1
@@ -491,7 +425,6 @@ Golden <- function(data, formula, xvarinf, weight,
           par <- 1/alpha
         }
         else{
-          #print(par)
           if (par<=E^-5){ 
             if (i>1){
               par <- 1/alphai[i-1,2]
@@ -519,7 +452,8 @@ Golden <- function(data, formula, xvarinf, weight,
             hess <- sum(w*wt*(1-zk)*(trigamma(par+y)-trigamma(par)+1/par-2/(par+uj)+(y+par)/(par+uj)^2))
             hess <- ifelse(hess==0, E^-23, hess)
             par0 <- par
-            par <- par0-solve(hess)%*%gf #multiplicador
+            par <- as.vector(par0-solve(hess)%*%gf) #multiplicador
+            #flag --> coloquei o as.vector() acima (JU)
             dpar <- par-par0
             if (par>=E^6){
               par <- E^6
@@ -563,9 +497,12 @@ Golden <- function(data, formula, xvarinf, weight,
         nj <- ifelse(nj>700, 700, nj)
         nj <- ifelse(nj<(-700), -700, nj)
         uj <- exp(nj)
+        contador5 <- 0
         while (abs(ddev)>0.000001 & aux1<100){
+          contador5 <- contador5+1
           uj <- ifelse(uj>E^100,E^100,uj)
-          Ai <- (1-zk)*((uj/(1+alpha*uj)+(y-uj)*(alpha*uj/(1+2*alpha*uj+alpha^2*uj^2))))
+          Ai <- as.vector((1-zk)*((uj/(1+alpha*uj)+(y-uj)*(alpha*uj/(1+2*alpha*uj+alpha^2*uj^2)))))
+          #flag --> botei o as.vector acima (JU)
           Ai <- ifelse(Ai<=0,E^-5,Ai)
           uj <- ifelse(uj<E^-150,E^-150,uj)
           denz <- (((uj/(1+alpha*uj)+(y-uj)*(alpha*uj/(1+2*alpha*uj+alpha^2*uj^2))))*(1+alpha*uj))
@@ -576,7 +513,10 @@ Golden <- function(data, formula, xvarinf, weight,
             b <- rep(0, nvar)
           }
           else{
-            b <- solve(t(x)%*%(w*Ai*x*wt))%*%t(x)%*%(w*Ai*wt*zj)
+            if (i==31 & contador4==1 & contador5==1){
+              print(zj)
+            }
+            b <- solve(t(x)%*%(w*Ai*x*wt))%*%t(x)%*%(w*Ai*wt*zj) #erro aqui
           }
           nj <- x%*%b+Offset
           nj <- ifelse(nj>700, 700, nj)
@@ -599,6 +539,7 @@ Golden <- function(data, formula, xvarinf, weight,
           #print(c("b", "par", "aux1", "dev", "olddev", "ddev"))
           #print(c(b, par, aux1, dev, olddev, ddev))
           aux1 <- aux1+1
+          #print(contador5)
         }
         ddpar <- par-parold
         if (model=="zip" | model=="zinb"){
@@ -677,6 +618,7 @@ Golden <- function(data, formula, xvarinf, weight,
         #print(c("i", "j", "b", "alpha", "lambda", "llike", "dllike"))
         #print(c(i, j, b, alpha, lambda, llike, dllike))
         j <- j+1
+        #print(contador4)
       }
       yhat[i] <- uj[i]
       pihat[i] <- njl[i]
@@ -704,6 +646,7 @@ Golden <- function(data, formula, xvarinf, weight,
         max_dist <<- max(dx) 
       }
       max_dist <<- max(max_dist,max(dx))
+      #print(i)
     }  
     CV <- t((y-yhat)*wt)%*%(y-yhat)
     par_ <- 1/alphai
@@ -883,8 +826,9 @@ Golden <- function(data, formula, xvarinf, weight,
 #------------------------------ testes ------------------------------#
 
 library(readr)
-korea_base_artigo <- read_csv("UnB/2024/TCC2/korea_base_artigo.csv")
+#korea_base_artigo <- read_csv("UnB/2024/TCC2/korea_base_artigo.csv")
 #korea_base_artigo <- read_csv("C:/Users/Juliana Rosa/OneDrive/Documents/TCC2/GWZINBR-main/korea_base_artigo.csv")
+korea_base_artigo <- read_csv("C:/Juliana/TCC/GWZINBR-main/korea_base_artigo.csv")
 View(korea_base_artigo)
 
 startTime <- Sys.time()
