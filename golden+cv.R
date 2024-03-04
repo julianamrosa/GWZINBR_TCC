@@ -196,10 +196,12 @@ Golden <- function(data, formula, xvarinf, weight,
   j <- 0
   contador <- 0
   while (abs(dllike)>0.00001 & j<600){
-    # print(zj)
     # problema atual (03/3) com zj, Ai, njl e lambdag
     # investigar as duas alterações sofridas por zj dentro desse looping
     contador <- contador + 1
+    if(contador==1){
+      #print(zj)
+    }
     ddpar <- 1
     cont <- 1
     contador2 <- 0
@@ -281,6 +283,10 @@ Golden <- function(data, formula, xvarinf, weight,
         Ai <- ifelse(Ai<=0, E^-5, Ai)
         uj <- ifelse(uj<E^-150, E^-150, uj)
         zj <- (nj+(y-uj)/(((uj/(1+alphag*uj)+(y-uj)*(alphag*uj/(1+2*alphag*uj+alphag^2*uj^2))))*(1+alphag*uj)))-Offset
+        if(contador==1 & contador2==1){
+          #print("zj2") #aqui ta tudo certo!
+          #print(zj)  
+        }
         if (det(t(x)%*%(Ai*x))==0){
           #bg <<- matrix(0, nvar, 1)
           bg <<- rep(0, nvar)
@@ -331,21 +337,42 @@ Golden <- function(data, formula, xvarinf, weight,
       njl <- ifelse(njl > maxg, maxg, njl)
       njl <- ifelse(njl < (-maxg),-maxg, njl)
       pig <- exp(njl)/(1+exp(njl))
+      if(contador==1){
+        # print(Ai)  
+      }
+      contador3 <- 0
       while (abs(ddev)>0.000001 & aux3<100){
+        contador3 <- contador3 + 1
         Ai <- pig*(1-pig)
         Ai <- ifelse(Ai<=0, E^-5, Ai)
         zj <- njl+(zkg-pig)*1/Ai
+        if(contador==1){
+          #print("zj3")
+          #print(zj)
+          #print(njl)
+        }
         if (det(t(G*Ai)%*%G)==0){
           lambdag <<- matrix(0, ncol(G), 1)
+          #print("entrou no if")
           #lambdag <<- rep(0, ncol(G))
         }  
         else {
           lambdag <<- solve(t(G*Ai)%*%G)%*%t(G*Ai)%*%zj
+          #print("entrou no else")
+          if(contador==1 & contador3==3){
+            print(lambdag)
+          }
         }
         njl <- G%*%lambdag
         njl <- ifelse(njl > maxg, maxg, njl)
-        njl <- ifelse(njl < maxg,-maxg, njl)
+        njl <- ifelse(njl < (-maxg),-maxg, njl)
+        if(contador==1 & contador3==1){
+          #print(njl)
+        }
         pig <- exp(njl)/(1+exp(njl))
+        if(contador==1 & contador3==1){
+          #print(pig)
+        }
         olddev <- devg
         devg <- sum(zkg*njl-log(1+exp(njl)))
         ddev <- devg-olddev
