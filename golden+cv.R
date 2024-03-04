@@ -140,6 +140,7 @@ Golden <- function(data, formula, xvarinf, weight,
       olddev <- devg
       uj <- ifelse(uj<E^-150,E^-150,uj)
       uj <- ifelse(uj>100000,100000,uj)
+      # print(uj) ok 
       tt <- y/uj
       tt <- ifelse(tt==0,E^-10,tt)
       devg <- 2*sum(y*log(tt)-(y+1/alphag)*log((1+alphag*y)/(1+alphag*uj)))
@@ -154,6 +155,7 @@ Golden <- function(data, formula, xvarinf, weight,
     cont <-cont+1
     ddpar <- parg-parold
   }
+  # print(bg) ok 
   if (!is.null(xvarinf)){
     lambda0 <- (length(pos0)-sum((parg/(uj+parg))^parg))/N
     #print(lambda0) nao entra aqui no SAS tbm
@@ -182,22 +184,27 @@ Golden <- function(data, formula, xvarinf, weight,
     }
   } #para o teste que estamos rodando, o SAS e o R nao entram aqui
   njl <- G%*%lambdag
-  # print(njl) ok
   if (model!="zip" & model!="zinb"){
     zkg <- 0
   }
   else{
     zkg <- 1/(1+exp(-G%*%lambdag)*(parg/(parg+uj))^parg)
-    # print(zkg) ok
     zkg <- ifelse(y>0,0,zkg)
   }
   dllike <- 1
   llikeg <- 0
   j <- 0
+  contador <- 0
   while (abs(dllike)>0.00001 & j<600){
+    # print(zj)
+    # problema atual (03/3) com zj, Ai, njl e lambdag
+    # investigar as duas alterações sofridas por zj dentro desse looping
+    contador <- contador + 1
     ddpar <- 1
     cont <- 1
+    contador2 <- 0
     while (abs(ddpar)>0.000001 & cont<100){
+      contador2 <- contador2+1
       dpar <- 1
       parold <- parg
       aux1 <- 1
@@ -210,7 +217,9 @@ Golden <- function(data, formula, xvarinf, weight,
         parg <<- 1/alphag
       }
       else{
-        #print(uj) errado!!!
+        if(contador==1){
+          #print(uj) #problema no looping interno a partir da 2a iteracao
+        }
         if (j>0){
           parg <<- 1/(sum((y-uj)^2/uj)/(N-nvar))
           # print(parg) errado!!!
@@ -252,34 +261,57 @@ Golden <- function(data, formula, xvarinf, weight,
       devg <- 0
       ddev <- 1
       nj <- x%*%bg+Offset
-      # print(bg) errado!!!
       uj <- exp(nj)
-      #print(uj) errado!!!
+      if(contador==1){
+        #print(uj)
+      }
+      #print(uj) errado a partir da segunda iteracao
       while (abs(ddev)>0.000001 & aux1<100){
+        if(contador==1 & contador2==1){
+          #print("nj1:")
+          #print(nj)
+        }
         uj <- ifelse(uj>E^100, E^100, uj)
         Ai <- as.vector((1-zkg)*((uj/(1+alphag*uj)+(y-uj)*(alphag*uj/(1+2*alphag*uj+alphag^2*uj^2)))))
-        # print(Ai) errado!
-        # print(zkg) errado!
-        # print(alphag) errado!
-        # alphag certo apenas nas duas primeiras iterações
+        if(contador==1 & contador2==1){
+          #print(Ai)
+          #print(zkg) totalmente ok
+          # print(alphag) ok 
+        }
         Ai <- ifelse(Ai<=0, E^-5, Ai)
         uj <- ifelse(uj<E^-150, E^-150, uj)
         zj <- (nj+(y-uj)/(((uj/(1+alphag*uj)+(y-uj)*(alphag*uj/(1+2*alphag*uj+alphag^2*uj^2))))*(1+alphag*uj)))-Offset
         if (det(t(x)%*%(Ai*x))==0){
           #bg <<- matrix(0, nvar, 1)
           bg <<- rep(0, nvar)
+          #print("alguma coisa")
         }
         else{
           bg <<- solve(t(x)%*%(Ai*x))%*%t(x)%*%(Ai*zj)
         }
-        # print(bg) errado!
-        # certo so na primeira iteração
-        # depois retorna vetor de zeros e os valores de bg ficam errados nas demais
-        # suspeita de erro no Ai
+        if(contador==1 & contador2==1){
+          #print(bg)
+        }
         nj <- x%*%bg+Offset
+        if(contador==1 & contador2==1){
+          #print("nj2")
+          #print(nj)
+        }
         nj <- ifelse(nj>700, 700, nj)
-        nj <- ifelse(nj<-700, -700, nj)
+        if(contador==1 & contador2==1){
+          #print("nj3:")
+          #print(nj)
+        }
+        nj <- ifelse(nj<(-700), -700, nj)
+        if(contador==1 & contador2==1){
+          #print("nj4:")
+          #print(nj)
+        }
         uj <- exp(nj)
+        if(contador==1){
+          #print(uj)
+          #print("alguma coisa")
+        }
         olddev <- devg
         gamma1 <- (uj/(uj+parg))^y*(parg/(uj+parg))^parg #(gamma(par+y)/(gamma(y+1)#gamma(par)))#
         gamma1 <- ifelse(gamma1<=0, E^-10, gamma1)
@@ -295,15 +327,9 @@ Golden <- function(data, formula, xvarinf, weight,
     if (model == "zip" |model == 'zinb'){
       devg <- 0
       ddev <- 1
-      # print(G) 1/2 certo
-      # As matrizes sao iguais no R e no SAS, mas no SAS saem muito mais resultados do que no R
-      # print(lambdag) errado!! só o 1o resultado esta certo
       njl <- G%*%lambdag
       njl <- ifelse(njl > maxg, maxg, njl)
-      njl <- ifelse(njl < maxg,-maxg, njl)
-      # print(njl) errado!!
-      # suspeita de problemas com maxg (G ou lambdag tambem)
-      # investigar maxg no SAS
+      njl <- ifelse(njl < (-maxg),-maxg, njl)
       pig <- exp(njl)/(1+exp(njl))
       while (abs(ddev)>0.000001 & aux3<100){
         Ai <- pig*(1-pig)
@@ -311,13 +337,10 @@ Golden <- function(data, formula, xvarinf, weight,
         zj <- njl+(zkg-pig)*1/Ai
         if (det(t(G*Ai)%*%G)==0){
           lambdag <<- matrix(0, ncol(G), 1)
-          #print(lambdag) inicialmente nao entra aqui
           #lambdag <<- rep(0, ncol(G))
         }  
         else {
           lambdag <<- solve(t(G*Ai)%*%G)%*%t(G*Ai)%*%zj
-          # print(lambdag) #O ERRO ESTÁ AQUI! 
-          # Talvez o operador entre Ge Ai deva ser matricial
         }
         njl <- G%*%lambdag
         njl <- ifelse(njl > maxg, maxg, njl)
@@ -331,8 +354,6 @@ Golden <- function(data, formula, xvarinf, weight,
       }
     }
     zkg <- 1/(1+exp(-njl)*(parg/(parg+uj))^parg)
-    # print(zkg) errado!!!
-    # print(njl) erradíssimo!! 
     zkg <- ifelse(y>0, 0, zkg)
     if (model != 'zip' & model != 'zinb'){
       zkg <- 0
@@ -407,11 +428,11 @@ Golden <- function(data, formula, xvarinf, weight,
       nj <- x%*%b+Offset #checar multiplicador
       uj <- exp(nj)
       par <- parg
-      # print(par)
       lambda <- lambdag
       njl <- G%*%lambda
+      #print(njl)
       njl <- ifelse(njl>maxg, maxg, njl)
-      njl <- ifelse(njl<-maxg, -maxg, njl)
+      njl <- ifelse(njl<(-maxg), -maxg, njl)
       if (model!="zip" & model!="zinb"){
         zk <- 0
       }
@@ -423,6 +444,7 @@ Golden <- function(data, formula, xvarinf, weight,
           lambda <- rbind(lambda0, rep(0, ncol(G)-1))
           njl <- G%*%lambda
         }
+        #print(njl)
         zk <- 1/(1+exp(-njl)*(par/(par+uj))^par)
         zk <- ifelse(y>0, 0, zk)
       }
@@ -457,7 +479,7 @@ Golden <- function(data, formula, xvarinf, weight,
             lambda <- lambdag
             njl <- G%*%lambda
             njl <- ifelse(njl>maxg, maxg, njl)
-            njl <- ifelse(njl<-maxg, -maxg, njl)
+            njl <- ifelse(njl<(-maxg), -maxg, njl)
             zk <- 1/(1+exp(-njl)*(parg/(parg+uj))^parg)
             zk <- ifelse(y>0, 0, zk)
             if (any(lambda)==0){
@@ -481,7 +503,7 @@ Golden <- function(data, formula, xvarinf, weight,
               lambda <- lambdag
               njl <- G%*%lambda
               njl <- ifelse(njl>maxg, maxg, njl)
-              njl <- ifelse(njl<-maxg,-maxg,njl)
+              njl <- ifelse(njl<(-maxg),-maxg,njl)
               zk <- 1/(1+exp(-njl)*(parg/(parg+uj))^parg)
               zk <- ifelse(y>0,0,zk)
               if (any(lambda)==0){
@@ -497,7 +519,7 @@ Golden <- function(data, formula, xvarinf, weight,
             lambda <- lambdag
             njl <- G%*%lambda
             njl <- ifelse(njl>maxg, maxg, njl)
-            njl <- ifelse(njl<-maxg, -maxg, njl)
+            njl <- ifelse(njl<(-maxg), -maxg, njl)
             zk <- 1/(1+exp(-njl)*(parg/(parg+uj))^parg)
             zk <- ifelse(y>0, 0, zk)
             if (any(lambda)==0){
@@ -512,7 +534,7 @@ Golden <- function(data, formula, xvarinf, weight,
         ddev <- 1
         nj <- x%*%b+Offset
         nj <- ifelse(nj>700, 700, nj)
-        nj <- ifelse(nj<-700, -700, nj)
+        nj <- ifelse(nj<(-700), -700, nj)
         uj <- exp(nj)
         while (abs(ddev)>0.000001 & aux1<100){
           uj <- ifelse(uj>E^100,E^100,uj)
@@ -531,7 +553,7 @@ Golden <- function(data, formula, xvarinf, weight,
           }
           nj <- x%*%b+Offset
           nj <- ifelse(nj>700, 700, nj)
-          nj <- ifelse(nj<-700, -700, nj)
+          nj <- ifelse(nj<(-700), -700, nj)
           uj <- exp(nj)
           olddev <- dev
           uj <- ifelse(uj>E^10, E^10, uj)
@@ -585,7 +607,7 @@ Golden <- function(data, formula, xvarinf, weight,
             ddev <- 1
             njl <- G%*%lambda
             njl <- ifelse(njl>maxg, maxg, njl)
-            njl <- ifelse(njl<-maxg, -maxg, njl)
+            njl <- ifelse(njl<(-maxg), -maxg, njl)
             pi <- exp(njl)/(1+exp(njl))
             while (abs(ddev)>0.000001 & aux3<100){
               Aii <- pi*(1-pi)
@@ -599,7 +621,7 @@ Golden <- function(data, formula, xvarinf, weight,
               }
               njl <- G%*%lambda
               njl <- ifelse(njl>maxg, maxg, njl)
-              njl <- ifelse(njl<-maxg, -maxg, njl)
+              njl <- ifelse(njl<(-maxg), -maxg, njl)
               pi <- exp(njl)/(1+exp(njl))
               olddev <- dev
               dev <- sum(zk*njl-log(1+exp(njl)))
@@ -612,7 +634,7 @@ Golden <- function(data, formula, xvarinf, weight,
         }
         njl <- G%*%lambda
         njl <- ifelse(njl>maxg, maxg, njl)
-        njl <- ifelse(njl<-maxg, -maxg, njl)
+        njl <- ifelse(njl<(-maxg), -maxg, njl)
         zk <- 1/(1+exp(-njl)*(par/(par+uj))^par)
         zk <- ifelse(y>0, 0, zk)
         if (any(lambda)==0){
