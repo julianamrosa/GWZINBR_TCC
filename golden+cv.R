@@ -267,7 +267,8 @@ Golden <- function(data, formula, xvarinf, weight,
         devg <- sum((1-zkg)*(log(gamma1)))
         ddev <- devg-olddev
         #print(c('bg', 'aux1', 'devg', 'olddev', 'ddev'))
-        #print(c(bg aux1 devg olddev ddev))
+        #print(c(bg, aux1, devg, olddev, ddev))
+        #prints comentados
         aux1 <- aux1+1
       }
       ddpar <- parg-parold
@@ -300,7 +301,9 @@ Golden <- function(data, formula, xvarinf, weight,
         olddev <- devg
         devg <- sum(zkg*njl-log(1+exp(njl)))
         ddev <- devg-olddev
-        # print(c('lambdag', 'devg', 'olddev', 'ddev')) 
+        #print(c('lambdag', 'devg', 'olddev', 'ddev'))
+        #print(c(lambdag, devg, olddev, ddev))
+        #prints comentados
         aux3 <- aux3+1
       }
     }
@@ -312,7 +315,9 @@ Golden <- function(data, formula, xvarinf, weight,
     oldllike <- llikeg
     llikeg <- sum(zkg*(njl)-log(1+exp(njl))+(1-zkg)*(log(gamma1)))
     dllike <- llikeg-oldllike
-    # print(c('j', 'bg', 'alphag', 'lambdag', 'llikeg', 'dllike')) 
+    #print(c('j', 'bg', 'alphag', 'lambdag', 'llikeg', 'dllike'))
+    #print(c(j, bg, alphag, lambdag, llikeg, dllike))
+    #prints comentados
     j <- j+1
   }
   long <- unlist(data[, long])
@@ -478,8 +483,12 @@ Golden <- function(data, formula, xvarinf, weight,
             }
           }
           alpha <- 1/par
-          #print(c("i", "j", "b", "lambda", "par", "alpha", "aux2"))
-          #print(c(i, j, b, lambda, par, alpha, aux2))
+          # if (i==244){
+          #   print(c("i", "j", "b", "lambda", "par", "alpha", "aux2"))
+          #   print(c(i, j, b, lambda, par, alpha, aux2))
+          # }
+          #j vai de 1 a 6 no R e de 1 a 5 no sas
+          #prints comentados
         }
         dev <- 0
         ddev <- 1
@@ -524,8 +533,11 @@ Golden <- function(data, formula, xvarinf, weight,
           gamma1 <- ifelse(gamma1<=0, E^-10, gamma1)
           dev <- sum((1-zk)*(log(gamma1)))
           ddev <- dev-olddev
-          #print(c("b", "par", "aux1", "dev", "olddev", "ddev"))
-          #print(c(b, par, aux1, dev, olddev, ddev))
+          # if (i==244){
+          #   print(c("b", "par", "aux1", "dev", "olddev", "ddev"))
+          #   print(c(b, par, aux1, dev, olddev, ddev))
+          # }
+          #prints comentados
           aux1 <- aux1+1
         }
         ddpar <- par-parold
@@ -540,13 +552,19 @@ Golden <- function(data, formula, xvarinf, weight,
           }
           alphatemp <- round(alphatemp, 7)
           lambdatemp <- round(lambdatemp, 7)
-          #print(c('i', 'j', 'alphatemp', 'nrow(alphatemp)', 'ncol(unique(alphatemp))'))
-          #print(c(i, j, alphatemp, nrow(alphatemp), ncol(unique(alphatemp))))
+          # if (i==244){
+          #   print(c('i', 'j', 'alphatemp', 'length(alphatemp)', 'length(unique(alphatemp))'))
+          #   print(c(i, j, alphatemp, length(alphatemp), length(unique(alphatemp))))
+          # }
+          #prints comentados
+          #os length(unique(alphatemp)) estão um pouco diferentes, provável consequência do j ir até 6 em vez de 5
           if (model=="zinb"){
             condition <- (j>300 & length(alphatemp)>length(unique(alphatemp)) & length(lambdatemp)>length(unique(lambdatemp)))
           }
           else if (model=="zip"){
-            #print i j lambdatemp (nrow(lambdatemp)) (ncol(unique(lambdatemp)));
+            #print('i', 'j', 'lambdatemp', '(length(lambdatemp))', '(length(unique(lambdatemp)))')
+            #print(i, j, lambdatemp, (length(lambdatemp)), (length(unique(lambdatemp))))
+            #prints comentados
             condition <- (j>300 & length(lambdatemp)>length(unique(lambdatemp)))
           }
           if (condition){
@@ -581,8 +599,12 @@ Golden <- function(data, formula, xvarinf, weight,
               olddev <- dev
               dev <- sum(zk*njl-log(1+exp(njl)))
               ddev <- dev-olddev
-              #print(c("lambda", "aux3", "dev", "olddev", "ddev"))
-              #print(c(lambda, aux3, dev, olddev, ddev))
+              # if (i==244){
+              #   print(c("lambda", "aux3", "dev", "olddev", "ddev"))
+              #   print(c(lambda, aux3, dev, olddev, ddev))
+              # }
+              #erros, muitos erros!!
+              #prints comentados
               aux3 <- aux3+1
             }
           }
@@ -602,40 +624,34 @@ Golden <- function(data, formula, xvarinf, weight,
         oldllike <- llike
         llike <- sum(zk*(njl)-log(1+exp(njl))+(1-zk)*(log(gamma1)))
         dllike <- llike-oldllike
-        #print(c("i", "j", "b", "alpha", "lambda", "llike", "dllike"))
-        #print(c(i, j, b, alpha, lambda, llike, dllike))
+        # if (i==244){
+        #   print(c("i", "j", "b", "alpha", "lambda", "llike", "dllike"))
+        #   print(c(i, j, b, alpha, lambda, llike, dllike))
+        # }
+        #erro! pequenas diferenças em llike e dllike, grandes diferenças em lambda
+        #prints comentados
         j <- j+1
       }
       yhat[i] <- uj[i]
       pihat[i] <- njl[i]
       alphai[i] <<-  alpha
       if (det(t(x)%*%(w*Ai*x*wt))==0){
-        #print("entrou no if")
         S[i] <- 0
       }
       else {
-        #print("entrou no else")
-        S[i] <- (x[i,]*solve(t(x)%*%(w*Ai*x*wt))%*%t(x*w*Ai*wt))[i]
+        #S[i] <- (x[i,]*solve(t(x)%*%(w*Ai*x*wt))%*%t(x*w*Ai*wt))[i]
+        S[i] <- (x[i,]%*%solve(t(x)%*%(w*Ai*x*wt))%*%t(x*w*Ai*wt))[i]
+        #flag: troquei o 1o multiplicador acima (JU)
       }
-      #print(S)
-      ### paramos aqui ###
-      #o S está com problema, era para ser um vetor de 0s
-      #as únicas alterações no S são nas linhas 614 e 618
-      #verifiquei no sas e no R e o teste sempre entra no else
-      #próximo passo: investigar em que iteração essa operação do else dá problema
-      #em seguida, verificar seus elementos um de cada vez
       if(model=="zip" | model=="zinb"){
         yhat[i] <- (uj*(1-exp(njl)/(1+exp(njl))))[i]
         yhat2[i] <- uj[i]
         if (det(t(G)%*%(w*Aii*G*wt))==0){
-          #print("entrou no if")
           Si[i] <- 0
         }
         else{
-          #print("entrou no else")
           Si[i] <- (G[i,]%*%solve(t(G)%*%(w*Aii*G*wt))%*%t(G*w*Aii*wt))[i]
           if (any(lambda)==0){
-            #print("entrou aqui também")
             Si[i] <- 0
           } 
         } 
@@ -644,8 +660,12 @@ Golden <- function(data, formula, xvarinf, weight,
         max_dist <<- max(dx) 
       }
       max_dist <<- max(max_dist,max(dx))
-    }  
+    }
     CV <- t((y-yhat)*wt)%*%(y-yhat)
+    #print(CV) erro nos 2 primeiros --> mistério!!!
+    #print(wt) ok
+    #print(yhat) ok
+    #print(t((y-yhat)*wt)) ok
     par_ <- 1/alphai
     if(model=="zinb" | model == "zip"){
       if (any(lambda)==0){
@@ -671,7 +691,6 @@ Golden <- function(data, formula, xvarinf, weight,
       }
       dev <- 2*(llnull1-ll)
       npar <- sum(S)+sum(Si)
-      #print(Si) #erro aqui
       AIC <- 2*npar-2*ll
       AICc <- AIC+2*(npar*(npar+1)/(N-npar-1))
       if(model=="zinb"){
@@ -703,12 +722,12 @@ Golden <- function(data, formula, xvarinf, weight,
       if(model == "negbin"){
         AIC <- 2*(npar+npar/ncol(x))-2*ll
         AICc <-AIC+2*(npar+npar/ncol(x))*(npar+npar/ncol(x)+1)/(N-(npar+npar/ncol(x))-1)
-      } 
+      }
     }
     if(bandwidth == "aic"){
-      CV <- AICC
+      CV <- AICc
     }
-    res <- cbind(CV,npar)
+    res <- cbind(CV, npar)
     return (res)
   }
   
@@ -825,8 +844,8 @@ Golden <- function(data, formula, xvarinf, weight,
 
 library(readr)
 #korea_base_artigo <- read_csv("UnB/2024/TCC2/korea_base_artigo.csv")
-korea_base_artigo <- read_csv("C:/Users/Juliana Rosa/OneDrive/Documents/TCC2/GWZINBR-main/korea_base_artigo.csv")
-#korea_base_artigo <- read_csv("C:/Juliana/TCC/GWZINBR-main/korea_base_artigo.csv")
+#korea_base_artigo <- read_csv("C:/Users/Juliana Rosa/OneDrive/Documents/TCC2/GWZINBR-main/korea_base_artigo.csv")
+korea_base_artigo <- read_csv("C:/Juliana/TCC/GWZINBR-main/korea_base_artigo.csv")
 View(korea_base_artigo)
 
 startTime <- Sys.time()
