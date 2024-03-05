@@ -1,5 +1,5 @@
 Golden <- function(data, formula, xvarinf, weight,
-                   lat, long, output, globalmin=TRUE,
+                   lat, long, globalmin=TRUE,
                    method, model="zinb", bandwidth="cv", offset, 
                    force=TRUE, maxg=100, distancekm=FALSE){
   if(!require(sp)){
@@ -63,7 +63,6 @@ Golden <- function(data, formula, xvarinf, weight,
   uj <- (y+mean(y))/2 
   nj <- log(uj)
   parg <<- sum((y-uj)^2/uj)/(N-nvar)
-  # print(parg) ok 
   ddpar <- 1
   cont <- 1
   cont3 <- 0
@@ -78,7 +77,6 @@ Golden <- function(data, formula, xvarinf, weight,
     if (model == "zinb" | model == "negbin"){
       if (cont>1){ 
         parg <<- 1/(sum((y-uj)^2/uj)/(N-nvar))
-        # print(parg) ok
       }  
       while (abs(dpar)>0.0001 & cont1<200){
         if (parg<0){
@@ -91,7 +89,6 @@ Golden <- function(data, formula, xvarinf, weight,
         par0 <- parg
         #parg <<- par0-solve(hess)%*%gf
         parg <<- par0-as.vector(solve(hess))*gf
-        # print(parg) ok
         if (parg>E^5){
           dpar <- 0.0001
           cont3 <- cont3+1
@@ -121,7 +118,6 @@ Golden <- function(data, formula, xvarinf, weight,
     cont2 <- 0
     while (abs(ddev)>0.000001 & cont2<100){
       Ai <- (uj/(1+alphag*uj))+(y-uj)*(alphag*uj/(1+2*alphag*uj+alphag^2*uj*uj))
-      # print(Ai) ok
       Ai <- ifelse(Ai<=0,E^-5,Ai)
       zj <- nj+(y-uj)/(Ai*(1+alphag*uj))-Offset
       if (det(t(x)%*%(Ai*x))==0) {
@@ -131,15 +127,12 @@ Golden <- function(data, formula, xvarinf, weight,
       else{
         bg <<- solve(t(x)%*%(Ai*x))%*%t(x)%*%(Ai*zj)
       }
-      # print(bg) ok 
       nj <- as.vector(x%*%bg+Offset)
       nj <- ifelse(nj>700,700,nj)
       uj <- exp(nj)
-      # print(uj) ok
       olddev <- devg
       uj <- ifelse(uj<E^-150,E^-150,uj)
       uj <- ifelse(uj>100000,100000,uj)
-      # print(uj) ok 
       tt <- y/uj
       tt <- ifelse(tt==0,E^-10,tt)
       devg <- 2*sum(y*log(tt)-(y+1/alphag)*log((1+alphag*y)/(1+alphag*uj)))
@@ -154,17 +147,14 @@ Golden <- function(data, formula, xvarinf, weight,
     cont <-cont+1
     ddpar <- parg-parold
   }
-  # print(bg) ok 
   if (!is.null(xvarinf)){
     lambda0 <- (length(pos0)-sum((parg/(uj+parg))^parg))/N
-    #print(lambda0) nao entra aqui no SAS tbm
     if (lambda0 <= 0) {
       #lambdag <<- matrix(0, ncol(G),1) 
       lambdag <<- rep(0, ncol(G))
     }
     else {
       lambda0 <<- log(lambda0/(1-lambda0))
-      # print(lambda0) nao entra aqui no SAS tbm
       #lambdag <<- rbind(lambda0, matrix(0,ncol(G)-1,1))
       lambdag <<- rbind(lambda0, rep(0,ncol(G)-1))
     }
@@ -513,10 +503,8 @@ Golden <- function(data, formula, xvarinf, weight,
             b <- rep(0, nvar)
           }
           else{
-            if (i==31 & contador4==1 & contador5==1){
-              print(zj)
-            }
-            b <- solve(t(x)%*%(w*Ai*x*wt))%*%t(x)%*%(w*Ai*wt*zj) #erro aqui
+            b <- solve(t(x)%*%(w*Ai*x*wt), tol=E^-23)%*%t(x)%*%(w*Ai*wt*zj)
+            #b <- MASS::ginv(t(x)%*%(w*Ai*x*wt))%*%t(x)%*%(w*Ai*wt*zj)
           }
           nj <- x%*%b+Offset
           nj <- ifelse(nj>700, 700, nj)
@@ -539,7 +527,6 @@ Golden <- function(data, formula, xvarinf, weight,
           #print(c("b", "par", "aux1", "dev", "olddev", "ddev"))
           #print(c(b, par, aux1, dev, olddev, ddev))
           aux1 <- aux1+1
-          #print(contador5)
         }
         ddpar <- par-parold
         if (model=="zip" | model=="zinb"){
@@ -618,26 +605,37 @@ Golden <- function(data, formula, xvarinf, weight,
         #print(c("i", "j", "b", "alpha", "lambda", "llike", "dllike"))
         #print(c(i, j, b, alpha, lambda, llike, dllike))
         j <- j+1
-        #print(contador4)
       }
       yhat[i] <- uj[i]
       pihat[i] <- njl[i]
       alphai[i] <<-  alpha
       if (det(t(x)%*%(w*Ai*x*wt))==0){
+        #print("entrou no if")
         S[i] <- 0
       }
       else {
+        #print("entrou no else")
         S[i] <- (x[i,]*solve(t(x)%*%(w*Ai*x*wt))%*%t(x*w*Ai*wt))[i]
       }
+      #print(S)
+      ### paramos aqui ###
+      #o S está com problema, era para ser um vetor de 0s
+      #as únicas alterações no S são nas linhas 614 e 618
+      #verifiquei no sas e no R e o teste sempre entra no else
+      #próximo passo: investigar em que iteração essa operação do else dá problema
+      #em seguida, verificar seus elementos um de cada vez
       if(model=="zip" | model=="zinb"){
         yhat[i] <- (uj*(1-exp(njl)/(1+exp(njl))))[i]
         yhat2[i] <- uj[i]
         if (det(t(G)%*%(w*Aii*G*wt))==0){
+          #print("entrou no if")
           Si[i] <- 0
         }
         else{
+          #print("entrou no else")
           Si[i] <- (G[i,]%*%solve(t(G)%*%(w*Aii*G*wt))%*%t(G*w*Aii*wt))[i]
           if (any(lambda)==0){
+            #print("entrou aqui também")
             Si[i] <- 0
           } 
         } 
@@ -646,7 +644,6 @@ Golden <- function(data, formula, xvarinf, weight,
         max_dist <<- max(dx) 
       }
       max_dist <<- max(max_dist,max(dx))
-      #print(i)
     }  
     CV <- t((y-yhat)*wt)%*%(y-yhat)
     par_ <- 1/alphai
@@ -674,6 +671,7 @@ Golden <- function(data, formula, xvarinf, weight,
       }
       dev <- 2*(llnull1-ll)
       npar <- sum(S)+sum(Si)
+      #print(Si) #erro aqui
       AIC <- 2*npar-2*ll
       AICc <- AIC+2*(npar*(npar+1)/(N-npar-1))
       if(model=="zinb"){
@@ -710,7 +708,7 @@ Golden <- function(data, formula, xvarinf, weight,
     if(bandwidth == "aic"){
       CV <- AICC
     }
-    res <- cbind(cv,npar)
+    res <- cbind(CV,npar)
     return (res)
   }
   
@@ -731,8 +729,8 @@ Golden <- function(data, formula, xvarinf, weight,
   if (!globalmin){
     lower <- ax
     upper <- bx
-    #xmin <- matrix(0, 1, 2)
-    xmin <- rep(0, 2)
+    xmin <- matrix(0, 1, 2)
+    #xmin <- rep(0, 2)
   }
   #do GMY=1 to 1;
   #ax1=lower[GMY];
@@ -757,7 +755,7 @@ Golden <- function(data, formula, xvarinf, weight,
     res2 <- cv(h2)
     CV2 <- res2[1]
     if (GMY==1){
-      output <<- cbind(GMY, h1, cv1, h2, cv2)
+      output <<- cbind(GMY, h1, CV1, h2, CV2) #erro aqui
       names(output) <<- c('GMY', 'h1', 'cv1', 'h2', 'cv2')
     }
     int <- 1
@@ -778,7 +776,7 @@ Golden <- function(data, formula, xvarinf, weight,
         res1 <- cv(h1)
         CV1 <- res1[1]
       }
-      output <<- rbind(output, c(GMY, h1, cv1, h2, cv2))
+      output <<- rbind(output, c(GMY, h1, CV1, h2, CV2))
       int <- int+1
     }
     if (CV1<CV2){
@@ -827,8 +825,8 @@ Golden <- function(data, formula, xvarinf, weight,
 
 library(readr)
 #korea_base_artigo <- read_csv("UnB/2024/TCC2/korea_base_artigo.csv")
-#korea_base_artigo <- read_csv("C:/Users/Juliana Rosa/OneDrive/Documents/TCC2/GWZINBR-main/korea_base_artigo.csv")
-korea_base_artigo <- read_csv("C:/Juliana/TCC/GWZINBR-main/korea_base_artigo.csv")
+korea_base_artigo <- read_csv("C:/Users/Juliana Rosa/OneDrive/Documents/TCC2/GWZINBR-main/korea_base_artigo.csv")
+#korea_base_artigo <- read_csv("C:/Juliana/TCC/GWZINBR-main/korea_base_artigo.csv")
 View(korea_base_artigo)
 
 startTime <- Sys.time()
@@ -836,6 +834,7 @@ Golden(data = korea_base_artigo,formula = n_covid1~Morbidity+high_sch_p+Healthca
          diff_sd+Crowding+Migration+Health_behavior, xvarinf = NULL, weight = NULL, lat = "x", long = "y", offset = "ln_total",
        model = "zinb", method = "adaptive_bsq", bandwidth = "cv", globalmin = FALSE, distancekm = TRUE)
 endTime <- Sys.time()
+endTime-startTime
 
 #------------------------------------------------------------#
 
