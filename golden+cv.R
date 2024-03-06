@@ -588,9 +588,24 @@ Golden <- function(data, formula, xvarinf, weight,
               zj <- njl+(zk-pi)/Aii
               if (det(t(G*Aii*w*wt)%*%G)==0){ #multiplicador
                 lambda <- matrix(0, ncol(G), 1)
+                if(i==244){
+                  print("entrou no if")
+                  #print(lambda)
+                }
               }
               else{
                 lambda <- solve(t(G*Aii*w*wt)%*%G)%*%t(G*Aii*w*wt)%*%zj
+                if(i==244){
+                  print("entrou no else")
+                  #print(lambda)
+                }
+              }
+              if(i==244){
+                # print(lambda) erro
+                # print(wt) ok
+                # print(w) ok
+                # print(G) ok
+                # print(Aii) errado! investigar ele
               }
               njl <- G%*%lambda
               njl <- ifelse(njl>maxg, maxg, njl)
@@ -623,6 +638,9 @@ Golden <- function(data, formula, xvarinf, weight,
         }
         oldllike <- llike
         llike <- sum(zk*(njl)-log(1+exp(njl))+(1-zk)*(log(gamma1)))
+        if(i==244){
+          #print(llike) 
+        }
         dllike <- llike-oldllike
         # if (i==244){
         #   print(c("i", "j", "b", "alpha", "lambda", "llike", "dllike"))
@@ -843,9 +861,9 @@ Golden <- function(data, formula, xvarinf, weight,
 #------------------------------ testes ------------------------------#
 
 library(readr)
-#korea_base_artigo <- read_csv("UnB/2024/TCC2/korea_base_artigo.csv")
+korea_base_artigo <- read_csv("UnB/2024/TCC2/korea_base_artigo.csv")
 #korea_base_artigo <- read_csv("C:/Users/Juliana Rosa/OneDrive/Documents/TCC2/GWZINBR-main/korea_base_artigo.csv")
-korea_base_artigo <- read_csv("C:/Juliana/TCC/GWZINBR-main/korea_base_artigo.csv")
+#korea_base_artigo <- read_csv("C:/Juliana/TCC/GWZINBR-main/korea_base_artigo.csv")
 View(korea_base_artigo)
 
 startTime <- Sys.time()
