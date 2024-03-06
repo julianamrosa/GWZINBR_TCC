@@ -400,7 +400,7 @@ Golden <- function(data, formula, xvarinf, weight,
           njl <- G%*%lambda
         }
         zk <- 1/(1+exp(-njl)*(par/(par+uj))^par)
-        #zk <- ifelse(y>0, 0, zk)
+        zk <- ifelse(y>0, 0, zk) #flag: esse código estava comentado (JU) --> já resolveu o lambda e o CV (res)
       }
       dllike <- 1
       llike <- 0
@@ -448,7 +448,6 @@ Golden <- function(data, formula, xvarinf, weight,
             hess <- ifelse(hess==0, E^-23, hess)
             par0 <- par
             par <- as.vector(par0-solve(hess)%*%gf) #multiplicador
-            #flag --> coloquei o as.vector() acima (JU)
             dpar <- par-par0
             if (par>=E^6){
               par <- E^6
@@ -487,7 +486,6 @@ Golden <- function(data, formula, xvarinf, weight,
           #   print(c("i", "j", "b", "lambda", "par", "alpha", "aux2"))
           #   print(c(i, j, b, lambda, par, alpha, aux2))
           # }
-          #j vai de 1 a 6 no R e de 1 a 5 no sas
           #prints comentados
         }
         dev <- 0
@@ -501,7 +499,6 @@ Golden <- function(data, formula, xvarinf, weight,
           contador5 <- contador5+1
           uj <- ifelse(uj>E^100,E^100,uj)
           Ai <- as.vector((1-zk)*((uj/(1+alpha*uj)+(y-uj)*(alpha*uj/(1+2*alpha*uj+alpha^2*uj^2)))))
-          #flag --> botei o as.vector acima (JU)
           Ai <- ifelse(Ai<=0,E^-5,Ai)
           uj <- ifelse(uj<E^-150,E^-150,uj)
           denz <- (((uj/(1+alpha*uj)+(y-uj)*(alpha*uj/(1+2*alpha*uj+alpha^2*uj^2))))*(1+alpha*uj))
@@ -557,7 +554,7 @@ Golden <- function(data, formula, xvarinf, weight,
           #   print(c(i, j, alphatemp, length(alphatemp), length(unique(alphatemp))))
           # }
           #prints comentados
-          #os length(unique(alphatemp)) estão um pouco diferentes, provável consequência do j ir até 6 em vez de 5
+          #erro!!! o 4o length(unique(alphatemp)) está igual a 4 em vez de 5
           if (model=="zinb"){
             condition <- (j>300 & length(alphatemp)>length(unique(alphatemp)) & length(lambdatemp)>length(unique(lambdatemp)))
           }
@@ -582,30 +579,17 @@ Golden <- function(data, formula, xvarinf, weight,
             njl <- ifelse(njl>maxg, maxg, njl)
             njl <- ifelse(njl<(-maxg), -maxg, njl)
             pi <- exp(njl)/(1+exp(njl))
+            contador6 <- 0
             while (abs(ddev)>0.000001 & aux3<100){
+              contador6 <- contador6+1
               Aii <- pi*(1-pi)
               Aii <- ifelse(Aii<=0, E^-5, Aii)	
               zj <- njl+(zk-pi)/Aii
               if (det(t(G*Aii*w*wt)%*%G)==0){ #multiplicador
                 lambda <- matrix(0, ncol(G), 1)
-                if(i==244){
-                  print("entrou no if")
-                  #print(lambda)
-                }
               }
               else{
                 lambda <- solve(t(G*Aii*w*wt)%*%G)%*%t(G*Aii*w*wt)%*%zj
-                if(i==244){
-                  print("entrou no else")
-                  #print(lambda)
-                }
-              }
-              if(i==244){
-                # print(lambda) erro
-                # print(wt) ok
-                # print(w) ok
-                # print(G) ok
-                # print(Aii) errado! investigar ele
               }
               njl <- G%*%lambda
               njl <- ifelse(njl>maxg, maxg, njl)
@@ -618,7 +602,6 @@ Golden <- function(data, formula, xvarinf, weight,
               #   print(c("lambda", "aux3", "dev", "olddev", "ddev"))
               #   print(c(lambda, aux3, dev, olddev, ddev))
               # }
-              #erros, muitos erros!!
               #prints comentados
               aux3 <- aux3+1
             }
@@ -639,14 +622,13 @@ Golden <- function(data, formula, xvarinf, weight,
         oldllike <- llike
         llike <- sum(zk*(njl)-log(1+exp(njl))+(1-zk)*(log(gamma1)))
         if(i==244){
-          #print(llike) 
+          #print(llike)
         }
         dllike <- llike-oldllike
         # if (i==244){
         #   print(c("i", "j", "b", "alpha", "lambda", "llike", "dllike"))
         #   print(c(i, j, b, alpha, lambda, llike, dllike))
         # }
-        #erro! pequenas diferenças em llike e dllike, grandes diferenças em lambda
         #prints comentados
         j <- j+1
       }
@@ -659,7 +641,6 @@ Golden <- function(data, formula, xvarinf, weight,
       else {
         #S[i] <- (x[i,]*solve(t(x)%*%(w*Ai*x*wt))%*%t(x*w*Ai*wt))[i]
         S[i] <- (x[i,]%*%solve(t(x)%*%(w*Ai*x*wt))%*%t(x*w*Ai*wt))[i]
-        #flag: troquei o 1o multiplicador acima (JU)
       }
       if(model=="zip" | model=="zinb"){
         yhat[i] <- (uj*(1-exp(njl)/(1+exp(njl))))[i]
@@ -680,10 +661,6 @@ Golden <- function(data, formula, xvarinf, weight,
       max_dist <<- max(max_dist,max(dx))
     }
     CV <- t((y-yhat)*wt)%*%(y-yhat)
-    #print(CV) erro nos 2 primeiros --> mistério!!!
-    #print(wt) ok
-    #print(yhat) ok
-    #print(t((y-yhat)*wt)) ok
     par_ <- 1/alphai
     if(model=="zinb" | model == "zip"){
       if (any(lambda)==0){
@@ -792,8 +769,8 @@ Golden <- function(data, formula, xvarinf, weight,
     res2 <- cv(h2)
     CV2 <- res2[1]
     if (GMY==1){
-      output <<- cbind(GMY, h1, CV1, h2, CV2) #erro aqui
-      names(output) <<- c('GMY', 'h1', 'cv1', 'h2', 'cv2')
+      band <<- cbind(GMY, h1, CV1, h2, CV2)
+      names(band) <<- c('GMY', 'h1', 'cv1', 'h2', 'cv2')
     }
     int <- 1
     while(abs(h3-h0) > tol*(abs(h1)+abs(h2)) & int<200){
@@ -813,7 +790,7 @@ Golden <- function(data, formula, xvarinf, weight,
         res1 <- cv(h1)
         CV1 <- res1[1]
       }
-      output <<- rbind(output, c(GMY, h1, CV1, h2, CV2))
+      band <<- rbind(band, c(GMY, h1, CV1, h2, CV2))
       int <- int+1
     }
     if (CV1<CV2){
@@ -861,9 +838,9 @@ Golden <- function(data, formula, xvarinf, weight,
 #------------------------------ testes ------------------------------#
 
 library(readr)
-korea_base_artigo <- read_csv("UnB/2024/TCC2/korea_base_artigo.csv")
+#korea_base_artigo <- read_csv("UnB/2024/TCC2/korea_base_artigo.csv")
 #korea_base_artigo <- read_csv("C:/Users/Juliana Rosa/OneDrive/Documents/TCC2/GWZINBR-main/korea_base_artigo.csv")
-#korea_base_artigo <- read_csv("C:/Juliana/TCC/GWZINBR-main/korea_base_artigo.csv")
+korea_base_artigo <- read_csv("C:/Juliana/TCC/GWZINBR-main/korea_base_artigo.csv")
 View(korea_base_artigo)
 
 startTime <- Sys.time()
@@ -872,6 +849,14 @@ Golden(data = korea_base_artigo,formula = n_covid1~Morbidity+high_sch_p+Healthca
        model = "zinb", method = "adaptive_bsq", bandwidth = "cv", globalmin = FALSE, distancekm = TRUE)
 endTime <- Sys.time()
 endTime-startTime
+
+#dúvida: band deve conter os valores iniciais ou não?
+
+#lembretes:
+#1- consertar erro no length(unique(alphatemp))
+#2- verificar tabelas de saída
+#3- arrumar formato das saídas e prints
+#4- implementar mudanças feitas no pibic que ainda faltam
 
 #------------------------------------------------------------#
 
