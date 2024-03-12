@@ -561,7 +561,7 @@ Golden <- function(data, formula, xvarinf, weight,
             b <- rep(0, nvar)
           }
           else{
-            b <- solve(t(x)%*%(w*Ai*x*wt), tol=E^-30)%*%t(x)%*%(w*Ai*wt*zj)
+            b <- solve(t(x)%*%(w*Ai*x*wt), tol=E^-60)%*%t(x)%*%(w*Ai*wt*zj)
             #b <- MASS::ginv(t(x)%*%(w*Ai*x*wt))%*%t(x)%*%(w*Ai*wt*zj)
           }
           nj <- x%*%b+Offset
@@ -695,7 +695,7 @@ Golden <- function(data, formula, xvarinf, weight,
       }
       else {
         #S[i] <- (x[i,]*solve(t(x)%*%(w*Ai*x*wt))%*%t(x*w*Ai*wt))[i]
-        S[i] <- (x[i,]%*%solve(t(x)%*%(w*Ai*x*wt))%*%t(x*w*Ai*wt))[i]
+        S[i] <- (x[i,]%*%solve(t(x)%*%(w*Ai*x*wt), tol=E^-60)%*%t(x*w*Ai*wt))[i]
       }
       if(model=="zip" | model=="zinb"){
         yhat[i] <- (uj*(1-exp(njl)/(1+exp(njl))))[i]
@@ -720,12 +720,12 @@ Golden <- function(data, formula, xvarinf, weight,
     if(model=="zinb" | model == "zip"){
       if (any(lambda)==0){
         ll <- sum(-log(0+exp(pihat[pos0]))+log(0*exp(pihat[pos0])+(par_[pos0]/(par_[pos0]+yhat2[pos0]))^par_[pos0]))+
-          sum(-log(0+exp(pihat[pos1]))+lgamma(par_[pos1]+y[pos1,])-lgamma(y[pos1,]+1)-lgamma(par_[pos1])+
-                y[pos1]*log(yhat2[pos1]/(par_[pos1]+yhat2[pos1]))+par_[pos1]*log(par_[pos1]/(par_[pos1]+yhat2[pos1])))
+          sum(-log(0+exp(pihat[pos1]))+lgamma(par_[pos1]+y[pos1])-lgamma(y[pos1]+1)-lgamma(par_[pos1])+
+                y[pos1]*log(yhat2[pos1]/(par_[pos1]+yhat2[pos1]))+par_[pos1]*log(par_[pos1]/(par_[pos1]+yhat2[pos1]))) #flag -> y vetor
         
-        llnull1 <- sum(-log(1+zk[pos0])+log(zk[pos0]+(par_[pos0]/(par_[pos0]+y[pos0,]))^par_[pos0]))+
-          sum(-log(1+zk[pos1])+lgamma(par_[pos1]+y[pos1,])-lgamma(y[pos1,]+1)-lgamma(par_[pos1])+
-                y[pos1]*log(y[pos1,]/(par_[pos1]+y[pos1,]))+par_[pos1]*log(par_[pos1]/(par_[pos1]+y[pos1,])))
+        llnull1 <- sum(-log(1+zk[pos0])+log(zk[pos0]+(par_[pos0]/(par_[pos0]+y[pos0]))^par_[pos0]))+
+          sum(-log(1+zk[pos1])+lgamma(par_[pos1]+y[pos1])-lgamma(y[pos1]+1)-lgamma(par_[pos1])+
+                y[pos1]*log(y[pos1]/(par_[pos1]+y[pos1]))+par_[pos1]*log(par_[pos1]/(par_[pos1]+y[pos1]))) #flag -> y vetor
         
         llnull2 <- sum(-log(1+0)+log(0+(par_/(par_+mean(y)))^par_))+
           sum(-log(1+0)+lgamma(par_+y)-lgamma(y+1)-lgamma(par_)+y*log(mean(y)/(par_+mean(y)))+par_*log(par_/(par_+mean(y)))) 
@@ -747,24 +747,24 @@ Golden <- function(data, formula, xvarinf, weight,
         AIC <- 2*(npar+npar/(ncol(x)+ncol(G)))-2*ll
         AICc <- AIC+2*((npar+npar/(ncol(x)+ncol(G)))*((npar+npar/(ncol(x)+ncol(G)))+1)/(N-(npar+npar/(ncol(x)+ncol(G)))-1))
       }
-    }  
+    }
     else if(model=="poisson" | model=="negbin"){
-      if (ncol(pos02)==0){
+      if (length(pos02)==0){ #flag ncol -> length
         pos0 <- pos1
         pos0x <- 1
         pos0xl <- 1
       } 
       else {
         pos0x <- (par_[pos0]/(par_[pos0]+yhat[pos0]))^par_[pos0]
-        pos0xl <- (par_[pos0]/(par_[pos0]+y[pos0,]))^par_[pos0]
+        pos0xl <- (par_[pos0]/(par_[pos0]+y[pos0]))^par_[pos0] #flag -> y vetor
       }
       ll <- sum(-log(0+exp(pihat[pos0]))+log(0*exp(pihat[pos0])+pos0x))+
-        sum(-log(0+exp(pihat[pos1]))+lgamma(par_[pos1]+y[pos1,])-lgamma(y[pos1,]+1)-lgamma(par_[pos1])+
+        sum(-log(0+exp(pihat[pos1]))+lgamma(par_[pos1]+y[pos1])-lgamma(y[pos1]+1)-lgamma(par_[pos1])+
               y[pos1]*log(yhat[pos1]/(par_[pos1]+yhat[pos1]))+
-              par_[pos1]*log(par_[pos1]/(par_[pos1]+yhat[pos1])))
+              par_[pos1]*log(par_[pos1]/(par_[pos1]+yhat[pos1]))) #flag -> y vetor
       
-      llnull1 <- sum(-log(1+zk)+log(zk+pos0xl))+ sum(-log(1+zk)+lgamma(par_[pos1]+y[pos1,])-lgamma(y[pos1,]+1)-lgamma(par_[pos1])+
-                                                       y[pos1]*log(y[pos1,]/(par_[pos1]+y[pos1,]))+par_[pos1]*log(par_[pos1]/(par_[pos1]+y[pos1,])))
+      llnull1 <- sum(-log(1+zk)+log(zk+pos0xl))+ sum(-log(1+zk)+lgamma(par_[pos1]+y[pos1])-lgamma(y[pos1]+1)-lgamma(par_[pos1])+
+                                                       y[pos1]*log(y[pos1]/(par_[pos1]+y[pos1]))+par_[pos1]*log(par_[pos1]/(par_[pos1]+y[pos1]))) #flag -> y vetor
       dev <- 2*(llnull1-ll)
       npar <- sum(S)
       AIC <- 2*npar-2*ll
@@ -926,38 +926,3 @@ Golden <- function(data, formula, xvarinf, weight,
   # print(min_bandwidth)
   return(output)
 } # fecha golden
-
-#------------------------------ testes ------------------------------#
-
-library(readr)
-#korea_base_artigo <- read_csv("UnB/2024/TCC2/korea_base_artigo.csv")
-#korea_base_artigo <- read_csv("C:/Users/Juliana Rosa/OneDrive/Documents/TCC2/GWZINBR-main/korea_base_artigo.csv")
-korea_base_artigo <- read_csv("C:/Juliana/TCC/GWZINBR-main/korea_base_artigo.csv")
-
-if(!require(sp)){
-  install.packages("sp")
-  library(sp)
-}
-
-startTime <- Sys.time()
-Golden(data = korea_base_artigo,formula = n_covid1~Morbidity+high_sch_p+Healthcare_access+
-         diff_sd+Crowding+Migration+Health_behavior, xvarinf = NULL, weight = NULL, lat = "x", long = "y", offset = "ln_total",
-       model = "zinb", method = "adaptive_bsq", bandwidth = "cv", globalmin = FALSE, distancekm = TRUE)
-endTime <- Sys.time()
-endTime-startTime
-
-startTime <- Sys.time()
-Golden(data = korea_base_artigo,formula = n_covid1~Morbidity+high_sch_p+Healthcare_access+
-         diff_sd+Crowding+Migration+Health_behavior, xvarinf = NULL, weight = NULL, lat = "x", long = "y", offset = "ln_total",
-       model = "zinb", method = "adaptive_bsq", bandwidth = "cv", globalmin = TRUE, distancekm = TRUE)
-endTime <- Sys.time()
-endTime-startTime
-
-#dúvidas: band deve conter os valores iniciais ou não?
-#         verificar nomes dos objetos na saída (e elementos num geral)
-#         decimais em CV são importantes?
-#         anotar o que é cada parâmetro
-
-#lembretes:
-#3- rodar todos os testes
-#4- return --> invisible

@@ -154,7 +154,6 @@
 			cont=cont+1;
 			ddpar=parg-parold;
 		end;
-
 		%if &XVARINF ne %then
 			%do;
 				lambda0=(ncol(pos0)-sum((parg/(uj+parg))##parg))/n;
@@ -202,12 +201,14 @@
 		dllike=1;
 		llikeg=0;
 		j=0;
-
+		contador=0;
 		do while (abs(dllike)>0.00001 & j<600);
+			contador=contador+1;
 			ddpar=1;
 			cont=1;
-
+			contador2=0;
 			do while (abs(ddpar)>0.000001 & cont<100);
+				contador2=contador2+1;
 				dpar=1;
 				parold=parg;
 				aux1=1;
@@ -273,7 +274,6 @@
 					Ai=choose(Ai<=0, 1E-5, Ai);
 					uj=choose(uj<1E-150, 1E-150, uj);
 					zj=(nj+(y-uj)/(((uj/(1+alphag*uj)+(y-uj)#(alphag*uj/(1+2*alphag*uj+alphag**2*uj##2))))#(1+alphag*uj)))-offset;
-
 					if det(x`*(Ai#x))=0 then
 						bg=j(nvar, 1, 0);
 					else
@@ -288,6 +288,7 @@
 					devg=sum((1-zkg)#(log(gamma1)));
 					ddev=devg-olddev;
 					*print bg aux1 devg olddev ddev;
+					*print comentado;
 					aux1=aux1+1;
 				end;
 				ddpar=parg-parold;
@@ -302,16 +303,18 @@
 					njl=choose(njl>&MAXG, &MAXG, njl);
 					njl=choose(njl<-&MAXG, -&MAXG, njl);
 					pig=exp(njl)/(1+exp(njl));
-
+					contador3 = 0;
 					do while (abs(ddev)>0.000001 & aux3<100);
+					contador3 = contador3 + 1;
 						Ai=pig#(1-pig);
 						Ai=choose(Ai<=0, 1E-5, Ai);
 						zj=njl+(zkg-pig)*1/Ai;
-
-						if det((G#Ai)`*G)=0 then
+						if det((G#Ai)`*G)=0 then do;
 							lambdag=j(ncol(G), 1, 0);
-						else
+						end;
+						else do;
 							lambdag=inv((G#Ai)`*G)*(G#Ai)`*zj;
+						end;
 						njl=G*lambdag;
 						njl=choose(njl>&MAXG, &MAXG, njl);
 						njl=choose(njl<-&MAXG, -&MAXG, njl);
@@ -320,6 +323,7 @@
 						devg=sum(zkg#njl-log(1+exp(njl)));
 						ddev=devg-olddev;
 						*print lambdag devg olddev ddev;
+						*print comentado;
 						aux3=aux3+1;
 					end;
 				%end;
@@ -334,6 +338,7 @@
 			llikeg=sum(zkg#(njl)-log(1+exp(njl))+(1-zkg)#(log(gamma1)));
 			dllike=llikeg-oldllike;
 			*print j bg alphag lambdag llikeg dllike;
+			*print comentado;
 			j=j+1;
 		end;
 
@@ -372,7 +377,7 @@
 						%DO;
 							dist[, 3]=dist[, 3]*111;
 						%END;
-				end;
+				end; *fecha loop j;
 				u=nrow(dist);
 				w=j(u, 1, 0);
 
@@ -388,7 +393,7 @@
 						%DO;
 							w[i]=0;
 						%END;
-				end;
+				end; *fecha loop jj;
 
 				%IF %UPCASE(&METHOD)=FIXED_BSQ or %UPCASE(&METHOD)=ADAPTIVEN %THEN
 					%DO;
@@ -410,7 +415,7 @@
 							else
 								w[jj, 1]=0;
 							w[jj, 2]=dist[jj, 2];
-						end;
+						end; *fecha loop jj;
 
 						%if %UPCASE(&BANDWIDTH)=CV %THEN
 							%DO;
@@ -448,8 +453,9 @@
 				dllike=1;
 				llike=0;
 				j=1;
-
+				contador4=0;
 				do while (abs(dllike)>0.00001 & j<=600);
+					contador4=contador4+1;
 					ddpar=1;
 					*do while (abs(ddpar)>0.000001);
 					dpar=1;
@@ -536,8 +542,9 @@
 										zk=0;
 								end;
 							alpha=1/par;
-							*print i j b lambda par alpha aux2;
-						%end;
+							*if i=244 then print i j b lambda par alpha aux2;
+							*print comentado;
+						%end; *fecha pct else;
 					dev=0;
 					ddev=1;
 					nj=x*b+offset;
@@ -545,7 +552,9 @@
 					nj=choose(nj<-700, -700, nj);
 					uj=exp(nj);
 
+					contador5=0;
 					do while (abs(ddev)>0.000001 & aux1<100);
+						contador5=contador5+1;
 						uj=choose(uj>1E100, 1E100, uj);
 						Ai=(1-zk)#((uj/(1+alpha*uj)+(y-uj)#(alpha*uj/(1+2*alpha*uj+alpha**2*uj##2))));
 						Ai=choose(Ai<=0, 1E-5, Ai);
@@ -556,8 +565,9 @@
 
 						if det(x`*(w#Ai#x#wt))=0 then
 							b=j(nvar, 1, 0);
-						else
+						else do;
 							b=inv(x`*(w#Ai#x#wt))*x`*(w#Ai#wt#zj);
+						end;
 						nj=x*b+offset;
 						nj=choose(nj>700, 700, nj);
 						nj=choose(nj<-700, -700, nj);
@@ -573,9 +583,10 @@
 						gamma1=choose(gamma1<=0, 1E-10, gamma1);
 						dev=sum((1-zk)#(log(gamma1)));
 						ddev=dev-olddev;
-						*print b par aux1 dev olddev ddev;
+						*if i=244 then print b par aux1 dev olddev ddev;
+						*print comentado;
 						aux1=aux1+1;
-					end;
+					end; *fecha loop while;
 					ddpar=par-parold;
 					*end;
 
@@ -594,7 +605,8 @@
 								end;
 							alphatemp=round(alphatemp, 0.0000001);
 							lambdatemp=round(lambdatemp, 0.0000001);
-							*print i j alphatemp (nrow(alphatemp)) (ncol(unique(alphatemp)));
+							*if i=244 then print i j alphatemp (nrow(alphatemp)) (ncol(unique(alphatemp)));
+							*print comentado;
 
 							%if %upcase(&MODEL)=ZINB %then
 								%do;
@@ -607,6 +619,7 @@ nrow(lambdatemp)>ncol(unique(lambdatemp))then
 									%if %upcase(&MODEL)=ZIP %then
 										%do;
 											*print i j lambdatemp (nrow(lambdatemp)) (ncol(unique(lambdatemp)));
+											*print comentado;
 
 											if j>300 & nrow(lambdatemp)>ncol(unique(lambdatemp))then
 												do;
@@ -625,15 +638,19 @@ nrow(lambdatemp)>ncol(unique(lambdatemp))then
 											njl=choose(njl<-&MAXG, -&MAXG, njl);
 											pi=exp(njl)/(1+exp(njl));
 
+											contador6=0;
 											do while (abs(ddev)>0.000001 & aux3<100);
+												contador6=contador6+1;
 												Aii=pi#(1-pi);
 												Aii=choose(Aii<=0, 1E-5, Aii);
 												zj=njl+(zk-pi)/Aii;
 
-												if det((G#Aii#w#wt)`*G)=0 then
+												if det((G#Aii#w#wt)`*G)=0 then do;
 													lambda=j(ncol(G), 1, 0);
-												else
+												end;
+												else do;
 													lambda=inv((G#Aii#w#wt)`*G)*(G#Aii#w#wt)`*zj;
+												end;
 												njl=G*lambda;
 												njl=choose(njl>&MAXG, &MAXG, njl);
 												njl=choose(njl<-&MAXG, -&MAXG, njl);
@@ -641,10 +658,11 @@ nrow(lambdatemp)>ncol(unique(lambdatemp))then
 												olddev=dev;
 												dev=sum(zk#njl-log(1+exp(njl)));
 												ddev=dev-olddev;
-												*print lambda aux3 dev olddev ddev;
+												*if i=244 then print lambda aux3 dev olddev ddev;
+												*print comentado;
 												aux3=aux3+1;
 											end;
-										end;
+										end; *fecha else;
 								%end;
 							njl=G*lambda;
 							njl=choose(njl>&MAXG, &MAXG, njl);
@@ -662,9 +680,10 @@ nrow(lambdatemp)>ncol(unique(lambdatemp))then
 							oldllike=llike;
 							llike=sum(zk#(njl)-log(1+exp(njl))+(1-zk)#(log(gamma1)));
 							dllike=llike-oldllike;
-							*print i j b alpha lambda llike dllike;
+							*if i=244 then print i j b alpha lambda llike dllike;
+							*print comentado;
 							j=j+1;
-						end;
+						end; *fecha loop while (condicoes j e dlike);
 
 					%IF %UPCASE(&METHOD)=FIXED_G or %UPCASE(&METHOD)=FIXED_BSQ or 
 						%UPCASE(&METHOD)=ADAPTIVE_BSQ %THEN
@@ -673,25 +692,30 @@ nrow(lambdatemp)>ncol(unique(lambdatemp))then
 							pihat[i]=njl[i];
 							alphai[i]=alpha;
 
-							if det(x`*(w#Ai#x#wt))=0 then
+							if det(x`*(w#Ai#x#wt))=0 then do;
 								S[i]=0;
-							else
+							end;
+							else do;
 								S[i]=(x[i, ]*inv(x`*(w#Ai#x#wt))*(x#w#Ai#wt)`)[i];
+							end;
 
 							%if %upcase(&MODEL)=ZIP or %upcase(&MODEL)=ZINB %then
 								%do;
 									yhat[i]=(uj#(1-exp(njl)/(1+exp(njl))))[i];
 									yhat2[i]=uj[i];
 
-									if det(G`*(w#Aii#G#wt))=0 then
+									if det(G`*(w#Aii#G#wt))=0 then do;
 										Si[i]=0;
-									else
+									end;
+									else do;
 										Si[i]=(G[i, ]*inv(G`*(w#Aii#G#wt))*(G#w#Aii#wt)`)[i];
+									end;
 
-									if any(lambda)=0 then
+									if any(lambda)=0 then do;
 										Si[i]=0;
+									end;
 								%end;
-						end;
+						end; *fecha o for loop i;
 						CV=((y-yhat)#wt)`*(y-yhat);
 						_par_=1/alphai;
 
@@ -849,7 +873,6 @@ y[pos1]#log(y[pos1, ]/(_par_[pos1]+y[pos1,
 						int=1;
 
 						do while(abs(h3-h0) > tol*(abs(h1)+abs(h2)) & int<200);
-
 							if CV2<CV1 then
 								do;
 									h0=h1;
@@ -917,7 +940,7 @@ y[pos1]#log(y[pos1, ]/(_par_[pos1]+y[pos1,
 								append from hv;
 							end;
 						%END;
-				end;
+				end; *fecha os loops do GMY;
 				create _min_bandwidth_ from xmin[colname={'golden' 'bandwidth'}];
 				append from xmin;
 
