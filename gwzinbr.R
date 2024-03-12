@@ -26,7 +26,7 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
     G <<- unlist(data[, xvarinf])
     G <<- cbind(rep(1, N), G)
   }
-  if(int_inf=TRUE){ #o que e int_inf? 
+  if (int_inf=TRUE){ #o que e int_inf? 
     G <<- cbind(rep(1, N), G)
   }
   # x <<- cbind(rep(1, N), x)
@@ -178,170 +178,181 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
   while (abs(dllike)>0.00001 & j<600){
     ddpar <- 1
     cont <- 1
-    
-  }  
+    while (abs(ddpar)>0.000001 & cont<100){
+      dpar <- 1
+      parold <- parg
+      aux1 <- 1
+      aux2 <- 1
+      aux3 <- 1
+      cont3 <- 0
+      int <- 1
+      if (model=="zip" | model=="poisson"){
+        alphag <- E^-6
+        #parg <<- 1/alphag
+        parg <- 1/alphag
+      }
+      else{
+        if (j>0){
+          #parg <<- 1/(sum((y-uj)^2/uj)/(N-nvar))
+          parg <- 1/(sum((y-uj)^2/uj)/(N-nvar))
+        }
+        while (abs(dpar)>0.0001 & aux2<200){
+          if (parg<0){
+            #parg <<- 0.00001
+            parg <- 0.00001
+          }
+          parg <- ifelse(parg<E^-10, E^-10, parg)
+          gf <- sum((1-zkg)*(digamma(parg+y)-digamma(parg)+log(parg)+1-log(parg+uj)-(parg+y)/(parg+uj)))
+          hessg <- sum((1-zkg)*(trigamma(parg+y)-trigamma(parg)+1/parg-2/(parg+uj)+(y+parg)/(parg+uj)^2))
+          hessg <- ifelse(hess==0, E^-23, hess)
+          par0 <- parg
+          parg <- as.vector(par0-solve(hessg)%*%gf)
+          if (parg > E^5) {
+            dpar <- 0.0001
+            cont3 <- cont3+1
+            if (cont3==1) {
+              parg <- 2
+            } 
+            else if (cont3==2) {
+              parg <- E^5
+            } 
+            else if (cont3==3) {
+              parg <- 0.0001
+            }
+          } 
+          else {
+            dpar <- parg-par0
+          }
+          if (parg>E^6){
+            parg <- E^6
+            dpar <- 0
+          }
+          aux2 <- aux2+1
+        }
+        alphag <- 1/parg
+      }
+      devg <- 0
+      ddev <- 1
+      nj <- x%*%bg+Offset
+      nj <- ifelse(nj>700, 700, nj)
+      nj <- ifelse(nj<(-700), -700, nj)
+      uj <- exp(nj)
+      while (abs(ddev)>0.000001 & aux1<100){
+        uj <- ifelse(uj>E^100, E^100, uj)
+        Ai <- as.vector((1-zkg)*((uj/(1+alphag*uj)+(y-uj)*(alphag*uj/(1+2*alphag*uj+alphag^2*uj^2)))))
+        Ai <- ifelse(Ai<=0, E^-5, Ai)
+        uj <- ifelse(uj<E^-150, E^-150, uj)
+        zj <- (nj+(y-uj)/(((uj/(1+alphag*uj)+(y-uj)*(alphag*uj/(1+2*alphag*uj+alphag^2*uj^2))))*(1+alphag*uj)))-Offset
+        if (det(t(x)%*%(Ai*x))==0){
+          #bg <<- matrix(0, nvar, 1)
+          #bg <<- rep(0, nvar)
+          bg <- rep(0, nvar)
+        }
+        else{
+          #bg <<- solve(t(x)%*%(Ai*x))%*%t(x)%*%(Ai*zj)
+          bg <- solve(t(x)%*%(Ai*x))%*%t(x)%*%(Ai*zj)
+        }
+        nj <- x%*%bg+Offset
+        nj <- ifelse(nj>700, 700, nj)
+        nj <- ifelse(nj<(-700), -700, nj)
+        uj <- exp(nj)
+        olddev <- devg
+        gamma1 <- (uj/(uj+parg))^y*(parg/(uj+parg))^parg #(gamma(par+y)/(gamma(y+1)#gamma(par)))#
+        gamma1 <- ifelse(gamma1<=0, E^-10, gamma1)
+        devg <- sum((1-zkg)*(log(gamma1)))
+        ddev <- devg-olddev
+        #print(c('bg', 'aux1', 'devg', 'olddev', 'ddev'))
+        #print(c(bg, aux1, devg, olddev, ddev))
+        #prints comentados
+        aux1 <- aux1+1
+      }
+      ddpar <- parg-parold
+      cont <- cont+1
+    }
+    if (model == "zip" |model == 'zinb'){
+      devg <- 0
+      ddev <- 1
+      njl <- G%*%lambdag
+      njl <- ifelse(njl > maxg, maxg, njl)
+      njl <- ifelse(njl < (-maxg),-maxg, njl)
+      pig <- exp(njl)/(1+exp(njl))
+      while (abs(ddev)>0.000001 & aux3<100){
+        Ai <- pig*(1-pig)
+        Ai <- ifelse(Ai<=0, E^-5, Ai)
+        zj <- njl+(zkg-pig)*1/Ai
+        if (det(t(G)%*%(Ai*G))==0){ #se der erro, conferir aqui
+          lambdag <- matrix(0, ncol(G), 1)
+        }  
+        else {
+          #lambdag <<- solve(t(G*Ai)%*%G)%*%t(G*Ai)%*%zj
+          lambdag <- solve(t(G)%*%(Ai%*%G))%*%t(G)*(Ai%*%zj) #se der erro, conferir aqui tbm
+        }
+        njl <- G%*%lambdag
+        njl <- ifelse(njl > maxg, maxg, njl)
+        njl <- ifelse(njl < (-maxg),-maxg, njl)
+        pig <- exp(njl)/(1+exp(njl))
+        olddev <- devg
+        devg <- sum(zkg*njl-log(1+exp(njl)))
+        ddev <- devg-olddev
+        #print(c('lambdag', 'devg', 'olddev', 'ddev'))
+        #print(c(lambdag, devg, olddev, ddev))
+        aux3 <- aux3+1
+      }
+    }
+    zkg <- 1/(1+exp(-njl)*(parg/(parg+uj))^parg)
+    zkg <- ifelse(y>0, 0, zkg)
+    if (model != 'zip' & model != 'zinb'){
+      zkg <- 0
+    } 
+    oldllike <- llikeg
+    llikeg <- sum(zkg*(njl)-log(1+exp(njl))+(1-zkg)*(log(gamma1)))
+    dllike <- llikeg-oldllike
+    #print(c('j', 'bg', 'alphag', 'lambdag', 'llikeg', 'dllike'))
+    #print(c(j, bg, alphag, lambdag, llikeg, dllike))
+    j <- j+1
+  }
+  g1x <- parg/(parg+uj)
+  g2x <- uj/(parg+uj)
+  hgx <- exp(njl)+g1x^parg
+  daa <- zkg*((g1x^parg*(log(g1x)+g2x))^2*(1-1/hgx)/hgx+g1x^parg*(g2x^2/parg)/hgx)+(1-zkg)*(trigamma(parg+y)-trigamma(parg)-2/(uj+parg)+1/parg+(y+parg)/(uj+parg))^2
+  dab <- zkg*(g1x^(2*parg+1)*uj*(log(g1x)+g2x)/hgx^2-g1x^parg*(-g2x^2+parg*g2x*(log(g1x)+g2x))/hgx)+(1-zkg)*(g2x*(y-uj)/(uj+parg))
+  dal <- -zkg*(exp(njl)*g1x^parg*(log(g1x)+g2x)/hgx^2)
+  daa <- daa*parg^4
+  dab <- dab*parg^2
+  if (any(lambdag==0)){
+    Iy <- matrix(0, nrow(y), 1)
+  }
+  dll <- Iy*(exp(njl)*g1x^parg/hgx^2)-exp(njl)/(1+exp(njl))^2
+  dbb <- Iy*(-(parg*g1x^parg*g2x/hgx)^2+parg^2*g1x^parg*g2x^2*(1-1/uj)/hgx)-(1-Iy)*(parg*g2x*(1+(y-uj)/(parg+uj)))
+  dlb <- Iy*(parg*exp(njl)*g1x^parg*g2x/hgx^2)
+  I1 <- matrix(1, nrow(y), 1)
+  #II <- -(t(I1) %*% daa) %*% I1 || -(t(I1) %*% dab) %*% X || -(t(I1) %*% dal) %*% G // (-t(X) %*% (dab * I1) || -t(X) %*% dbb %*% X || -t(X) %*% dlb %*% G) // (-t(G) %*% (dal * I1) || -t(G) %*% (X %*% dlb) || -t(G) %*% t(G) %*% dll %*% G)
+  
 }
 
 
-do while (abs(ddpar)>0.000001 & cont<100);
-dpar=1;
-parold=parg;
-aux1=1;
-aux2=1;
-aux3=1;
-cont3=0;
-int=1;
 
-%if %upcase(&MODEL)=ZIP or %upcase(&MODEL)=POISSON %then
-%do;
-alphag=1E-6;
-parg=1/alphag;
-%end;
-%else
-  %do;
-*if j>0 then parg=1/(sum((y-uj)##2/uj)/(n-nvar));
-                         
-                         do while (abs(dpar)>0.0001 & aux2<200);
-                         
-                         if parg<0 then
-                         parg=0.00001;
-                         parg=choose(parg<1E-10, 1E-10, parg);
-                         gf=sum((1-zkg)#(digamma(parg+y)-digamma(parg)+log(parg)+1-log(parg+uj)-(parg+y)/(parg+uj)));
-                                hessg=sum((1-zkg)#(trigamma(parg+y)-trigamma(parg)+1/parg-2/(parg+uj)+(y+parg)/(parg+uj)##2));
-                                          hessg=choose(hessg=0, 1E-23, hessg);
-                                          par0=parg;
-                                          parg=par0-inv(hessg)*gf;
-                                          
-                                          if parg>1E5 then
-                                          do;
-                                          dpar=0.0001;
-                                          cont3=cont3+1;
-                                          
-                                          if cont3=1 then
-                                          parg=2;
-                                          else if cont3=2 then
-                                          parg=1E5;
-                                          else if cont3=3 then
-                                          parg=0.0001;
-                                          end;
-                                          else
-                                            dpar=parg-par0;
-                                          
-                                          if parg>1E6 then
-                                          do;
-                                          parg=1E6;
-                                          dpar=0;
-                                          end;
-                                          aux2=aux2+1;
-                                          end;
-                                          alphag=1/parg;
-                                          %end;
-                                          devg=0;
-                                          ddev=1;
-                                          nj=x*bg+offset;
-                                          nj=choose(nj>700, 700, nj);
-                                          nj=choose(nj<-700, -700, nj);
-                                          uj=exp(nj);
-                                          
-                                          do while (abs(ddev)>0.000001 & aux1<100);
-                                          uj=choose(uj>1E100, 1E100, uj);
-                                          Ai=(1-zkg)#((uj/(1+alphag*uj)+(y-uj)#(alphag*uj/(1+2*alphag*uj+alphag**2*uj##2))));
-                                          Ai=choose(Ai<=0, 1E-5, Ai);
-                                          uj=choose(uj<1E-150, 1E-150, uj);
-                                          zj=(nj+(y-uj)/(((uj/(1+alphag*uj)+(y-uj)#(alphag*uj/(1+2*alphag*uj+alphag**2*uj##2))))#(1+alphag*uj)))-offset;
-                                                           
-                                                           if det(x`*(Ai#x))=0 then
-                                                                      bg=j(nvar, 1, 0);
-                                                                      else
-                                                                        bg=inv(x`*(Ai#x))*x`*(Ai#zj);
-                                                                                              nj=x*bg+offset;
-                                                                                              nj=choose(nj>700, 700, nj);
-                                                                                              nj=choose(nj<-700, -700, nj);
-                                                                                              uj=exp(nj);
-                                                                                              olddev=devg;
-                                                                                              gamma1=/*(gamma(par+y)/(gamma(y+1)#gamma(par)))#*/(uj/(uj+parg))##y#(parg/(uj+parg))##parg;
-                                                                                                                      gamma1=choose(gamma1<=0, 1E-10, gamma1);
-                                                                                                                      devg=sum((1-zkg)#(log(gamma1)));
-                                                                                                                               ddev=devg-olddev;
-                                                                                                                               *print bg aux1 devg olddev ddev;
-                                                                                                                               aux1=aux1+1;
-                                                                                                                               end;
-                                                                                                                               ddpar=parg-parold;
-                                                                                                                               cont=cont+1;
-                                                                                                                               end;
-                                                                                                                               
-                                                                                                                               %if %upcase(&MODEL)=ZIP or %upcase(&MODEL)=ZINB %then
-                                                                                                                               %do;
-                                                                                                                               devg=0;
-                                                                                                                               ddev=1;
-                                                                                                                               njl=G*lambdag;
-                                                                                                                               njl=choose(njl>&MAXG, &MAXG, njl);
-                                                                                                                               njl=choose(njl<-&MAXG, -&MAXG, njl);
-                                                                                                                               pig=exp(njl)/(1+exp(njl));
-                                                                                                                               
-                                                                                                                               do while (abs(ddev)>0.000001 & aux3<100);
-                                                                                                                               Ai=pig#(1-pig);
-                                                                                                                               Ai=choose(Ai<=0, 1E-5, Ai);
-                                                                                                                               zj=njl+(zkg-pig)/Ai;
-                                                                                                                               
-                                                                                                                               if det(G`*(Ai#G))=0 then
-                                                                                                                                          lambdag=j(ncol(G), 1, 0);
-                                                                                                                                          else
-                                                                                                                                            lambdag=inv(G`*(Ai#G))*G`*(Ai#zj);
-                                                                                                                                                                       njl=G*lambdag;
-                                                                                                                                                                       njl=choose(njl>&MAXG, &MAXG, njl);
-                                                                                                                                                                       njl=choose(njl<-&MAXG, -&MAXG, njl);
-                                                                                                                                                                       pig=exp(njl)/(1+exp(njl));
-                                                                                                                                                                       olddev=devg;
-                                                                                                                                                                       devg=sum(zkg#njl-log(1+exp(njl)));
-                                                                                                                                                                                ddev=devg-olddev;
-                                                                                                                                                                                *print lambdag devg olddev ddev;
-                                                                                                                                                                                aux3=aux3+1;
-                                                                                                                                                                                end;
-                                                                                                                                                                                %end;
-                                                                                                                                                                                zkg=1/(1+exp(-njl)#(parg/(parg+uj))##parg);
-                                                                                                                                                                                       zkg=choose(y>0, 0, zkg);
-                                                                                                                                                                                       
-                                                                                                                                                                                       %if %upcase(&MODEL) ne ZIP and %upcase(&MODEL) ne ZINB %then
-                                                                                                                                                                                       %do;
-                                                                                                                                                                                       zkg=0;
-                                                                                                                                                                                       %end;
-                                                                                                                                                                                       oldllike=llikeg;
-                                                                                                                                                                                       llikeg=sum(zkg#njl-log(1+exp(njl))+(1-zkg)#(log(gamma1)));
-                                                                                                                                                                                                  dllike=llikeg-oldllike;
-                                                                                                                                                                                                  *print j bg alphag lambdag llikeg dllike;
-                                                                                                                                                                                                  j=j+1;
-                                                                                                                                                                                                  end;
-                                                                                                                                                                                                  g1x=parg/(parg+uj);
-                                                                                                                                                                                                  g2x=uj/(parg+uj);
-                                                                                                                                                                                                  hgx=exp(njl)+g1x##parg;
-                                                                                                                                                                                                  daa=zkg#((g1x##parg#(log(g1x)+g2x))##2#(1-1/hgx)/hgx+g1x##parg#(g2x##2/parg)/hgx)+(1-zkg)#(trigamma(parg+y)-trigamma(parg)-2/(uj+parg)+1/parg+(y+parg)/(uj+parg)##2);
-                                                                                                                                                                                                  dab=zkg#(g1x##(2*parg+1)#uj#(log(g1x)+g2x)/hgx##2-g1x##parg#(-g2x##2+parg#g2x#(log(g1x)+g2x))/hgx)+(1-zkg)#(g2x#(y-uj)/(uj+parg));
-                                                                                                                                                                                                  dal=-zkg#(exp(njl)#g1x##parg#(log(g1x)+g2x)/hgx##2);
-                                                                                                                                                                                                  daa=daa*parg**4;
-                                                                                                                                                                                                  dab=dab*parg**2;
-                                                                                                                                                                                                  
-                                                                                                                                                                                                  if any(lambdag)=0 then
-                                                                                                                                                                                                  Iy=j(nrow(y), 1, 0);
-                                                                                                                                                                                                  dll=Iy#(exp(njl)#g1x##parg/hgx##2)-exp(njl)/(1+exp(njl))##2;
-                                                                                                                                                                                                  dbb=Iy#(-(parg*g1x##parg#g2x/hgx)##2+parg**2*g1x##parg#g2x##2#(1-1/uj)/hgx)-(1-Iy)#(parg*g2x#(1+(y-uj)/(parg+uj)));
-                                                                                                                                                                                                  dlb=Iy#(parg*exp(njl)#g1x##parg#g2x/hgx##2);
-                                                                                                                                                                                                  I1=j(nrow(y), 1, 1);
-                                                                                                                                                                                                  II=-(I1#daa)`*I1||-(I1#dab)`*X||-(I1#dal)`*G//(-X`*(dab#I1)||-(X#dbb)`*X||-(X#dlb)`*G)//(-G`*(dal#I1)||-G`*(X#dlb)||-(G#dll)`*G);
-                                                                                                                                                                                                       
-                                                                                                                                                                                                       if all(lambdag)>0 & alphag=1E-6 then
-                                                                                                                                                                                                       II=II[2:nrow(II), 2:nrow(II)];
-                                                                                                                                                                                                       else if any(lambdag)=0 & alphag>1E-6 then
-                                                                                                                                                                                                       II=II[1:ncol(x)+1, 1:ncol(x)+1];
-                                                                                                                                                                                                       else if any(lambdag)=0 & alphag=1E-6 then
-                                                                                                                                                                                                       II=II[2:ncol(x)+1, 2:ncol(x)+1];
-                                                                                                                                                                                                       varabetalambdag=vecdiag(inv(II));
-                                                                                                                                                                                                       stdabetalambdag=sqrt(abs(varabetalambdag));
-                                                                                                                                                                                                       varcovg=inv(II);
-                                                                                                                                                                                                       *print bg lambdag alphag devg llikeg stdabetalambdag;
-                                                                                                                                                                                                       
-                                                                                                                                                                                                       /*****************************************/
-                                                                                                                                                                                                                                                                                                                                                                                                           
+if any(lambdag)=0 then
+Iy=j(nrow(y), 1, 0);
+dll=Iy#(exp(njl)#g1x##parg/hgx##2)-exp(njl)/(1+exp(njl))##2;
+dbb=Iy#(-(parg*g1x##parg#g2x/hgx)##2+parg**2*g1x##parg#g2x##2#(1-1/uj)/hgx)-(1-Iy)#(parg*g2x#(1+(y-uj)/(parg+uj)));
+dlb=Iy#(parg*exp(njl)#g1x##parg#g2x/hgx##2);
+I1=j(nrow(y), 1, 1);
+II=-(I1#daa)`*I1||-(I1#dab)`*X||-(I1#dal)`*G//(-X`*(dab#I1)||-(X#dbb)`*X||-(X#dlb)`*G)//(-G`*(dal#I1)||-G`*(X#dlb)||-(G#dll)`*G);
+     
+     if all(lambdag)>0 & alphag=1E-6 then
+     II=II[2:nrow(II), 2:nrow(II)];
+     else if any(lambdag)=0 & alphag>1E-6 then
+     II=II[1:ncol(x)+1, 1:ncol(x)+1];
+     else if any(lambdag)=0 & alphag=1E-6 then
+     II=II[2:ncol(x)+1, 2:ncol(x)+1];
+     varabetalambdag=vecdiag(inv(II));
+     stdabetalambdag=sqrt(abs(varabetalambdag));
+     varcovg=inv(II);
+     *print bg lambdag alphag devg llikeg stdabetalambdag;
+     
+/*****************************************/
+                                                                                                                                                                                                                                                                                                           
                                                                                                                                                                                                                                                                                                                                                                                                            
                                                                                                                                                                                                                                                                                                                                                                                                            %IF %UPCASE(&METHOD)=ADAPTIVEN %THEN
                                                                                                                                                                                                                                                                                                                                                                                                          %DO;
