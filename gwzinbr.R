@@ -326,165 +326,160 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
   dbb <- Iy*(-(parg*g1x^parg*g2x/hgx)^2+parg^2*g1x^parg*g2x^2*(1-1/uj)/hgx)-(1-Iy)*(parg*g2x*(1+(y-uj)/(parg+uj)))
   dlb <- Iy*(parg*exp(njl)*g1x^parg*g2x/hgx^2)
   I1 <- matrix(1, nrow(y), 1)
-  #II <- -(t(I1) %*% daa) %*% I1 || -(t(I1) %*% dab) %*% X || -(t(I1) %*% dal) %*% G // (-t(X) %*% (dab * I1) || -t(X) %*% dbb %*% X || -t(X) %*% dlb %*% G) // (-t(G) %*% (dal * I1) || -t(G) %*% (X %*% dlb) || -t(G) %*% t(G) %*% dll %*% G)
+  # II <- -(t(I1) %*% daa) %*% I1 || -(t(I1) %*% dab) %*% X || -(t(I1) %*% dal) %*% G // (-t(X) %*% (dab * I1) || -t(X) %*% dbb %*% X || -t(X) %*% dlb %*% G) // (-t(G) %*% (dal * I1) || -t(G) %*% (X %*% dlb) || -t(G) %*% t(G) %*% dll %*% G)
+  II <- rbind(cbind(-(t(I1) %*% daa) %*% I1, -(t(I1) %*% dab) %*% x, -(t(I1) %*% dal) %*% G), 
+              cbind(-(t(x) %*% (dab * I1)), -t(x) %*% dbb %*% x, -t(x) %*% dlb %*% G), 
+              cbind(-(t(G) %*% (dal * I1)), -t(G) %*% (x %*% dlb),  -t(G) %*% t(G) %*% dll %*% G)) #revisar
+  if (all(lambdag)>0 & alphag==E^-6){
+    II <- II[2:nrow(II), 2:nrow(II)]
+  }
+  else if(any(lambdag)==0 & alphag>E^-6){
+    II <- II[1:(ncol(x)+1), 1:(ncol(x)+1)]
+  }
+  else if(any(lambdag)== 0 & alphag==E^-6){
+    II <- II[2:(ncol(x)+1), 2:(ncol(x)+1)]
+  }
+  varabetalambdag <- diag(solve(II))
+  stdabetalambdag <- sqrt(abs(varabetalambdag))
+  varcovg <- solve(II)
+  # *print bg lambdag alphag devg llikeg stdabetalambdag;
+  
+            # /*****************************************/
   
 }
 
-
-
-if any(lambdag)=0 then
-Iy=j(nrow(y), 1, 0);
-dll=Iy#(exp(njl)#g1x##parg/hgx##2)-exp(njl)/(1+exp(njl))##2;
-dbb=Iy#(-(parg*g1x##parg#g2x/hgx)##2+parg**2*g1x##parg#g2x##2#(1-1/uj)/hgx)-(1-Iy)#(parg*g2x#(1+(y-uj)/(parg+uj)));
-dlb=Iy#(parg*exp(njl)#g1x##parg#g2x/hgx##2);
-I1=j(nrow(y), 1, 1);
-II=-(I1#daa)`*I1||-(I1#dab)`*X||-(I1#dal)`*G//(-X`*(dab#I1)||-(X#dbb)`*X||-(X#dlb)`*G)//(-G`*(dal#I1)||-G`*(X#dlb)||-(G#dll)`*G);
-     
-     if all(lambdag)>0 & alphag=1E-6 then
-     II=II[2:nrow(II), 2:nrow(II)];
-     else if any(lambdag)=0 & alphag>1E-6 then
-     II=II[1:ncol(x)+1, 1:ncol(x)+1];
-     else if any(lambdag)=0 & alphag=1E-6 then
-     II=II[2:ncol(x)+1, 2:ncol(x)+1];
-     varabetalambdag=vecdiag(inv(II));
-     stdabetalambdag=sqrt(abs(varabetalambdag));
-     varcovg=inv(II);
-     *print bg lambdag alphag devg llikeg stdabetalambdag;
-     
-/*****************************************/
-                                                                                                                                                                                                                                                                                                           
-                                                                                                                                                                                                                                                                                                                                                                                                           
-                                                                                                                                                                                                                                                                                                                                                                                                           %IF %UPCASE(&METHOD)=ADAPTIVEN %THEN
-                                                                                                                                                                                                                                                                                                                                                                                                         %DO;
-                                                                                                                                                                                                                                                                                                                                                                                                         use &DHV;
-                                                                                                                                                                                                                                                                                                                                                                                                         read all into hv;
-                                                                                                                                                                                                                                                                                                                                                                                                         %END;
-                                                                                                                                                                                                                                                                                                                                                                                                         
-                                                                                                                                                                                                                                                                                                                                                                                                         %IF &H NE %THEN
-                                                                                                                                                                                                                                                                                                                                                                                                         %DO;
-                                                                                                                                                                                                                                                                                                                                                                                                         h=&H;
-                                                                                                                                                                                                                                                                                                                                                                                                         print h[label="Bandwidth"];
-                                                                                                                                                                                                                                                                                                                                                                                                         %END;
-                                                                                                                                                                                                                                                                                                                                                                                                         %ELSE
-                                                                                                                                                                                                                                                                                                                                                                                                         %DO;
-                                                                                                                                                                                                                                                                                                                                                                                                         
-                                                                                                                                                                                                                                                                                                                                                                                                         %IF %UPCASE(&METHOD)=FIXED_G or %UPCASE(&METHOD)=FIXED_BSQ or 
-                                                                                                                                                                                                                                                                                                                                                                                                         %UPCASE(&METHOD)=ADAPTIVE_BSQ %THEN
-                                                                                                                                                                                                                                                                                                                                                                                                         %DO;
-                                                                                                                                                                                                                                                                                                                                                                                                         h=&_h_;
-                                                                                                                                                                                                                                                                                                                                                                                                         print h[label="Bandwidth"];
-                                                                                                                                                                                                                                                                                                                                                                                                         %END;
-                                                                                                                                                                                                                                                                                                                                                                                                         %END;
-                                                                                                                                                                                                                                                                                                                                                                                                         read all var{&LONG &LAT} into COORD;
-                                                                                                                                                                                                                                                                                                                                                                                                         
-                                                                                                                                                                                                                                                                                                                                                                                                         %if &grid=%then
-                                                                                                                                                                                                                                                                                                                                                                                                         %do;
-                                                                                                                                                                                                                                                                                                                                                                                                         read all var{&LONG &LAT} into POINTS;
-                                                                                                                                                                                                                                                                                                                                                                                                         %end;
-                                                                                                                                                                                                                                                                                                                                                                                                         close &DATA;
-                                                                                                                                                                                                                                                                                                                                                                                                         
-                                                                                                                                                                                                                                                                                                                                                                                                         %if &grid^=%then
-                                                                                                                                                                                                                                                                                                                                                                                                         %do;
-                                                                                                                                                                                                                                                                                                                                                                                                         use &grid;
-                                                                                                                                                                                                                                                                                                                                                                                                         read all var{&LONG &LAT} into POINTS;
-                                                                                                                                                                                                                                                                                                                                                                                                         close &GRID;
-                                                                                                                                                                                                                                                                                                                                                                                                         %end;
-                                                                                                                                                                                                                                                                                                                                                                                                         m=nrow(POINTS);
-                                                                                                                                                                                                                                                                                                                                                                                                         bi=j(ncol(x)*m, 4, 0);
-                                                                                                                                                                                                                                                                                                                                                                                                         li=j(ncol(G)*m, 4, 0);
-                                                                                                                                                                                                                                                                                                                                                                                                         alphai=j(m, 3, 0);
-                                                                                                                                                                                                                                                                                                                                                                                                         BB=j(ncol(x)*n, n, 0);
-                                                                                                                                                                                                                                                                                                                                                                                                         BBl=j(ncol(G)*n, n, 0);
-                                                                                                                                                                                                                                                                                                                                                                                                         sumwi=j(m, 1, 0);
-                                                                                                                                                                                                                                                                                                                                                                                                         varbi=j(ncol(x)*m, 1, 0);
-                                                                                                                                                                                                                                                                                                                                                                                                         varli=j(ncol(G)*m, 1, 0);
-                                                                                                                                                                                                                                                                                                                                                                                                         S=j(m, 1, 0);
-                                                                                                                                                                                                                                                                                                                                                                                                         Si=j(m, 1, 0);
-                                                                                                                                                                                                                                                                                                                                                                                                         S2=j(m, 1, 0);
-                                                                                                                                                                                                                                                                                                                                                                                                         biT=j(m, ncol(x)+1, 0);
-                                                                                                                                                                                                                                                                                                                                                                                                         ym=y-y[:];
-                                                                                                                                                                                                                                                                                                                                                                                                         
-                                                                                                                                                                                                                                                                                                                                                                                                         /******** calculating distance **********/;
-                                                                                                                                                                                                                                                                                                                                                                                                         _dist_=distance(COORD, POINTS, "L2");
-                                                                                                                                                                                                                                                                                                                                                                                                         seq=1:n;
-                                                                                                                                                                                                                                                                                                                                                                                                         create _dist_ from _dist_;
-                                                                                                                                                                                                                                                                                                                                                                                                         append from _dist_;
-                                                                                                                                                                                                                                                                                                                                                                                                         
-                                                                                                                                                                                                                                                                                                                                                                                                         do i=1 to m;
-                                                                                                                                                                                                                                                                                                                                                                                                         
-                                                                                                                                                                                                                                                                                                                                                                                                         do j=1 to n;
-                                                                                                                                                                                                                                                                                                                                                                                                         seqi=j(n, 1, i);
-                                                                                                                                                                                                                                                                                                                                                                                                         dist=seqi||seq`||_dist_[, i];
-                                                                                                                                                                                                                                                                                                                                                                                                         
-                                                                                                                                                                                                                                                                                                                                                                                                         %IF %UPCASE(&DISTANCEKM)=YES %THEN
-                                                                                                                                                                                                                                                                                                                                                                                                         %DO;
-                                                                                                                                                                                                                                                                                                                                                                                                         dist[, 3]=dist[, 3]*111;
-                                                                                                                                                                                                                                                                                                                                                                                                         %END;
-                                                                                                                                                                                                                                                                                                                                                                                                         end;
-                                                                                                                                                                                                                                                                                                                                                                                                         u=nrow(dist);
-                                                                                                                                                                                                                                                                                                                                                                                                         w=j(u, 1, 0);
-                                                                                                                                                                                                                                                                                                                                                                                                         
-                                                                                                                                                                                                                                                                                                                                                                                                         do jj=1 to u;
-                                                                                                                                                                                                                                                                                                                                                                                                         
-                                                                                                                                                                                                                                                                                                                                                                                                         %IF %UPCASE(&METHOD)=FIXED_G %THEN
-                                                                                                                                                                                                                                                                                                                                                                                                         %DO;
-                                                                                                                                                                                                                                                                                                                                                                                                         w[jj]=exp(-0.5*(dist[jj, 3]/h)**2);
-                                                                                                                                                                                                                                                                                                                                                                                                         %END;
-                                                                                                                                                                                                                                                                                                                                                                                                         %ELSE %IF %UPCASE(&METHOD)=FIXED_BSQ %THEN
-                                                                                                                                                                                                                                                                                                                                                                                                         %DO;
-                                                                                                                                                                                                                                                                                                                                                                                                         w[jj]=(1-(dist[jj, 3]/h)**2)**2;
-                                                                                                                                                                                                                                                                                                                                                                                                         %END;
-                                                                                                                                                                                                                                                                                                                                                                                                         %ELSE %IF %UPCASE(&METHOD)=ADAPTIVEN %THEN
-                                                                                                                                                                                                                                                                                                                                                                                                         %DO;
-                                                                                                                                                                                                                                                                                                                                                                                                         w[jj]=(1-(dist[jj, 3]/hv[i])**2)**2;
-                                                                                                                                                                                                                                                                                                                                                                                                         %END;
-                                                                                                                                                                                                                                                                                                                                                                                                         
-                                                                                                                                                                                                                                                                                                                                                                                                         %if &grid=%then
-                                                                                                                                                                                                                                                                                                                                                                                                         %do;
-                                                                                                                                                                                                                                                                                                                                                                                                         end;
-                                                                                                                                                                                                                                                                                                                                                                                                         
-                                                                                                                                                                                                                                                                                                                                                                                                         %IF %UPCASE(&METHOD)=ADAPTIVE_BSQ %THEN
-                                                                                                                                                                                                                                                                                                                                                                                                         %DO;
-                                                                                                                                                                                                                                                                                                                                                                                                         call sort(dist, {3});
-                                                                                                                                                                                                                                                                                                                                                                                                         dist=dist||(1:nrow(dist))`;
-                                                                                                                                                                                                                                                                                                                                                                                                         w=j(n, 2, 0);
-                                                                                                                                                                                                                                                                                                                                                                                                         hn=dist[h, 3];
-                                                                                                                                                                                                                                                                                                                                                                                                         
-                                                                                                                                                                                                                                                                                                                                                                                                         do jj=1 to n;
-                                                                                                                                                                                                                                                                                                                                                                                                         
-                                                                                                                                                                                                                                                                                                                                                                                                         if dist[jj, 4]<=h then
-                                                                                                                                                                                                                                                                                                                                                                                                         w[jj, 1]=(1-(dist[jj, 3]/hn)**2)**2;
-                                                                                                                                                                                                                                                                                                                                                                                                         else
-                                                                                                                                                                                                                                                                                                                                                                                                           w[jj, 1]=0;
-                                                                                                                                                                                                                                                                                                                                                                                                         w[jj, 2]=dist[jj, 2];
-                                                                                                                                                                                                                                                                                                                                                                                                         end;
-                                                                                                                                                                                                                                                                                                                                                                                                         call sort(w, {2});
-                                                                                                                                                                                                                                                                                                                                                                                                         w=w[, 1];
-                                                                                                                                                                                                                                                                                                                                                                                                         %END;
-                                                                                                                                                                                                                                                                                                                                                                                                         %end;
-                                                                                                                                                                                                                                                                                                                                                                                                         %else
-                                                                                                                                                                                                                                                                                                                                                                                                           %do;
-                                                                                                                                                                                                                                                                                                                                                                                                         end;
-                                                                                                                                                                                                                                                                                                                                                                                                         
-                                                                                                                                                                                                                                                                                                                                                                                                         %IF %UPCASE(&METHOD)=ADAPTIVE_BSQ %THEN
-                                                                                                                                                                                                                                                                                                                                                                                                         %DO;
-                                                                                                                                                                                                                                                                                                                                                                                                         call sort(dist, {3});
-                                                                                                                                                                                                                                                                                                                                                                                                         dist=dist||(1:n)`;
-                                                                                                                                                                                                                                                                                                                                                                                                         w=j(n, 2, 0);
-                                                                                                                                                                                                                                                                                                                                                                                                         hn=dist[h, 3];
-                                                                                                                                                                                                                                                                                                                                                                                                         
-                                                                                                                                                                                                                                                                                                                                                                                                         do jj=1 to n;
-                                                                                                                                                                                                                                                                                                                                                                                                         
-                                                                                                                                                                                                                                                                                                                                                                                                         if dist[jj, 4]<=h then
-                                                                                                                                                                                                                                                                                                                                                                                                         w[jj, 1]=(1-(dist[jj, 3]/hn)**2)**2;
-                                                                                                                                                                                                                                                                                                                                                                                                         else
-                                                                                                                                                                                                                                                                                                                                                                                                           w[jj, 1]=0;
-                                                                                                                                                                                                                                                                                                                                                                                                         w[jj, 2]=dist[jj, 2];
-                                                                                                                                                                                                                                                                                                                                                                                                         end;
-                                                                                                                                                                                                                                                                                                                                                                                                         call sort(w, {2});
-                                                                                                                                                                                                                                                                                                                                                                                                         w=w[, 1];
-                                                                                                                                                                                                                                                                                                                                                                                                         %END;
-                                                                                                                                                                                                                                                                                                                                                                                                         %end;
+   
+%IF %UPCASE(&METHOD)=ADAPTIVEN %THEN
+ %DO;
+ use &DHV;
+ read all into hv;
+ %END;
+ 
+ %IF &H NE %THEN
+ %DO;
+ h=&H;
+ print h[label="Bandwidth"];
+ %END;
+ %ELSE
+ %DO;
+ 
+ %IF %UPCASE(&METHOD)=FIXED_G or %UPCASE(&METHOD)=FIXED_BSQ or 
+ %UPCASE(&METHOD)=ADAPTIVE_BSQ %THEN
+ %DO;
+ h=&_h_;
+ print h[label="Bandwidth"];
+ %END;
+ %END;
+ read all var{&LONG &LAT} into COORD;
+ 
+ %if &grid=%then
+ %do;
+ read all var{&LONG &LAT} into POINTS;
+ %end;
+ close &DATA;
+ 
+ %if &grid^=%then
+ %do;
+ use &grid;
+ read all var{&LONG &LAT} into POINTS;
+ close &GRID;
+ %end;
+ m=nrow(POINTS);
+ bi=j(ncol(x)*m, 4, 0);
+ li=j(ncol(G)*m, 4, 0);
+ alphai=j(m, 3, 0);
+ BB=j(ncol(x)*n, n, 0);
+ BBl=j(ncol(G)*n, n, 0);
+ sumwi=j(m, 1, 0);
+ varbi=j(ncol(x)*m, 1, 0);
+ varli=j(ncol(G)*m, 1, 0);
+ S=j(m, 1, 0);
+ Si=j(m, 1, 0);
+ S2=j(m, 1, 0);
+ biT=j(m, ncol(x)+1, 0);
+ ym=y-y[:];
+ 
+ /******** calculating distance **********/;
+ _dist_=distance(COORD, POINTS, "L2");
+ seq=1:n;
+ create _dist_ from _dist_;
+ append from _dist_;
+ 
+ do i=1 to m;
+ 
+ do j=1 to n;
+ seqi=j(n, 1, i);
+ dist=seqi||seq`||_dist_[, i];
+ 
+ %IF %UPCASE(&DISTANCEKM)=YES %THEN
+ %DO;
+ dist[, 3]=dist[, 3]*111;
+ %END;
+ end;
+ u=nrow(dist);
+ w=j(u, 1, 0);
+ 
+ do jj=1 to u;
+ 
+ %IF %UPCASE(&METHOD)=FIXED_G %THEN
+ %DO;
+ w[jj]=exp(-0.5*(dist[jj, 3]/h)**2);
+ %END;
+ %ELSE %IF %UPCASE(&METHOD)=FIXED_BSQ %THEN
+ %DO;
+ w[jj]=(1-(dist[jj, 3]/h)**2)**2;
+ %END;
+ %ELSE %IF %UPCASE(&METHOD)=ADAPTIVEN %THEN
+ %DO;
+ w[jj]=(1-(dist[jj, 3]/hv[i])**2)**2;
+ %END;
+ 
+ %if &grid=%then
+ %do;
+ end;
+ 
+ %IF %UPCASE(&METHOD)=ADAPTIVE_BSQ %THEN
+ %DO;
+ call sort(dist, {3});
+ dist=dist||(1:nrow(dist))`;
+ w=j(n, 2, 0);
+ hn=dist[h, 3];
+ 
+ do jj=1 to n;
+ 
+ if dist[jj, 4]<=h then
+ w[jj, 1]=(1-(dist[jj, 3]/hn)**2)**2;
+ else
+   w[jj, 1]=0;
+ w[jj, 2]=dist[jj, 2];
+ end;
+ call sort(w, {2});
+ w=w[, 1];
+ %END;
+ %end;
+ %else
+   %do;
+ end;
+ 
+ %IF %UPCASE(&METHOD)=ADAPTIVE_BSQ %THEN
+ %DO;
+ call sort(dist, {3});
+ dist=dist||(1:n)`;
+ w=j(n, 2, 0);
+ hn=dist[h, 3];
+ 
+ do jj=1 to n;
+ 
+ if dist[jj, 4]<=h then
+ w[jj, 1]=(1-(dist[jj, 3]/hn)**2)**2;
+ else
+   w[jj, 1]=0;
+ w[jj, 2]=dist[jj, 2];
+ end;
+ call sort(w, {2});
+ w=w[, 1];
+ %END;
+ %end;
                                                                                                                                                                                                                                                                                                                                                                                                          
                                                                                                                                                                                                                                                                                                                                                                                                          /****** MODEL SELECTION *************/
                                                                                                                                                                                                                                                                                                                                                                                                            Iy=Iy2;
