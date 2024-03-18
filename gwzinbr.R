@@ -1,5 +1,5 @@
 gwzinbr <- function(data, formula, xvarinf, weight=NULL,
-                    lat, long, grid=NULL, dhv, method, model = "zinb",
+                    lat, long, grid=NULL, method, model = "zinb",
                     offset=NULL, distancekm=FALSE, force=TRUE, int_inf=TRUE,
                     maxg=100, h=NULL){
 
@@ -15,7 +15,6 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
   y <<- model.extract(mf, "response")
   N <<- length(y) 
   x <<- model.matrix(mt, mf)
-  #sera q e necessario ler y, N e x novamente? são os mesmos resultados da golden
   if (is.null(xvarinf)){
     G <<- matrix(1, N, 1)
     # G <<- rep(1, N) #matriz coluna
@@ -26,7 +25,7 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
     G <<- unlist(data[, xvarinf])
     G <<- cbind(rep(1, N), G)
   }
-  if (int_inf=TRUE){ #o que e int_inf? 
+  if (int_inf){ #o que e int_inf? 
     G <<- cbind(rep(1, N), G)
   }
   # x <<- cbind(rep(1, N), x)
@@ -346,60 +345,33 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
   
             # /*****************************************/
   
-}
+  long <- unlist(data[, long])
+  lat <- unlist(data[, lat])
+  COORD <- matrix(c(long, lat), ncol=2)
+  mm <- nrow(COORD) #substituicao: 'm' por 'mm', pois m representa nosso modelo no R
+  bi <- matrix(0, ncol(x)*mm, 4)
+  li <- matrix(0, ncol(G)*mm, 4)
+  alphai <- matrix(0, mm, 3)
+  BB <- matrix(0, ncol(x)*N, N)
+  BB1 <- matrix(0, ncol(G)*N, N)
+  sumwi <- matrix(0, mm, 1)
+  varbi <- matrix(0, ncol(x)*mm, 1)
+  varli <- matrix(0, ncol(G)* mm, 1)
+  S <- matrix(0, mm, 1) #poderia substituir por rep()
+  # S <- rep(0, mm)
+  Si <- matrix(0, mm, 1)
+  # Si <- rep(0, mm)
+  S2 <- matrix(0, mm, 1)
+  # S2 <- rep(0, mm)
+  biT <- matrix(0, mm, ncol(x)+1)
+  ym <- y-mean(y)
+  
+  # /******** calculating distance **********/;
+  
+  
+} 
 
-   
-%IF %UPCASE(&METHOD)=ADAPTIVEN %THEN
- %DO;
- use &DHV;
- read all into hv;
- %END;
- 
- %IF &H NE %THEN
- %DO;
- h=&H;
- print h[label="Bandwidth"];
- %END;
- %ELSE
- %DO;
- 
- %IF %UPCASE(&METHOD)=FIXED_G or %UPCASE(&METHOD)=FIXED_BSQ or 
- %UPCASE(&METHOD)=ADAPTIVE_BSQ %THEN
- %DO;
- h=&_h_;
- print h[label="Bandwidth"];
- %END;
- %END;
- read all var{&LONG &LAT} into COORD;
- 
- %if &grid=%then
- %do;
- read all var{&LONG &LAT} into POINTS;
- %end;
- close &DATA;
- 
- %if &grid^=%then
- %do;
- use &grid;
- read all var{&LONG &LAT} into POINTS;
- close &GRID;
- %end;
- m=nrow(POINTS);
- bi=j(ncol(x)*m, 4, 0);
- li=j(ncol(G)*m, 4, 0);
- alphai=j(m, 3, 0);
- BB=j(ncol(x)*n, n, 0);
- BBl=j(ncol(G)*n, n, 0);
- sumwi=j(m, 1, 0);
- varbi=j(ncol(x)*m, 1, 0);
- varli=j(ncol(G)*m, 1, 0);
- S=j(m, 1, 0);
- Si=j(m, 1, 0);
- S2=j(m, 1, 0);
- biT=j(m, ncol(x)+1, 0);
- ym=y-y[:];
- 
- /******** calculating distance **********/;
+
  _dist_=distance(COORD, POINTS, "L2");
  seq=1:n;
  create _dist_ from _dist_;
