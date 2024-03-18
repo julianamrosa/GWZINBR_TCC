@@ -869,6 +869,11 @@ y[pos1]#log(y[pos1, ]/(_par_[pos1]+y[pos1,
 
 								if GMY=1 then
 									create &OUTPUT var{GMY h1 cv1 h2 cv2};
+									%IF %UPCASE(&METHOD)=FIXED_G or %UPCASE(&METHOD)=FIXED_BSQ or 
+								%UPCASE(&METHOD)=ADAPTIVE_BSQ %THEN
+									%DO;
+									append;
+								%END;
 							%END;
 						int=1;
 

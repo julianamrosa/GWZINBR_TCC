@@ -14,7 +14,7 @@ run;
 
 %Golden(DATA=Korea_base,YVAR=n_covid1,XVAR=Morbidity high_sch_p
 Healthcare_access diff_sd crowding Migration Health_behavior,LONG=x,LAT=y,OUTPUT=band,
-OFFSET=ln_total,MODEL=ZINB,METHOD=ADAPTIVE_BSQ,BANDWIDTH=CV, GLOBALMIN = NO,DISTANCEKM=YES);
+OFFSET=ln_total,MODEL=ZINB,METHOD=ADAPTIVE_BSQ,BANDWIDTH=CV, GLOBALMIN = no,DISTANCEKM=YES);
 *25 segs;
 
 /* Teste 2: adaptive_bsq - aic */
@@ -37,30 +37,6 @@ OFFSET=ln_total,MODEL=ZINB,METHOD=fixed_g,BANDWIDTH=CV, GLOBALMIN = NO,DISTANCEK
 Healthcare_access diff_sd crowding Migration Health_behavior,LONG=x,LAT=y,OUTPUT=band,
 OFFSET=ln_total,MODEL=ZINB,METHOD=fixed_g,BANDWIDTH=aic, GLOBALMIN = NO,DISTANCEKM=YES);
 *31 segs;
-
-/* Teste 5: fixed_bsq - cv */
-
-%Golden(DATA=Korea_base,YVAR=n_covid1,XVAR=Morbidity high_sch_p
-Healthcare_access diff_sd crowding Migration Health_behavior,LONG=x,LAT=y,OUTPUT=band,
-OFFSET=ln_total,MODEL=ZINB,METHOD=fixed_bsq,BANDWIDTH=CV, GLOBALMIN = NO,DISTANCEKM=YES);
-
-/* Teste 6: fixed_bsq - aic */
-
-%Golden(DATA=Korea_base,YVAR=n_covid1,XVAR=Morbidity high_sch_p
-Healthcare_access diff_sd crowding Migration Health_behavior,LONG=x,LAT=y,OUTPUT=band,
-OFFSET=ln_total,MODEL=ZINB,METHOD=fixed_bsq,BANDWIDTH=aic, GLOBALMIN = NO,DISTANCEKM=YES);
-
-/* Teste 7: adaptiven - cv */
-
-%Golden(DATA=Korea_base,YVAR=n_covid1,XVAR=Morbidity high_sch_p
-Healthcare_access diff_sd crowding Migration Health_behavior,LONG=x,LAT=y,OUTPUT=band,
-OFFSET=ln_total,MODEL=ZINB,METHOD=adaptiven,BANDWIDTH=CV, GLOBALMIN = NO,DISTANCEKM=YES);
-
-/* Teste 8: adaptiven - aic */
-
-%Golden(DATA=Korea_base,YVAR=n_covid1,XVAR=Morbidity high_sch_p
-Healthcare_access diff_sd crowding Migration Health_behavior,LONG=x,LAT=y,OUTPUT=band,
-OFFSET=ln_total,MODEL=ZINB,METHOD=adaptiven,BANDWIDTH=aic, GLOBALMIN = NO,DISTANCEKM=YES);
 
 /** ZIP **/
 
@@ -87,30 +63,6 @@ OFFSET=ln_total,MODEL=ZIP,METHOD=fixed_g,BANDWIDTH=CV, GLOBALMIN = NO,DISTANCEKM
 %Golden(DATA=Korea_base,YVAR=n_covid1,XVAR=Morbidity high_sch_p
 Healthcare_access diff_sd crowding Migration Health_behavior,LONG=x,LAT=y,OUTPUT=band,
 OFFSET=ln_total,MODEL=ZIP,METHOD=fixed_g,BANDWIDTH=aic, GLOBALMIN = NO,DISTANCEKM=YES);
-
-/* Teste 13: fixed_bsq - cv */
-
-%Golden(DATA=Korea_base,YVAR=n_covid1,XVAR=Morbidity high_sch_p
-Healthcare_access diff_sd crowding Migration Health_behavior,LONG=x,LAT=y,OUTPUT=band,
-OFFSET=ln_total,MODEL=ZIP,METHOD=fixed_bsq,BANDWIDTH=CV, GLOBALMIN = NO,DISTANCEKM=YES);
-
-/* Teste 14: fixed_bsq - aic */
-
-%Golden(DATA=Korea_base,YVAR=n_covid1,XVAR=Morbidity high_sch_p
-Healthcare_access diff_sd crowding Migration Health_behavior,LONG=x,LAT=y,OUTPUT=band,
-OFFSET=ln_total,MODEL=ZIP,METHOD=fixed_bsq,BANDWIDTH=aic, GLOBALMIN = NO,DISTANCEKM=YES);
-
-/* Teste 15: adaptiven - cv */
-
-%Golden(DATA=Korea_base,YVAR=n_covid1,XVAR=Morbidity high_sch_p
-Healthcare_access diff_sd crowding Migration Health_behavior,LONG=x,LAT=y,OUTPUT=band,
-OFFSET=ln_total,MODEL=ZIP,METHOD=adaptiven,BANDWIDTH=CV, GLOBALMIN = NO,DISTANCEKM=YES);
-
-/* Teste 16: adaptiven - aic */
-
-%Golden(DATA=Korea_base,YVAR=n_covid1,XVAR=Morbidity high_sch_p
-Healthcare_access diff_sd crowding Migration Health_behavior,LONG=x,LAT=y,OUTPUT=band,
-OFFSET=ln_total,MODEL=ZIP,METHOD=adaptiven,BANDWIDTH=aic, GLOBALMIN = NO,DISTANCEKM=YES);
 
 /** NEGBIN **/
 
@@ -141,30 +93,6 @@ Healthcare_access diff_sd crowding Migration Health_behavior,LONG=x,LAT=y,OUTPUT
 OFFSET=ln_total,MODEL=NEGBIN,METHOD=fixed_g,BANDWIDTH=aic, GLOBALMIN = NO,DISTANCEKM=YES);
 *13 segs;
 
-/* Teste 21: fixed_bsq - cv */
-
-%Golden(DATA=Korea_base,YVAR=n_covid1,XVAR=Morbidity high_sch_p
-Healthcare_access diff_sd crowding Migration Health_behavior,LONG=x,LAT=y,OUTPUT=band,
-OFFSET=ln_total,MODEL=NEGBIN,METHOD=fixed_bsq,BANDWIDTH=CV, GLOBALMIN = NO,DISTANCEKM=YES);
-
-/* Teste 22: fixed_bsq - aic */
-
-%Golden(DATA=Korea_base,YVAR=n_covid1,XVAR=Morbidity high_sch_p
-Healthcare_access diff_sd crowding Migration Health_behavior,LONG=x,LAT=y,OUTPUT=band,
-OFFSET=ln_total,MODEL=NEGBIN,METHOD=fixed_bsq,BANDWIDTH=aic, GLOBALMIN = NO,DISTANCEKM=YES);
-
-/* Teste 23: adaptiven - cv */
-
-%Golden(DATA=Korea_base,YVAR=n_covid1,XVAR=Morbidity high_sch_p
-Healthcare_access diff_sd crowding Migration Health_behavior,LONG=x,LAT=y,OUTPUT=band,
-OFFSET=ln_total,MODEL=NEGBIN,METHOD=adaptiven,BANDWIDTH=CV, GLOBALMIN = NO,DISTANCEKM=YES);
-
-/* Teste 24: adaptiven - aic */
-
-%Golden(DATA=Korea_base,YVAR=n_covid1,XVAR=Morbidity high_sch_p
-Healthcare_access diff_sd crowding Migration Health_behavior,LONG=x,LAT=y,OUTPUT=band,
-OFFSET=ln_total,MODEL=NEGBIN,METHOD=adaptiven,BANDWIDTH=aic, GLOBALMIN = NO,DISTANCEKM=YES);
-
 /** POISSON **/
 
 /* Teste 25: adaptive_bsq - cv */
@@ -191,30 +119,6 @@ OFFSET=ln_total,MODEL=POISSON,METHOD=fixed_g,BANDWIDTH=CV, GLOBALMIN = NO,DISTAN
 %Golden(DATA=Korea_base,YVAR=n_covid1,XVAR=Morbidity high_sch_p
 Healthcare_access diff_sd crowding Migration Health_behavior,LONG=x,LAT=y,OUTPUT=band,
 OFFSET=ln_total,MODEL=POISSON,METHOD=fixed_g,BANDWIDTH=aic, GLOBALMIN = NO,DISTANCEKM=YES);
-
-/* Teste 29: fixed_bsq - cv */
-
-%Golden(DATA=Korea_base,YVAR=n_covid1,XVAR=Morbidity high_sch_p
-Healthcare_access diff_sd crowding Migration Health_behavior,LONG=x,LAT=y,OUTPUT=band,
-OFFSET=ln_total,MODEL=POISSON,METHOD=fixed_bsq,BANDWIDTH=CV, GLOBALMIN = NO,DISTANCEKM=YES);
-
-/* Teste 30: fixed_bsq - aic */
-
-%Golden(DATA=Korea_base,YVAR=n_covid1,XVAR=Morbidity high_sch_p
-Healthcare_access diff_sd crowding Migration Health_behavior,LONG=x,LAT=y,OUTPUT=band,
-OFFSET=ln_total,MODEL=POISSON,METHOD=fixed_bsq,BANDWIDTH=aic, GLOBALMIN = NO,DISTANCEKM=YES);
-
-/* Teste 31: adaptiven - cv */
-
-%Golden(DATA=Korea_base,YVAR=n_covid1,XVAR=Morbidity high_sch_p
-Healthcare_access diff_sd crowding Migration Health_behavior,LONG=x,LAT=y,OUTPUT=band,
-OFFSET=ln_total,MODEL=POISSON,METHOD=adaptiven,BANDWIDTH=CV, GLOBALMIN = NO,DISTANCEKM=YES);
-
-/* Teste 32: adaptiven - aic */
-
-%Golden(DATA=Korea_base,YVAR=n_covid1,XVAR=Morbidity high_sch_p
-Healthcare_access diff_sd crowding Migration Health_behavior,LONG=x,LAT=y,OUTPUT=band,
-OFFSET=ln_total,MODEL=POISSON,METHOD=adaptiven,BANDWIDTH=aic, GLOBALMIN = NO,DISTANCEKM=YES);
 
 %GWZINBR(DATA=Korea_base,YVAR=n_covid1,XVAR=Morbidity high_sch_p Healthcare_access diff_sd
 crowding Migration Health_behavior,XVARINF=Morbidity high_sch_p Healthcare_access diff_sd

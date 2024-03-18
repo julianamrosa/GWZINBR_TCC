@@ -1,7 +1,7 @@
 Golden <- function(data, formula, xvarinf, weight,
                    lat, long, globalmin=TRUE,
                    method, model="zinb", bandwidth="cv", offset, 
-                   force=TRUE, maxg=100, distancekm=FALSE){
+                   force=FALSE, maxg=100, distancekm=FALSE){
   output <- list()
   E <- 10
   mf <- match.call(expand.dots = FALSE)
@@ -379,13 +379,13 @@ Golden <- function(data, formula, xvarinf, weight,
   sequ <- 1:N # seq <- sequ
   cv <- function(h){
     #N, wt, x, y, G, yhat, yhat2, pihat, hv, coord, _dist_, seq, offset, alphai, S, Si, parg, pargg, ujg, bg, lambdag, pos0, pos1, pos02, nvar  
-    if(method=="adaptiven"){
-      #hv <- matrix(0,1,1)
-      hv <- 0
-      #yhat <- matrix(0,1,1)
-      yhat <- 0
-      # create &output from hv[colname='h'];
-    }
+    # if(method=="adaptiven"){
+    #   #hv <- matrix(0,1,1)
+    #   hv <- 0
+    #   #yhat <- matrix(0,1,1)
+    #   yhat <- 0
+    #   # create &output from hv[colname='h'];
+    # }
     for (i in 1:N){
       for (j in 1:N){
         #seqi <- matrix(i, N, 1)
@@ -401,14 +401,14 @@ Golden <- function(data, formula, xvarinf, weight,
       w <- rep(0, u)
       for (jj in 1:u){
         w[jj] <- exp(-0.5*(distan[jj,3]/h)^2)
-        if (method=="fixed_bsq" | method=="adaptiven"){
+        if (method=="fixed_bsq"){ # | method=="adaptiven"
           w[jj] <- (1-(distan[jj,3]/h)^2)^2
         }
         if (bandwidth=="cv"){
           w[i] <- 0
         }
       }
-      if (method=="fixed_bsq" | method=="adaptiven"){
+      if (method=="fixed_bsq"){ # | method=="adaptiven"
         position <- which(distan[,3]<=h)
         w[position] <- 0
       }
@@ -499,7 +499,8 @@ Golden <- function(data, formula, xvarinf, weight,
             hess <- sum(w*wt*(1-zk)*(trigamma(par+y)-trigamma(par)+1/par-2/(par+uj)+(y+par)/(par+uj)^2))
             hess <- ifelse(hess==0, E^-23, hess)
             par0 <- par
-            par <- as.vector(par0-solve(hess)%*%gf) #multiplicador
+            #par <- as.vector(par0-solve(hess)%*%gf) #multiplicador
+            par <- as.vector(par0-MASS::ginv(hess)%*%gf) #multiplicador
             dpar <- par-par0
             if (par>=E^6){
               par <- E^6
@@ -561,8 +562,8 @@ Golden <- function(data, formula, xvarinf, weight,
             b <- rep(0, nvar)
           }
           else{
-            b <- solve(t(x)%*%(w*Ai*x*wt), tol=E^-60)%*%t(x)%*%(w*Ai*wt*zj)
-            #b <- MASS::ginv(t(x)%*%(w*Ai*x*wt))%*%t(x)%*%(w*Ai*wt*zj)
+            #b <- solve(t(x)%*%(w*Ai*x*wt), tol=E^-60)%*%t(x)%*%(w*Ai*wt*zj)
+            b <- MASS::ginv(t(x)%*%(w*Ai*x*wt))%*%t(x)%*%(w*Ai*wt*zj)
           }
           nj <- x%*%b+Offset
           nj <- ifelse(nj>700, 700, nj)
@@ -640,7 +641,8 @@ Golden <- function(data, formula, xvarinf, weight,
                 lambda <- matrix(0, ncol(G), 1)
               }
               else{
-                lambda <- solve(t(G*Aii*w*wt)%*%G)%*%t(G*Aii*w*wt)%*%zj
+                #lambda <- solve(t(G*Aii*w*wt)%*%G)%*%t(G*Aii*w*wt)%*%zj
+                lambda <- MASS::ginv(t(G*Aii*w*wt)%*%G)%*%t(G*Aii*w*wt)%*%zj
               }
               njl <- G%*%lambda
               njl <- ifelse(njl>maxg, maxg, njl)
@@ -695,7 +697,8 @@ Golden <- function(data, formula, xvarinf, weight,
       }
       else {
         #S[i] <- (x[i,]*solve(t(x)%*%(w*Ai*x*wt))%*%t(x*w*Ai*wt))[i]
-        S[i] <- (x[i,]%*%solve(t(x)%*%(w*Ai*x*wt), tol=E^-60)%*%t(x*w*Ai*wt))[i]
+        #S[i] <- (x[i,]%*%solve(t(x)%*%(w*Ai*x*wt), tol=E^-60)%*%t(x*w*Ai*wt))[i]
+        S[i] <- (x[i,]%*%MASS::ginv(t(x)%*%(w*Ai*x*wt))%*%t(x*w*Ai*wt))[i]
       }
       if(model=="zip" | model=="zinb"){
         yhat[i] <- (uj*(1-exp(njl)/(1+exp(njl))))[i]
@@ -746,7 +749,7 @@ Golden <- function(data, formula, xvarinf, weight,
       if(model=="zinb"){
         AIC <- 2*(npar+npar/(ncol(x)+ncol(G)))-2*ll
         AICc <- AIC+2*((npar+npar/(ncol(x)+ncol(G)))*((npar+npar/(ncol(x)+ncol(G)))+1)/(N-(npar+npar/(ncol(x)+ncol(G)))-1))
-      }
+      } #investigar aqui para teste 2
     }
     else if(model=="poisson" | model=="negbin"){
       if (length(pos02)==0){ #flag ncol -> length
@@ -830,7 +833,7 @@ Golden <- function(data, formula, xvarinf, weight,
     res2 <- cv(h2)
     CV2 <- res2[1]
     if (GMY==1){
-      band <- data.frame('GMY'=GMY, 'h1'=h1, 'cv1'=CV1, 'h2'=h2, 'cv2'=CV2) #flag saída
+      band <- data.frame('GSS_count'=GMY, 'h1'=h1, 'cv1'=CV1, 'h2'=h2, 'cv2'=CV2) #flag saída
     }
     else{
       band <- rbind(band, c(GMY, h1, CV1, h2, CV2))
@@ -877,37 +880,37 @@ Golden <- function(data, formula, xvarinf, weight,
     if (bandwidth=="aic"){
       # print(c('golden', 'xmin', 'npar'))
       # print(c(golden, xmin[GMY,2], npar))
-      if (GMY==1){
-        gss_results <- data.frame('golden'=golden, 'xmin'=xmin[GMY,2], 'npar'=npar) #flag saída
-      }
-      else{
-        gss_results <- rbind(gss_results, c(golden, xmin[GMY,2], npar))
-      }
+      # if (GMY==1){
+      #   gss_results <- data.frame('golden'=golden, 'xmin'=xmin[GMY,2], 'npar'=npar) #flag saída
+      # }
+      # else{
+      #   gss_results <- rbind(gss_results, c(golden, xmin[GMY,2], npar))
+      # }
     }
     else{
       # print(c('golden', 'xmin'))
       # print(c(golden, xmin[GMY,2]))
-      if (GMY==1){
-        gss_results <- data.frame('golden'=golden, 'xmin'=xmin[GMY,2]) #flag saída
-      }
-      else{
-        gss_results <- rbind(gss_results, c(golden, xmin[GMY,2]))
-      }
+      # if (GMY==1){
+      #   gss_results <- data.frame('golden'=golden, 'xmin'=xmin[GMY,2]) #flag saída
+      # }
+      # else{
+      #   gss_results <- rbind(gss_results, c(golden, xmin[GMY,2]))
+      # }
     }
     if (!globalmin){
       break
     }
   }
   min_bandwidth <- as.data.frame(xmin)
-  names(min_bandwidth) <- c('golden', 'bandwidth') #flag saída
+  names(min_bandwidth) <- c(ifelse(bandwidth=="aic", "aic", "cv"), 'bandwidth') #flag saída
   output <- append(output, list(h_values))
   names(output)[length(output)] <- "h_values"
-  output <- append(output, list(gss_results))
-  names(output)[length(output)] <- "gss_results"
+  # output <- append(output, list(gss_results))
+  # names(output)[length(output)] <- "gss_results"
   output <- append(output, list(band))
-  names(output)[length(output)] <- "band"
+  names(output)[length(output)] <- "iterations"
   output <- append(output, list(min_bandwidth))
-  names(output)[length(output)] <- "min_bandwidth"
+  names(output)[length(output)] <- "gss_results" #troca de min_bandwidth para gss_results
   if (globalmin){
     # print(c('golden', 'bandwidth'))
     # print(xmin)
@@ -916,9 +919,9 @@ Golden <- function(data, formula, xvarinf, weight,
     # print(c('Global Minimum', xming))
     message('Global Minimum (Da Silva and Mendes, 2018)') #flag saída
   }
-  h <- min_bandwidth[which(min_bandwidth$golden==min(min_bandwidth$golden)), 'bandwidth'] #flag saída
+  h <- min_bandwidth[which(unlist(min_bandwidth[, ifelse(bandwidth=="aic", "aic", "cv")])==min(unlist(min_bandwidth[, ifelse(bandwidth=="aic", "aic", "cv")]))), 'bandwidth'] #flag saída
   output <- append(output, list(h))
-  names(output)[length(output)] <- "h"
+  names(output)[length(output)] <- "min_bandwidth"
   message('Bandwidth: ', h) #flag saída
   # print('band')
   # print(band)
