@@ -499,8 +499,8 @@ Golden <- function(data, formula, xvarinf, weight,
             hess <- sum(w*wt*(1-zk)*(trigamma(par+y)-trigamma(par)+1/par-2/(par+uj)+(y+par)/(par+uj)^2))
             hess <- ifelse(hess==0, E^-23, hess)
             par0 <- par
-            #par <- as.vector(par0-solve(hess)%*%gf) #multiplicador
-            par <- as.vector(par0-MASS::ginv(hess)%*%gf) #multiplicador
+            par <- as.vector(par0-solve(hess)%*%gf) #multiplicador
+            #par <- as.vector(par0-MASS::ginv(hess)%*%gf) #multiplicador
             dpar <- par-par0
             if (par>=E^6){
               par <- E^6
@@ -535,6 +535,10 @@ Golden <- function(data, formula, xvarinf, weight,
             }
           }
           alpha <- 1/par
+          if (i==244 & contador4==1){
+            print(alpha) #parei aqui
+            #investigar par (onde começa a ficar errado?)
+          }
           # if (i==244){
           #   print(c("i", "j", "b", "lambda", "par", "alpha", "aux2"))
           #   print(c(i, j, b, lambda, par, alpha, aux2))
@@ -553,6 +557,12 @@ Golden <- function(data, formula, xvarinf, weight,
           uj <- ifelse(uj>E^100,E^100,uj)
           Ai <- as.vector((1-zk)*((uj/(1+alpha*uj)+(y-uj)*(alpha*uj/(1+2*alpha*uj+alpha^2*uj^2)))))
           Ai <- ifelse(Ai<=0,E^-5,Ai)
+          # if (i==244 & contador5==1 & contador4==1){
+          #   print("uj")
+          #   print(uj)
+          #   #uj e zk parecem ok
+          #   #alpha é o problema
+          # }
           uj <- ifelse(uj<E^-150,E^-150,uj)
           denz <- (((uj/(1+alpha*uj)+(y-uj)*(alpha*uj/(1+2*alpha*uj+alpha^2*uj^2))))*(1+alpha*uj))
           denz <- ifelse(denz==0,E^-5,denz)
@@ -685,6 +695,9 @@ Golden <- function(data, formula, xvarinf, weight,
         #prints comentados
         j <- j+1
       }
+      # if (i==244){
+      #   print(contador4)
+      # }
       yhat[i] <- uj[i]
       pihat[i] <- njl[i]
       #alphai[i] <<-  alpha
@@ -697,8 +710,12 @@ Golden <- function(data, formula, xvarinf, weight,
       }
       else {
         #S[i] <- (x[i,]*solve(t(x)%*%(w*Ai*x*wt))%*%t(x*w*Ai*wt))[i]
-        #S[i] <- (x[i,]%*%solve(t(x)%*%(w*Ai*x*wt), tol=E^-60)%*%t(x*w*Ai*wt))[i]
-        S[i] <- (x[i,]%*%MASS::ginv(t(x)%*%(w*Ai*x*wt))%*%t(x*w*Ai*wt))[i]
+        S[i] <- (x[i,]%*%solve(t(x)%*%(w*Ai*x*wt), tol=E^-60)%*%t(x*w*Ai*wt))[i]
+        #S[i] <- (x[i,]%*%MASS::ginv(t(x)%*%(w*Ai*x*wt))%*%t(x*w*Ai*wt))[i]
+        # if (i==1){
+        #   print("Ai")
+        #   print(Ai)
+        # }
       }
       if(model=="zip" | model=="zinb"){
         yhat[i] <- (uj*(1-exp(njl)/(1+exp(njl))))[i]
@@ -710,8 +727,8 @@ Golden <- function(data, formula, xvarinf, weight,
           Si[i] <- (G[i,]%*%solve(t(G)%*%(w*Aii*G*wt))%*%t(G*w*Aii*wt))[i]
           if (any(lambda)==0){
             Si[i] <- 0
-          } 
-        } 
+          }
+        }
       }
       # if(i==1){
       #   max_dist <<- max(dx) 
@@ -744,6 +761,8 @@ Golden <- function(data, formula, xvarinf, weight,
       }
       dev <- 2*(llnull1-ll)
       npar <- sum(S)+sum(Si)
+      # print("Si")
+      # print(Si)
       AIC <- 2*npar-2*ll
       AICc <- AIC+2*(npar*(npar+1)/(N-npar-1))
       if(model=="zinb"){
@@ -777,6 +796,10 @@ Golden <- function(data, formula, xvarinf, weight,
         AICc <-AIC+2*(npar+npar/ncol(x))*(npar+npar/ncol(x)+1)/(N-(npar+npar/ncol(x))-1)
       }
     }
+    # print("npar")
+    # print(npar)
+    # print("ll")
+    # print(ll)
     if(bandwidth == "aic"){
       CV <- AICc
     }
@@ -845,16 +868,20 @@ Golden <- function(data, formula, xvarinf, weight,
         h1 <- h3-r*(h3-h0)
         h2 <- h0+r*(h3-h0)
         CV1 <- CV2
+        #print(h2)
         res2 <- cv(h2)
         CV2 <- res2[1]
+        #print("entrou no if")
       }
       else{
         h3 <- h2
         h1 <- h3-r*(h3-h0)
         h2 <- h0+r*(h3-h0)
         CV2 <- CV1
+        #print(h1)
         res1 <- cv(h1)
         CV1 <- res1[1]
+        #print("entrou no else")
       }
       band <- rbind(band, c(GMY, h1, CV1, h2, CV2))
       int <- int+1
@@ -902,7 +929,7 @@ Golden <- function(data, formula, xvarinf, weight,
     }
   }
   min_bandwidth <- as.data.frame(xmin)
-  names(min_bandwidth) <- c(ifelse(bandwidth=="aic", "aic", "cv"), 'bandwidth') #flag saída
+  names(min_bandwidth) <- c(bandwidth, 'bandwidth') #flag saída
   output <- append(output, list(h_values))
   names(output)[length(output)] <- "h_values"
   # output <- append(output, list(gss_results))
@@ -919,7 +946,7 @@ Golden <- function(data, formula, xvarinf, weight,
     # print(c('Global Minimum', xming))
     message('Global Minimum (Da Silva and Mendes, 2018)') #flag saída
   }
-  h <- min_bandwidth[which(unlist(min_bandwidth[, ifelse(bandwidth=="aic", "aic", "cv")])==min(unlist(min_bandwidth[, ifelse(bandwidth=="aic", "aic", "cv")]))), 'bandwidth'] #flag saída
+  h <- min_bandwidth[which(unlist(min_bandwidth[, bandwidth])==min(unlist(min_bandwidth[, bandwidth]))), 'bandwidth'] #flag saída
   output <- append(output, list(h))
   names(output)[length(output)] <- "min_bandwidth"
   message('Bandwidth: ', h) #flag saída
