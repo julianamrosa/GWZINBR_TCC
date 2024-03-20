@@ -367,48 +367,37 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
   ym <- y-mean(y)
   
   # /******** calculating distance **********/;
-  
-  
+  dist_ <- sp::spDistsN1(COORD, COORD[i,]) #substituicao: _dist_ por dist_ 
+  sequ <- 1:N
+  for(i in 1:mm){
+    for(j in 1:N){
+      seqi <- rep(i, N)
+      distan <- cbind(seqi, sequ, dist_)
+      if (distancekm){
+        distan[,3] <- distan[,3]*111
+      }
+    }
+    u <- nrow(distan)
+    w <- rep(0, u)
+    for(jj in 1:u){
+      if(method=="fixed_g"){
+        w[jj] <- exp(-0.5*(dist[jj, 3]/h)^2)
+      }
+      else if(method=="fixed_bsq"){
+        w[jj] <- (1 -(dist[jj, 3]/h)^2)^2
+      }
+    }
+  } # confirmar onde esse laco fecha
 } 
 
-
- _dist_=distance(COORD, POINTS, "L2");
- seq=1:n;
- create _dist_ from _dist_;
- append from _dist_;
- 
  do i=1 to m;
  
- do j=1 to n;
- seqi=j(n, 1, i);
- dist=seqi||seq`||_dist_[, i];
- 
- %IF %UPCASE(&DISTANCEKM)=YES %THEN
- %DO;
- dist[, 3]=dist[, 3]*111;
- %END;
- end;
- u=nrow(dist);
- w=j(u, 1, 0);
+ # (...) indica que laco i = 1 to m ainda nao fechou
  
  do jj=1 to u;
  
- %IF %UPCASE(&METHOD)=FIXED_G %THEN
- %DO;
- w[jj]=exp(-0.5*(dist[jj, 3]/h)**2);
- %END;
- %ELSE %IF %UPCASE(&METHOD)=FIXED_BSQ %THEN
- %DO;
- w[jj]=(1-(dist[jj, 3]/h)**2)**2;
- %END;
- %ELSE %IF %UPCASE(&METHOD)=ADAPTIVEN %THEN
- %DO;
- w[jj]=(1-(dist[jj, 3]/hv[i])**2)**2;
- %END;
+ # (...) indica que laco jj = u to m ainda nao fechou
  
- %if &grid=%then
- %do;
- end;
  
  %IF %UPCASE(&METHOD)=ADAPTIVE_BSQ %THEN
  %DO;
