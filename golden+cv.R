@@ -401,6 +401,7 @@ Golden <- function(data, formula, xvarinf, weight,
       w <- rep(0, u)
       for (jj in 1:u){
         w[jj] <- exp(-0.5*(distan[jj,3]/h)^2)
+        if (i==244){print(w)} #parei aqui, printar w mais restrito e continuar investigando
         if (method=="fixed_bsq"){ # | method=="adaptiven"
           w[jj] <- (1-(distan[jj,3]/h)^2)^2
         }
@@ -436,6 +437,9 @@ Golden <- function(data, formula, xvarinf, weight,
       nj <- x%*%b+Offset #checar multiplicador
       uj <- exp(nj)
       par <- parg
+      # if (i==244){
+      #   print(par)
+      # }
       lambda <- lambdag
       njl <- G%*%lambda
       njl <- ifelse(njl>maxg, maxg, njl)
@@ -500,6 +504,11 @@ Golden <- function(data, formula, xvarinf, weight,
             hess <- ifelse(hess==0, E^-23, hess)
             par0 <- par
             par <- as.vector(par0-solve(hess)%*%gf) #multiplicador
+            # if (i==244 & contador4==1){
+            #   print(zk)
+            #   #hess, gf, w com problema --> olhar w
+            #   #zk, wt ok
+            # }
             #par <- as.vector(par0-MASS::ginv(hess)%*%gf) #multiplicador
             dpar <- par-par0
             if (par>=E^6){
@@ -535,10 +544,10 @@ Golden <- function(data, formula, xvarinf, weight,
             }
           }
           alpha <- 1/par
-          if (i==244 & contador4==1){
-            print(alpha) #parei aqui
-            #investigar par (onde começa a ficar errado?)
-          }
+          # if (i==244 & contador4==1){
+          #   print(alpha)
+          #   #investigar par (onde começa a ficar errado?)
+          # }
           # if (i==244){
           #   print(c("i", "j", "b", "lambda", "par", "alpha", "aux2"))
           #   print(c(i, j, b, lambda, par, alpha, aux2))
