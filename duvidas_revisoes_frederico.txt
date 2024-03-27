@@ -1,0 +1,44 @@
+na introdução, não quisemos juntar os parágrafos
+
+não quisemos tirar o primeiro objetivo específico
+
+na seção 2.2, conferir com o Alan se o theta indicado é vetor ou escalar
+
+na seção 2.4, mantivemos o Y sem o índice i (e os demais parâmetros também)
+
+equação 2.4.2 e tabela 2.1: não seria xi minúsculo? em vez de Xi.
+Na tabela 2.1, no probit, o x é transposto?
+
+p vs pi. O p tem mais de um significado no texto (prob de sucesso e número de parâmetros do modelo).
+Como lidar com isso?
+
+entender o que é offset e colocar breve explicação no relatório (eq. 2.4.5).
+
+eq. 2.4.5 --> mu é vetor ou escalar? deveria ser mu_i? (eq. 2.4.10 também)
+
+eq. 2.4.8 --> verificar se mu é negrito também.
+
+eq. 2.4.9 --> o que é a matriz A?
+
+tabela 2.2: o que deve ser negrito? o que precisa de índice i?
+
+depois da eq. 2.5.1, p é probabilidade ou proporção?
+
+tabela 2.3: conferir negrito. X não é transposto?
+
+tem que explicar de novo o que é o i em cada seção? exemplo: seção rbnizgp
+
+algoritmo 1: é preciso definir as notações? exemplo: beta_i e k_i
+
+qual o domínio de gamma? [0, 1]?
+
+ainda no agoritmo 1, explicar z_j numa nota de rodapé
+
+algoritmo 1: conferir negritos indicados
+
+página 19: conferir negritos
+
+podemos trocar a notação da log-verossimilhança para L minúsculo?
+
+página 23 --> o que é G? definir no texto
+
