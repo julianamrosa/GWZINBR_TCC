@@ -1,0 +1,3 @@
+cv e npar com problema no final -> investigar aic e npar na cv()
+estão com problema -> investigar S e Si
+Si está ok, S parece ter problemas em alguns elementos (olhar com calma) -> investigar a parte S[i]

@@ -770,8 +770,10 @@ Golden <- function(data, formula, xvarinf, weight,
       }
       dev <- 2*(llnull1-ll)
       npar <- sum(S)+sum(Si)
-      # print("Si")
-      # print(Si)
+      # print(Si) ok
+      # print(S) pode estar com erro em poucos elementos
+      # print(sum(S)) problema
+      # print(sum(Si)) ok
       AIC <- 2*npar-2*ll
       AICc <- AIC+2*(npar*(npar+1)/(N-npar-1))
       if(model=="zinb"){
@@ -806,13 +808,15 @@ Golden <- function(data, formula, xvarinf, weight,
       }
     }
     # print("npar")
-    # print(npar)
+    # print(npar) problema
     # print("ll")
-    # print(ll)
+    # print(ll) problema
+    # print(G) ok
     if(bandwidth == "aic"){
       CV <- AICc
     }
     res <- cbind(CV, npar)
+    #print(res)
     return (res)
   }
   
@@ -844,127 +848,60 @@ Golden <- function(data, formula, xvarinf, weight,
     upper <- cbind((1-r)*bx, r*bx, bx)
     xmin <- matrix(0, 3, 2)
   }
-  for (GMY in 1:3){
-    ax1 <- lower[GMY]
-    bx1 <- upper[GMY]
-    h0 <- ax1
-    h3 <- bx1
-    h1 <- bx1-r*(bx1-ax1)
-    h2 <- ax1+r*(bx1-ax1)
-    # print(c('h0', 'h1', 'h2', 'h3'))
-    # print(c(h0, h1, h2, h3))
-    if (GMY==1){
-      h_values <- data.frame('h0'=h0, 'h1'=h1, 'h2'=h2, 'h3'=h3) #flag saída
-    }
-    else{
-      h_values <- rbind(h_values, c(h0, h1, h2, h3))
-    }
-    ################################
-    res1 <- cv(h1)
-    CV1 <- res1[1]
+  GMY <- 1
+  ax1 <- lower[GMY]
+  bx1 <- upper[GMY]
+  h0 <- ax1
+  h3 <- bx1
+  h1 <- bx1-r*(bx1-ax1)
+  h2 <- ax1+r*(bx1-ax1)
+  # print(c('h0', 'h1', 'h2', 'h3'))
+  # print(c(h0, h1, h2, h3))
+  if (GMY==1){
+    h_values <- data.frame('h0'=h0, 'h1'=h1, 'h2'=h2, 'h3'=h3) #flag saída
+  }
+  else{
+    h_values <- rbind(h_values, c(h0, h1, h2, h3))
+  }
+  ################################
+  res1 <- cv(h1)
+  CV1 <- res1[1]
+  res2 <- cv(h2)
+  CV2 <- res2[1]
+  if (GMY==1){
+    band <- data.frame('GSS_count'=GMY, 'h1'=h1, 'cv1'=CV1, 'h2'=h2, 'cv2'=CV2) #flag saída
+  }
+  else{
+    band <- rbind(band, c(GMY, h1, CV1, h2, CV2))
+  }
+  int <- 1
+  print(int)
+  if (CV2<CV1){
+    #print("entrou no if")
+    h0 <- h1
+    h1 <- h3-r*(h3-h0)
+    h2 <- h0+r*(h3-h0)
+    CV1 <- CV2
+    #print(h2)
     res2 <- cv(h2)
     CV2 <- res2[1]
-    if (GMY==1){
-      band <- data.frame('GSS_count'=GMY, 'h1'=h1, 'cv1'=CV1, 'h2'=h2, 'cv2'=CV2) #flag saída
-    }
-    else{
-      band <- rbind(band, c(GMY, h1, CV1, h2, CV2))
-    }
-    int <- 1
-    while(abs(h3-h0) > tol*(abs(h1)+abs(h2)) & int<200){
-      print(int)
-      if (CV2<CV1){
-        print("entrou no if")
-        h0 <- h1
-        h1 <- h3-r*(h3-h0)
-        h2 <- h0+r*(h3-h0)
-        CV1 <- CV2
-        print(h2)
-        res2 <- cv(h2)
-        CV2 <- res2[1]
-      }
-      else{
-        print("entrou no else")
-        h3 <- h2
-        h1 <- h3-r*(h3-h0)
-        h2 <- h0+r*(h3-h0)
-        CV2 <- CV1
-        print(h1)
-        res1 <- cv(h1)
-        CV1 <- res1[1]
-      }
-      band <- rbind(band, c(GMY, h1, CV1, h2, CV2))
-      int <- int+1
-      print(c("cv1", CV1))
-      print(c("cv2", CV2))
-    }
-    if (CV1<CV2){
-      golden <- CV1
-      xmin[GMY,1] <- golden
-      xmin[GMY,2] <- h1
-      npar <- res1[2]
-      if (method=="adaptive_bsq"){
-        xmin[GMY,2] <- floor(h1)
-      }
-    }
-    else{
-      golden <- CV2
-      xmin[GMY,1] <- golden
-      xmin[GMY,2] <- h2
-      npar <- res2[2]
-      if (method=="adaptive_bsq"){
-        xmin[GMY,2] <- floor(h2)
-      }
-    }
-    if (bandwidth=="aic"){
-      # print(c('golden', 'xmin', 'npar'))
-      # print(c(golden, xmin[GMY,2], npar))
-      # if (GMY==1){
-      #   gss_results <- data.frame('golden'=golden, 'xmin'=xmin[GMY,2], 'npar'=npar) #flag saída
-      # }
-      # else{
-      #   gss_results <- rbind(gss_results, c(golden, xmin[GMY,2], npar))
-      # }
-    }
-    else{
-      # print(c('golden', 'xmin'))
-      # print(c(golden, xmin[GMY,2]))
-      # if (GMY==1){
-      #   gss_results <- data.frame('golden'=golden, 'xmin'=xmin[GMY,2]) #flag saída
-      # }
-      # else{
-      #   gss_results <- rbind(gss_results, c(golden, xmin[GMY,2]))
-      # }
-    }
-    if (!globalmin){
-      break
-    }
   }
-  min_bandwidth <- as.data.frame(xmin)
-  names(min_bandwidth) <- c(bandwidth, 'bandwidth') #flag saída
-  output <- append(output, list(h_values))
-  names(output)[length(output)] <- "h_values"
-  # output <- append(output, list(gss_results))
-  # names(output)[length(output)] <- "gss_results"
-  output <- append(output, list(band))
-  names(output)[length(output)] <- "iterations"
-  output <- append(output, list(min_bandwidth))
-  names(output)[length(output)] <- "gss_results" #troca de min_bandwidth para gss_results
-  if (globalmin){
-    # print(c('golden', 'bandwidth'))
-    # print(xmin)
-    # xming <- xmin[which(xmin[,1]==min(xmin[,1])), 2]
-    # print('(Da Silva and Mendes, 2018)')
-    # print(c('Global Minimum', xming))
-    message('Global Minimum (Da Silva and Mendes, 2018)') #flag saída
+  else{
+    #print("entrou no else")
+    h3 <- h2
+    h1 <- h3-r*(h3-h0)
+    h2 <- h0+r*(h3-h0)
+    CV2 <- CV1
+    #print(h1)
+    res1 <- cv(h1)
+    CV1 <- res1[1]
   }
-  hh <- min_bandwidth[which(unlist(min_bandwidth[, bandwidth])==min(unlist(min_bandwidth[, bandwidth]))), 'bandwidth'] #flag saída
-  output <- append(output, list(hh))
-  names(output)[length(output)] <- "min_bandwidth"
-  message('Bandwidth: ', h) #flag saída
-  # print('band')
-  # print(band)
-  # print('min_bandwidth')
-  # print(min_bandwidth)
-  return(output)
+  band <- rbind(band, c(GMY, h1, CV1, h2, CV2))
+  int <- int+1
+  # print(c("cv1", CV1))
+  # print(c("cv2", CV2))
 } # fecha golden
+
+#entender o porquê da função cv dar errado (decimais)
+#acho que só dá errado para aic, não para cv --> conferir
+#se for o caso, focar nas partes do cálculo do aic e aicc
