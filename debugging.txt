@@ -1,3 +1,33 @@
-cv e npar com problema no final -> investigar aic e npar na cv()
+cv e npar com problema no final --> investigar aic e npar na cv()
 estão com problema -> investigar S e Si
-Si está ok, S parece ter problemas em alguns elementos (olhar com calma) -> investigar a parte S[i]
+Si está ok, S tem problemas nos elementos >>59<< e 198 --> investigar construção dos S[i]
+o problema em S[59] é o Ai --> investigar construção do Ai (4 ocorrências)
+o problema é na 4a ocorrência, porém existem muitas iterações (não sei qual é a problemática) --> investigar por pedaços
+
+
+testes:
+
+i=1, contador4=1, contador5=1
+i=1, contador4=1, contador5=2
+i=1, contador4=1, contador5=3
+i=1, contador4=1, contador5=4
+i=1, contador4=1, contador5=5
+i=1, contador4=1, contador5=6
+
+i=1, contador4=2, contador5=1
+i=1, contador4=2, contador5=2
+i=1, contador4=2, contador5=3
+i=1, contador4=2, contador5=4
+
+i=1, contador4=3, contador5=1
+i=1, contador4=3, contador5=2
+
+i=1, contador4=4, contador5=1
+i=1, contador4=4, contador5=2
+
+i=1, contador4=5, contador5=1
+i=1, contador4=5, contador5=2
+
+até aqui tudo OK
+
+fazer para i=58, depois i=59 e i=60 (o esperado é que apenas o 59 dê problema. caso contrário, reavaliar os testes)

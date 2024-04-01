@@ -148,6 +148,8 @@ Golden <- function(data, formula, xvarinf, weight,
     while (abs(ddev)>0.000001 & cont2<100){
       Ai <- (uj/(1+alphag*uj))+(y-uj)*(alphag*uj/(1+2*alphag*uj+alphag^2*uj*uj))
       Ai <- ifelse(Ai<=0,E^-5,Ai)
+      # print("Primeiro Ai")
+      # print(sum(Ai)) ok
       zj <- nj+(y-uj)/(Ai*(1+alphag*uj))-Offset
       if (det(t(x)%*%(Ai*x))==0) {
         # bg <<- matrix(0, ncol(x),1)
@@ -294,6 +296,8 @@ Golden <- function(data, formula, xvarinf, weight,
         uj <- ifelse(uj>E^100, E^100, uj)
         Ai <- as.vector((1-zkg)*((uj/(1+alphag*uj)+(y-uj)*(alphag*uj/(1+2*alphag*uj+alphag^2*uj^2)))))
         Ai <- ifelse(Ai<=0, E^-5, Ai)
+        # print("Segundo Ai")
+        # print(sum(Ai)) parece ok...
         uj <- ifelse(uj<E^-150, E^-150, uj)
         zj <- (nj+(y-uj)/(((uj/(1+alphag*uj)+(y-uj)*(alphag*uj/(1+2*alphag*uj+alphag^2*uj^2))))*(1+alphag*uj)))-Offset
         if (det(t(x)%*%(Ai*x))==0){
@@ -334,6 +338,8 @@ Golden <- function(data, formula, xvarinf, weight,
         contador3 <- contador3 + 1
         Ai <- pig*(1-pig)
         Ai <- ifelse(Ai<=0, E^-5, Ai)
+        # print("Terceiro Ai")
+        # print(sum(Ai)) parece ok...
         zj <- njl+(zkg-pig)*1/Ai
         if (det(t(G*Ai)%*%G)==0){
           #lambdag <<- matrix(0, ncol(G), 1)
@@ -566,6 +572,10 @@ Golden <- function(data, formula, xvarinf, weight,
           uj <- ifelse(uj>E^100,E^100,uj)
           Ai <- as.vector((1-zk)*((uj/(1+alpha*uj)+(y-uj)*(alpha*uj/(1+2*alpha*uj+alpha^2*uj^2)))))
           Ai <- ifelse(Ai<=0,E^-5,Ai)
+          if (i==1 & contador4==5 & contador5==3){
+            #print("Quarto Ai") problema aqui --> investigar
+            print(sum(Ai))
+          }
           # if (i==244 & contador5==1 & contador4==1){
           #   print("uj")
           #   print(uj)
@@ -720,6 +730,12 @@ Golden <- function(data, formula, xvarinf, weight,
       else {
         #S[i] <- (x[i,]*solve(t(x)%*%(w*Ai*x*wt))%*%t(x*w*Ai*wt))[i]
         S[i] <- (x[i,]%*%solve(t(x)%*%(w*Ai*x*wt), tol=E^-60)%*%t(x*w*Ai*wt))[i]
+        #x e wt não mudam, estão ok
+        #olhar w e Ai
+        if (i==60){
+          #print(sum(w)) ok
+          #print(sum(Ai)) #muito erradoooooo
+        }
         #S[i] <- (x[i,]%*%MASS::ginv(t(x)%*%(w*Ai*x*wt))%*%t(x*w*Ai*wt))[i]
         # if (i==1){
         #   print("Ai")
@@ -771,7 +787,7 @@ Golden <- function(data, formula, xvarinf, weight,
       dev <- 2*(llnull1-ll)
       npar <- sum(S)+sum(Si)
       # print(Si) ok
-      # print(S) pode estar com erro em poucos elementos
+      # print(S) #elemento 59 com problema (o 198 tem uma pequena divergência também)
       # print(sum(S)) problema
       # print(sum(Si)) ok
       AIC <- 2*npar-2*ll
@@ -875,7 +891,7 @@ Golden <- function(data, formula, xvarinf, weight,
     band <- rbind(band, c(GMY, h1, CV1, h2, CV2))
   }
   int <- 1
-  print(int)
+  #print(int)
   if (CV2<CV1){
     #print("entrou no if")
     h0 <- h1
