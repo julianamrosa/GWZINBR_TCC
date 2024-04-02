@@ -28,6 +28,69 @@ i=1, contador4=4, contador5=2
 i=1, contador4=5, contador5=1
 i=1, contador4=5, contador5=2
 
-até aqui tudo OK
+----- até aqui tudo OK
+
+i=57, contador4=1, contador5=1
+i=57, contador4=1, contador5=2
+i=57, contador4=1, contador5=3
+i=57, contador4=1, contador5=4
+i=57, contador4=1, contador5=5
+i=57, contador4=1, contador5=6 diferença na 6a casa decimal (3a chamada da cv)
+i=57, contador4=1, contador5=7 diferença na 9a casa decimal (3a chamada da cv)
+i=57, contador4=1, contador5=8 diferença na 7a casa decimal (3a chamada da cv)
+i=57, contador4=1, contador5=9 diferença na 7a casa decimal (3a chamada da cv)
+i=57, contador4=1, contador5=10 diferença na 7a casa decimal (3a chamada da cv)
+i=57, contador4=1, contador5=11 diferença na 9a casa decimal (3a chamada da cv)
+i=57, contador4=1, contador5=12 diferença na 2a casa decimal (3a chamada da cv)
+...
+
+i=57, contador4=2, contador5=1
+i=57, contador4=2, contador5=2
+i=57, contador4=2, contador5=3
+i=57, contador4=2, contador5=4
+i=57, contador4=2, contador5=5
+i=57, contador4=2, contador5=6
+i=57, contador4=2, contador5=7 diferença na 4a casa decimal (3a chamada da cv) - pode ser arredondamento
+i=57, contador4=2, contador5=8
+i=57, contador4=2, contador5=9
+
+i=57, contador4=3, contador5=1
+i=57, contador4=3, contador5=2
+i=57, contador4=3, contador5=3 aqui
+i=57, contador4=3, contador5=4
+i=57, contador4=3, contador5=5
+i=57, contador4=3, contador5=6
+i=57, contador4=3, contador5=7
+i=57, contador4=3, contador5=8
+i=57, contador4=3, contador5=9
+
+i=57, contador4=4, contador5=1
+i=57, contador4=4, contador5=2
+
+i=57, contador4=5, contador5=1
+i=57, contador4=5, contador5=2
+
+----
+
+i=58, contador4=1, contador5=1
+i=58, contador4=1, contador5=2
+i=58, contador4=1, contador5=3
+i=58, contador4=1, contador5=4 primeira diferença (na 3a chamada da cv)
+i=58, contador4=1, contador5=5
+i=58, contador4=1, contador5=6
+
+i=58, contador4=2, contador5=1
+i=58, contador4=2, contador5=2
+i=58, contador4=2, contador5=3
+i=58, contador4=2, contador5=4
+
+i=58, contador4=3, contador5=1
+i=58, contador4=3, contador5=2
+
+i=58, contador4=4, contador5=1
+i=58, contador4=4, contador5=2
+
+i=58, contador4=5, contador5=1
+i=58, contador4=5, contador5=2
 
 fazer para i=58, depois i=59 e i=60 (o esperado é que apenas o 59 dê problema. caso contrário, reavaliar os testes)

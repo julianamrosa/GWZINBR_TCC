@@ -572,7 +572,7 @@ Golden <- function(data, formula, xvarinf, weight,
           uj <- ifelse(uj>E^100,E^100,uj)
           Ai <- as.vector((1-zk)*((uj/(1+alpha*uj)+(y-uj)*(alpha*uj/(1+2*alpha*uj+alpha^2*uj^2)))))
           Ai <- ifelse(Ai<=0,E^-5,Ai)
-          if (i==1 & contador4==5 & contador5==3){
+          if (i==57 & contador4==3 & contador5==3){
             #print("Quarto Ai") problema aqui --> investigar
             print(sum(Ai))
           }
