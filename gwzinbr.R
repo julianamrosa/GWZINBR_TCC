@@ -2,7 +2,7 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
                     lat, long, grid=NULL, method, model = "zinb",
                     offset=NULL, distancekm=FALSE, force=TRUE, int_inf=TRUE,
                     maxg=100, h=NULL){
-  
+
   E <- 10
   mf <- match.call(expand.dots = FALSE)
   m <- match(c("formula", "data"), names(mf), 0)
@@ -343,7 +343,7 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
   varcovg <- solve(II)
   # *print bg lambdag alphag devg llikeg stdabetalambdag;
   
-  # /*****************************************/
+            # /*****************************************/
   
   long <- unlist(data[, long])
   lat <- unlist(data[, lat])
@@ -454,7 +454,7 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
   dllike <- 1
   llike <- 0
   j <- 1
-  while (abs(dllike) > 0.00001 & j <= 600) { #fecha na linha 2049 do SAS
+  while (abs(dllike) > 0.00001 & j <= 600) { #fecha na linha 2049 do SAS? Confirmar com professor
     ddpar <- 1
     dpar <- 1
     parold <- par
@@ -572,280 +572,271 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
       aux1 <- aux1 + 1
     }
     ddpar <- par-parold
+    if (model=="zip" | model=="zinb"){
+      if (j==1){
+        alphatemp <- alpha
+        lambdatemp <- lambda[1] 
+      }
+      else{
+        alphatemp <- c(alphatemp, alpha)
+        lambdatemp <- c(lambdatemp, lambda[1])
+      }
+      alphatemp <- round(alphatemp, 7)
+      lambdatemp <- round(lambdatemp, 7)
+      if (model=="zinb"){
+        condition <- (j>300 & length(alphatemp)>length(unique(alphatemp)) & length(lambdatemp)>length(unique(lambdatemp)))
+      }
+      else if (model=="zip"){
+        #print('i', 'j', 'lambdatemp', '(length(lambdatemp))', '(length(unique(lambdatemp)))')
+        #print(i, j, lambdatemp, (length(lambdatemp)), (length(unique(lambdatemp))))
+        condition <- (j>300 & length(lambdatemp)>length(unique(lambdatemp)))
+      }
+      if (condition){
+        #lambda <- matrix(0, ncol(G), 1)
+        lambda <- rep(0, ncol(G))
+        njl <- G%*%lambda
+        #zk <- matrix(0, n, 1)
+        zk <- rep(0, N)
+      }
+      else{
+        aux3 <- 1
+        dev <- 0
+        ddev <- 1
+        njl <- G%*%lambda
+        njl <- ifelse(njl>maxg, maxg, njl)
+        njl <- ifelse(njl<(-maxg), -maxg, njl)
+        pi <- exp(njl)/(1+exp(njl))
+        while (abs(ddev)>0.000001 & aux3<100){
+          Aii <- pi*(1-pi)
+          Aii <- ifelse(Aii<=0, E^-5, Aii)	
+          zj <- njl+(zk-pi)/Aii
+          if (det(t(G*Aii*w*wt)%*%G)==0){ #multiplicador
+            lambda <- matrix(0, ncol(G), 1)
+          }
+          else{
+            lambda <- solve(t(G*Aii*w*wt)%*%G)%*%t(G*Aii*w*wt)%*%zj
+          }
+          njl <- G%*%lambda
+          njl <- ifelse(njl>maxg, maxg, njl)
+          njl <- ifelse(njl<(-maxg), -maxg, njl)
+          pi <- exp(njl)/(1+exp(njl))
+          olddev <- dev
+          dev <- sum(zk*njl-log(1+exp(njl)))
+          ddev <- dev-olddev
+          #   print(c("lambda", "aux3", "dev", "olddev", "ddev"))
+          #   print(c(lambda, aux3, dev, olddev, ddev))
+          aux3 <- aux3+1
+        }
+      }
+    }
+    njl <- G%*%lambda
+    njl <- ifelse(njl>maxg, maxg, njl)
+    njl <- ifelse(njl<(-maxg), -maxg, njl)
+    zk <- 1/(1+exp(-njl)*(par/(par+uj))^par)
+    zk <- ifelse(y>0, 0, zk)
+    if (any(lambda)==0){
+      #zk <- matrix(0, n, 1)
+      zk <- rep(0, N)
+    }
+    if (model!="zip" & model!="zinb"){
+      zk <- 0
+    }
+    oldllike <- llike
+    llike <- sum(zk*(njl)-log(1+exp(njl))+(1-zk)*(log(gamma1)))
+    dllike <- llike-oldllike
+    #   print(c("i", "j", "b", "alpha", "lambda", "llike", "dllike"))
+    #   print(c(i, j, b, alpha, lambda, llike, dllike))
+    j <- j+1
   }
-} 
+}
 
-%if %upcase(&MODEL)=ZIP or %upcase(&MODEL)=ZINB %then
-%do;
-
-if j=1 then
-do;
-alphatemp=alpha;
-lambdatemp=lambda[1];
-end;
-else
-  do;
-alphatemp=alphatemp//alpha;
-lambdatemp=lambdatemp//lambda[1];
-end;
-alphatemp=round(alphatemp, 0.0000001);
-lambdatemp=round(lambdatemp, 0.0000001);
-*print i j alphatemp (nrow(alphatemp)) (ncol(unique(alphatemp)));
-
-%if %upcase(&MODEL)=ZINB %then
-%do;
-
-if j>300 & nrow(alphatemp)>ncol(unique(alphatemp)) & 
-  nrow(lambdatemp)>ncol(unique(lambdatemp))then
-do;
-%end;
-
-%if %upcase(&MODEL)=ZIP %then
-%do;
-*print i j lambdatemp (nrow(lambdatemp)) (ncol(unique(lambdatemp)));
-
-if j>300 & nrow(lambdatemp)>ncol(unique(lambdatemp))then
-do;
-%end;
-lambda=j(ncol(G), 1, 0);
-njl=G*lambda;
-zk=j(n, 1, 0);
-end;
-else
-  do;
-aux3=1;
-dev=0;
-ddev=1;
-njl=G*lambda;
-njl=choose(njl>&MAXG, &MAXG, njl);
-njl=choose(njl<-&MAXG, -&MAXG, njl);
-pi=exp(njl)/(1+exp(njl));
-
-do while (abs(ddev)>0.000001 & aux3<100);
-Aii=pi#(1-pi);
-Aii=choose(Aii<=0, 1E-5, Aii);
-zj=njl+(zk-pi)/Aii;
-
-if det((G#Aii#w#wt)`*G)=0 then
-        lambda=j(ncol(G), 1, 0);
-        else
-          lambda=inv((G#Aii#w#wt)`*G)*(G#Aii#w#wt)`*zj;
-                      njl=G*lambda;
-                      njl=choose(njl>&MAXG, &MAXG, njl);
-                      njl=choose(njl<-&MAXG, -&MAXG, njl);
-                      pi=exp(njl)/(1+exp(njl));
-                      olddev=dev;
-                      dev=sum(zk#njl-log(1+exp(njl)));
-                              ddev=dev-olddev;
-                              *print lambda aux3 dev olddev ddev;
-                              aux3=aux3+1;
-                              end;
-                              end;
-                              %end;
-                              njl=G*lambda;
-                              njl=choose(njl>&MAXG, &MAXG, njl);
-                              njl=choose(njl<-&MAXG, -&MAXG, njl);
-                              zk=1/(1+exp(-njl)#(par/(par+uj))##par);
-                                    zk=choose(y>0, 0, zk);
-                                    
-                                    if any(lambda)=0 then
-                                    zk=j(n, 1, 0);
-                                    
-                                    %if %upcase(&MODEL) ne ZIP and %upcase(&MODEL) ne ZINB %then
-                                    %do;
-                                    zk=0;
-                                    %end;
-                                    oldllike=llike;
-                                    llike=sum(zk#(njl)-log(1+exp(njl))+(1-zk)#(log(gamma1)));
-                                              dllike=llike-oldllike;
-                                              *print i j b alpha lambda llike dllike;
-                                              j=j+1;
-                                              end;
-                                              
-                                              /**** COMPUTING VARIANCE OF BETA AND LAMBDA ******/
-                                                if det(x`*(w#Ai#x#wt))=0 then
-                                                           C=j(ncol(x), nrow(x), 0);
-                                                           else
-                                                             C=inv(x`*(w#Ai#x#wt))*x`#(w#Ai#wt)`;
-                                                                   Ci=j(ncol(G), 1, 0);
-                                                                   
-                                                                   %if %upcase(&MODEL)=ZIP or %upcase(&MODEL)=ZINB %then
-                                                                   %do;
-                                                                   
-                                                                   if det(G`*(w#Aii#G#wt))=0 then
-                                                                              Ci=j(ncol(G), nrow(G), 0);
-                                                                              else
-                                                                                Ci=inv(G`*(w#Aii#G#wt))*G`#(w#Aii#wt)`;
-                                                                                       
-                                                                                       if any(lambda)=0 then
-                                                                                       Ci=j(ncol(G), n, 0);
-                                                                                       %END;
-                                                                                       g1x=par/(par+uj);
-                                                                                       g2x=uj/(par+uj);
-                                                                                       hgx=exp(njl)+g1x##par;
-                                                                                       hgx=choose(hgx>1E10, 1E10, hgx);
-                                                                                       daa=w#wt#(zk#((g1x##par#(log(g1x)+g2x))##2#(1-1/hgx)/hgx+g1x##par#(g2x##2/par)/hgx)+(1-zk)#(trigamma(par+y)-trigamma(par)-2/(uj+par)+1/par+(y+par)/(uj+par)##2));
-                                                                                       dab=w#wt#(zk#(g1x##(2*par+1)#uj#(log(g1x)+g2x)/hgx##2-g1x##par#(-g2x##2+par#g2x#(log(g1x)+g2x))/hgx)+(1-zk)#(g2x#(y-uj)/(uj+par)));
-                                                                                       dal=-w#wt#zk#(exp(njl)#g1x##par#(log(g1x)+g2x)/hgx##2);
-                                                                                       daa=daa*par**4;
-                                                                                       dab=dab*par**2;
-                                                                                       
-                                                                                       if any(lambda)=0 then
-                                                                                       Iy=j(nrow(y), 1, 0);
-                                                                                       exphx=1+exp(njl);
-                                                                                       exphx=choose(exphx>1E90, 1E90, exphx);
-                                                                                       dll=w#wt#(Iy#(exp(njl)#g1x##par/hgx##2)-exp(njl)/(exphx)##2);
-                                                                                       dbb=sqrt(w)#wt#(Iy#(-(par*g1x##par#g2x/hgx)##2+par**2*g1x##par#g2x##2#(1-1/uj)/hgx)-(1-Iy)#(par*g2x#(1+(y-uj)/(par+uj))));
-                                                                                       dlb=w#wt#Iy#(par*exp(njl)#g1x##par#g2x/hgx##2);
-                                                                                       dll=choose(dll=., 1E100, dll);
-                                                                                       daa=choose(daa=., 1E100, daa);
-                                                                                       dab=choose(dab=., 1E100, dab);
-                                                                                       dal=choose(dal=., 1E100, dal);
-                                                                                       dbb=choose(dbb=., 1E100, dbb);
-                                                                                       dlb=choose(dlb=., 1E100, dlb);
-                                                                                       I1=j(nrow(y), 1, 1);
-                                                                                       
-                                                                                       if any(b)=0 & any(lambda)=0 then
-                                                                                       do;
-                                                                                       II=j(ncol(x)+ncol(G)+1, ncol(x)+ncol(G)+1, 0);
-                                                                                       end;
-                                                                                       else if any(lambda)=0 then
-                                                                                       do;
-                                                                                       dbb=w#wt#(Iy#(-(par*g1x##par#g2x/hgx)##2+par**2*g1x##par#g2x##2#(1-1/uj)/hgx)-(1-Iy)#(par*g2x#(1+(y-uj)/(par+uj))));
-                                                                                       
-                                                                                       if det((X#dbb#dbb/Ai)`*X)=0 then
-                                                                                               II=-(I1#daa)`*I1||-(I1#dab)`*X||-(I1#dal)`*G//(-X`*(dab#I1)||-((X#dbb)`*X)||-(X#dlb)`*G)//(-G`*(dal#I1)||-G`*(X#dlb)||-(G#dll)`*G);
-                                                                                                    else
-                                                                                                      II=-(I1#daa)`*I1||-(I1#dab)`*X||-(I1#dal)`*G//(-X`*(dab#I1)||-((X#dbb)`*X)*inv((X#dbb#dbb/Ai)`*X)*((X#dbb)`*X)||-(X#dlb)`*G)//(-G`*(dal#I1)||-G`*(X#dlb)||-(G#dll)`*G);
-                                                                                                           end;
-                                                                                                           else
-                                                                                                             II=-(I1#daa)`*I1||-(I1#dab)`*X||-(I1#dal)`*G//(-X`*(dab#I1)||-((X#dbb)`*X)||-(X#dlb)`*G)//(-G`*(dal#I1)||-G`*(X#dlb)||-(G#dll)`*G);
-                                                                                                                  
-                                                                                                                  if all(lambda)>0 & alpha=1E-6 then
-                                                                                                                  II=II[2:nrow(II), 2:nrow(II)];
-                                                                                                                  else if any(lambda)=0 & alpha>1E-6 then
-                                                                                                                  II=II[1:ncol(x)+1, 1:ncol(x)+1];
-                                                                                                                  else if any(lambda)=0 & alpha=1E-6 then
-                                                                                                                  II=II[2:ncol(x)+1, 2:ncol(x)+1];
-                                                                                                                  
-                                                                                                                  if det(II)=0 then
-                                                                                                                  do;
-                                                                                                                  
-                                                                                                                  if all(lambda)>0 & alpha=1E-6 then
-                                                                                                                  do;
-                                                                                                                  II=II[1:ncol(x), 1:ncol(x)];
-                                                                                                                  
-                                                                                                                  if det(II)=0 then
-                                                                                                                  varabetalambda=j(nrow(II), 1, 0)//j(ncol(G), 1, 0);
-                                                                                                                  else
-                                                                                                                    varabetalambda=vecdiag(inv(II))//j(ncol(G), 1, 0);
-                                                                                                                  end;
-                                                                                                                  else if any(lambda)=0 & alpha=1E-6 then
-                                                                                                                  do;
-                                                                                                                  II=II[1:ncol(x), 1:ncol(x)];
-                                                                                                                  
-                                                                                                                  if det(II)=0 then
-                                                                                                                  varabetalambda=j(nrow(II), 1, 0)//j(ncol(G), 1, 0);
-                                                                                                                  else
-                                                                                                                    varabetalambda=vecdiag(inv(II))//j(ncol(G), 1, 0);
-                                                                                                                  end;
-                                                                                                                  else
-                                                                                                                    do;
-                                                                                                                  II=II[1:ncol(x)+1, 1:ncol(x)+1];
-                                                                                                                  
-                                                                                                                  if det(II)=0 then
-                                                                                                                  varabetalambda=j(nrow(II), 1, 0)//j(ncol(G), 1, 0);
-                                                                                                                  ;
-                                                                                                                  else
-                                                                                                                    varabetalambda=vecdiag(inv(II))//j(ncol(G), 1, 0);
-                                                                                                                  end;
-                                                                                                                  end;
-                                                                                                                  else
-                                                                                                                    varabetalambda=vecdiag(inv(II));
-                                                                                                                  
-                                                                                                                  if all(lambda)>0 & alpha>1E-6 then
-                                                                                                                  do;
-                                                                                                                  varb=varabetalambda[2:ncol(x)+1];
-                                                                                                                  varl=varabetalambda[ncol(x)+2:nrow(varabetalambda)];
-                                                                                                                  alphai[i, 1]=i;
-                                                                                                                  alphai[i, 2]=alpha;
-                                                                                                                  alphai[i, 3]=sqrt(abs(varabetalambda[1]));
-                                                                                                                  end;
-                                                                                                                  else if all(lambda)>0 & alpha=1E-6 then
-                                                                                                                  do;
-                                                                                                                  varb=varabetalambda[1:ncol(x)];
-                                                                                                                  varl=varabetalambda[ncol(x)+1:nrow(varabetalambda)];
-                                                                                                                  alphai[i, 1]=i;
-                                                                                                                  alphai[i, 2]=alpha;
-                                                                                                                  alphai[i, 3]=sqrt(1/abs(-(I1#daa)`*I1));
-                                                                                                                                            end;
-                                                                                                                                            else if any(lambda)=0 & alpha>1E-6 then
-                                                                                                                                            do;
-                                                                                                                                            varb=varabetalambda[2:ncol(x)+1];
-                                                                                                                                            varl=j(ncol(G), 1, 0);
-                                                                                                                                            alphai[i, 1]=i;
-                                                                                                                                            alphai[i, 2]=alpha;
-                                                                                                                                            alphai[i, 3]=sqrt(abs(varabetalambda[1]));
-                                                                                                                                            end;
-                                                                                                                                            else if any(lambda)=0 & alpha=1E-6 then
-                                                                                                                                            do;
-                                                                                                                                            varb=varabetalambda[1:ncol(x)];
-                                                                                                                                            varl=j(ncol(G), 1, 0);
-                                                                                                                                            alphai[i, 1]=i;
-                                                                                                                                            alphai[i, 2]=alpha;
-                                                                                                                                            alphai[i, 3]=sqrt(1/abs(-(I1#daa)`*I1));
-                                                                                                                                                                      end;
-                                                                                                                                                                      
-                                                                                                                                                                      /*******************************/
-                                                                                                                                                                        m1=(i-1)*ncol(x)+1;
-                                                                                                                                                                      m2=m1+(ncol(x)-1);
-                                                                                                                                                                      bi[m1:m2, 1]=i;
-                                                                                                                                                                      bi[m1:m2, 2]=b;
-                                                                                                                                                                      bi[m1:m2, 3]=POINTS[i, 1];
-                                                                                                                                                                      bi[m1:m2, 4]=POINTS[i, 2];
-                                                                                                                                                                      varbi[m1:m2, 1]=varb;
-                                                                                                                                                                      
-                                                                                                                                                                      %if %upcase(&MODEL)=ZIP or %upcase(&MODEL)=ZINB %then
-                                                                                                                                                                      %do;
-                                                                                                                                                                      m1=(i-1)*ncol(G)+1;
-                                                                                                                                                                      m2=m1+(ncol(G)-1);
-                                                                                                                                                                      li[m1:m2, 1]=i;
-                                                                                                                                                                      li[m1:m2, 2]=lambda;
-                                                                                                                                                                      li[m1:m2, 3]=POINTS[i, 1];
-                                                                                                                                                                      li[m1:m2, 4]=POINTS[i, 2];
-                                                                                                                                                                      varli[m1:m2, 1]=varl;
-                                                                                                                                                                      %end;
-                                                                                                                                                                      
-                                                                                                                                                                      %if &grid=%then
-                                                                                                                                                                      %do;
-                                                                                                                                                                      r=x[i, ]*C;
-                                                                                                                                                                      S[i]=r[i];
-                                                                                                                                                                      S2[i]=r*r`;
-                                                                                                                                                                      yhat[i]=uj[i];
-                                                                                                                                                                      pihat[i]=njl[i];
-                                                                                                                                                                      
-                                                                                                                                                                      %if %upcase(&MODEL)=ZIP or %upcase(&MODEL)=ZINB %then
-                                                                                                                                                                      %do;
-                                                                                                                                                                      ri=G[i, ]*Ci;
-                                                                                                                                                                      Si[i]=ri[i];
-                                                                                                                                                                      yhat2[i]=uj[i];
-                                                                                                                                                                      yhat[i]=(uj#(1-exp(njl)/(1+exp(njl))))[i];
-                                                                                                                                                                               %end;
-                                                                                                                                                                               
-                                                                                                                                                                               /** creating non-stationarity matrix **/
-                                                                                                                                                                                 
-                                                                                                                                                                                 %IF %UPCASE(&METHOD) ne ADAPTIVE_BSQ %THEN
-                                                                                                                                                                               %DO;
-                                                                                                                                                                               CCC=x||w||wt;
-                                                                                                                                                                               m1=(i-1)*ncol(x)+1;
-                                                                                                                                                                               m2=m1+(ncol(x)-1);
-                                                                                                                                                                               
-                                                                                                                                                                               if det(CCC[, 1:ncol(x)]`*(CCC[, ncol(CCC)-1]#CCC[, 1:ncol(x)]#CCC[, 
-                                                                                                                                                                                                         ncol(CCC)]))=0 then
-                                                                                                                                                                               BB[m1:m2, ]=j(ncol(x), nrow(x), 0);
-                                                                                                                                                                               else
-                                                                                                                                                                                 BB[m1:m2, ]=inv(CCC[, 1:ncol(x)]`*(CCC[, ncol(CCC)-1]#CCC[, 
-                                                                                                                                                                                                                    1:ncol(x)]#CCC[, ncol(CCC)]))*CCC[, 1:ncol(x)]`#(CCC[, 
+# /**** COMPUTING VARIANCE OF BETA AND LAMBDA ******/
+  # Vou construir essa parte do lado de fora até saber onde fecha o while indicado
+  if(det(t(x)%*%(w*Ai*x*wt))==0){
+    C <- matrix(0, ncol(x),nrow(x)) 
+  } else{
+    C <- solve(t(x)%*%(w*Ai*x*wt))%*%t(x)%*%(w*Ai*wt)
+  }
+  Ci <- matrix(0, ncol(G), 1)
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      
+/**** COMPUTING VARIANCE OF BETA AND LAMBDA ******/
+                     %if %upcase(&MODEL)=ZIP or %upcase(&MODEL)=ZINB %then
+                     %do;
+                     
+                     if det(G`*(w#Aii#G#wt))=0 then
+                                Ci=j(ncol(G), nrow(G), 0);
+                                else
+                                  Ci=inv(G`*(w#Aii#G#wt))*G`#(w#Aii#wt)`;
+                                         
+                                         if any(lambda)=0 then
+                                         Ci=j(ncol(G), n, 0);
+                                         %END;
+                                         g1x=par/(par+uj);
+                                         g2x=uj/(par+uj);
+                                         hgx=exp(njl)+g1x##par;
+                                         hgx=choose(hgx>1E10, 1E10, hgx);
+                                         daa=w#wt#(zk#((g1x##par#(log(g1x)+g2x))##2#(1-1/hgx)/hgx+g1x##par#(g2x##2/par)/hgx)+(1-zk)#(trigamma(par+y)-trigamma(par)-2/(uj+par)+1/par+(y+par)/(uj+par)##2));
+                                         dab=w#wt#(zk#(g1x##(2*par+1)#uj#(log(g1x)+g2x)/hgx##2-g1x##par#(-g2x##2+par#g2x#(log(g1x)+g2x))/hgx)+(1-zk)#(g2x#(y-uj)/(uj+par)));
+                                         dal=-w#wt#zk#(exp(njl)#g1x##par#(log(g1x)+g2x)/hgx##2);
+                                         daa=daa*par**4;
+                                         dab=dab*par**2;
+                                         
+                                         if any(lambda)=0 then
+                                         Iy=j(nrow(y), 1, 0);
+                                         exphx=1+exp(njl);
+                                         exphx=choose(exphx>1E90, 1E90, exphx);
+                                         dll=w#wt#(Iy#(exp(njl)#g1x##par/hgx##2)-exp(njl)/(exphx)##2);
+                                         dbb=sqrt(w)#wt#(Iy#(-(par*g1x##par#g2x/hgx)##2+par**2*g1x##par#g2x##2#(1-1/uj)/hgx)-(1-Iy)#(par*g2x#(1+(y-uj)/(par+uj))));
+                                         dlb=w#wt#Iy#(par*exp(njl)#g1x##par#g2x/hgx##2);
+                                         dll=choose(dll=., 1E100, dll);
+                                         daa=choose(daa=., 1E100, daa);
+                                         dab=choose(dab=., 1E100, dab);
+                                         dal=choose(dal=., 1E100, dal);
+                                         dbb=choose(dbb=., 1E100, dbb);
+                                         dlb=choose(dlb=., 1E100, dlb);
+                                         I1=j(nrow(y), 1, 1);
+                                         
+                                         if any(b)=0 & any(lambda)=0 then
+                                         do;
+                                         II=j(ncol(x)+ncol(G)+1, ncol(x)+ncol(G)+1, 0);
+                                         end;
+                                         else if any(lambda)=0 then
+                                         do;
+                                         dbb=w#wt#(Iy#(-(par*g1x##par#g2x/hgx)##2+par**2*g1x##par#g2x##2#(1-1/uj)/hgx)-(1-Iy)#(par*g2x#(1+(y-uj)/(par+uj))));
+                                         
+                                         if det((X#dbb#dbb/Ai)`*X)=0 then
+                                                 II=-(I1#daa)`*I1||-(I1#dab)`*X||-(I1#dal)`*G//(-X`*(dab#I1)||-((X#dbb)`*X)||-(X#dlb)`*G)//(-G`*(dal#I1)||-G`*(X#dlb)||-(G#dll)`*G);
+                                                      else
+                                                        II=-(I1#daa)`*I1||-(I1#dab)`*X||-(I1#dal)`*G//(-X`*(dab#I1)||-((X#dbb)`*X)*inv((X#dbb#dbb/Ai)`*X)*((X#dbb)`*X)||-(X#dlb)`*G)//(-G`*(dal#I1)||-G`*(X#dlb)||-(G#dll)`*G);
+                                                             end;
+                                                             else
+                                                               II=-(I1#daa)`*I1||-(I1#dab)`*X||-(I1#dal)`*G//(-X`*(dab#I1)||-((X#dbb)`*X)||-(X#dlb)`*G)//(-G`*(dal#I1)||-G`*(X#dlb)||-(G#dll)`*G);
+                                                                    
+                                                                    if all(lambda)>0 & alpha=1E-6 then
+                                                                    II=II[2:nrow(II), 2:nrow(II)];
+                                                                    else if any(lambda)=0 & alpha>1E-6 then
+                                                                    II=II[1:ncol(x)+1, 1:ncol(x)+1];
+                                                                    else if any(lambda)=0 & alpha=1E-6 then
+                                                                    II=II[2:ncol(x)+1, 2:ncol(x)+1];
+                                                                    
+                                                                    if det(II)=0 then
+                                                                    do;
+                                                                    
+                                                                    if all(lambda)>0 & alpha=1E-6 then
+                                                                    do;
+                                                                    II=II[1:ncol(x), 1:ncol(x)];
+                                                                    
+                                                                    if det(II)=0 then
+                                                                    varabetalambda=j(nrow(II), 1, 0)//j(ncol(G), 1, 0);
+                                                                    else
+                                                                      varabetalambda=vecdiag(inv(II))//j(ncol(G), 1, 0);
+                                                                    end;
+                                                                    else if any(lambda)=0 & alpha=1E-6 then
+                                                                    do;
+                                                                    II=II[1:ncol(x), 1:ncol(x)];
+                                                                    
+                                                                    if det(II)=0 then
+                                                                    varabetalambda=j(nrow(II), 1, 0)//j(ncol(G), 1, 0);
+                                                                    else
+                                                                      varabetalambda=vecdiag(inv(II))//j(ncol(G), 1, 0);
+                                                                    end;
+                                                                    else
+                                                                      do;
+                                                                    II=II[1:ncol(x)+1, 1:ncol(x)+1];
+                                                                    
+                                                                    if det(II)=0 then
+                                                                    varabetalambda=j(nrow(II), 1, 0)//j(ncol(G), 1, 0);
+                                                                    ;
+                                                                    else
+                                                                      varabetalambda=vecdiag(inv(II))//j(ncol(G), 1, 0);
+                                                                    end;
+                                                                    end;
+                                                                    else
+                                                                      varabetalambda=vecdiag(inv(II));
+                                                                    
+                                                                    if all(lambda)>0 & alpha>1E-6 then
+                                                                    do;
+                                                                    varb=varabetalambda[2:ncol(x)+1];
+                                                                    varl=varabetalambda[ncol(x)+2:nrow(varabetalambda)];
+                                                                    alphai[i, 1]=i;
+                                                                    alphai[i, 2]=alpha;
+                                                                    alphai[i, 3]=sqrt(abs(varabetalambda[1]));
+                                                                    end;
+                                                                    else if all(lambda)>0 & alpha=1E-6 then
+                                                                    do;
+                                                                    varb=varabetalambda[1:ncol(x)];
+                                                                    varl=varabetalambda[ncol(x)+1:nrow(varabetalambda)];
+                                                                    alphai[i, 1]=i;
+                                                                    alphai[i, 2]=alpha;
+                                                                    alphai[i, 3]=sqrt(1/abs(-(I1#daa)`*I1));
+                                                                                              end;
+                                                                                              else if any(lambda)=0 & alpha>1E-6 then
+                                                                                              do;
+                                                                                              varb=varabetalambda[2:ncol(x)+1];
+                                                                                              varl=j(ncol(G), 1, 0);
+                                                                                              alphai[i, 1]=i;
+                                                                                              alphai[i, 2]=alpha;
+                                                                                              alphai[i, 3]=sqrt(abs(varabetalambda[1]));
+                                                                                              end;
+                                                                                              else if any(lambda)=0 & alpha=1E-6 then
+                                                                                              do;
+                                                                                              varb=varabetalambda[1:ncol(x)];
+                                                                                              varl=j(ncol(G), 1, 0);
+                                                                                              alphai[i, 1]=i;
+                                                                                              alphai[i, 2]=alpha;
+                                                                                              alphai[i, 3]=sqrt(1/abs(-(I1#daa)`*I1));
+                                                                                                                        end;
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              /*******************************/
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                m1=(i-1)*ncol(x)+1;
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              m2=m1+(ncol(x)-1);
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              bi[m1:m2, 1]=i;
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              bi[m1:m2, 2]=b;
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              bi[m1:m2, 3]=POINTS[i, 1];
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              bi[m1:m2, 4]=POINTS[i, 2];
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              varbi[m1:m2, 1]=varb;
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              %if %upcase(&MODEL)=ZIP or %upcase(&MODEL)=ZINB %then
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              %do;
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              m1=(i-1)*ncol(G)+1;
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              m2=m1+(ncol(G)-1);
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              li[m1:m2, 1]=i;
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              li[m1:m2, 2]=lambda;
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              li[m1:m2, 3]=POINTS[i, 1];
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              li[m1:m2, 4]=POINTS[i, 2];
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              varli[m1:m2, 1]=varl;
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              %end;
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              %if &grid=%then
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              %do;
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              r=x[i, ]*C;
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              S[i]=r[i];
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              S2[i]=r*r`;
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              yhat[i]=uj[i];
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              pihat[i]=njl[i];
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              %if %upcase(&MODEL)=ZIP or %upcase(&MODEL)=ZINB %then
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              %do;
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              ri=G[i, ]*Ci;
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              Si[i]=ri[i];
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              yhat2[i]=uj[i];
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              yhat[i]=(uj#(1-exp(njl)/(1+exp(njl))))[i];
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       %end;
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       /** creating non-stationarity matrix **/
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         %IF %UPCASE(&METHOD) ne ADAPTIVE_BSQ %THEN
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       %DO;
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       CCC=x||w||wt;
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       m1=(i-1)*ncol(x)+1;
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       m2=m1+(ncol(x)-1);
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       if det(CCC[, 1:ncol(x)]`*(CCC[, ncol(CCC)-1]#CCC[, 1:ncol(x)]#CCC[, 
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 ncol(CCC)]))=0 then
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       BB[m1:m2, ]=j(ncol(x), nrow(x), 0);
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       else
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         BB[m1:m2, ]=inv(CCC[, 1:ncol(x)]`*(CCC[, ncol(CCC)-1]#CCC[, 
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            1:ncol(x)]#CCC[, ncol(CCC)]))*CCC[, 1:ncol(x)]`#(CCC[, 
 ncol(CCC)-1]#CCC[, ncol(CCC)])`;
 
 %if %upcase(&MODEL)=ZIP or %upcase(&MODEL)=ZINB %then
