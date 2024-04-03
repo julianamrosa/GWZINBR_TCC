@@ -383,6 +383,7 @@
 
 				do jj=1 to u;
 					w[jj]=exp(-0.5*(dist[jj, 3]/h)**2);
+					*if i=244 & jj=u then print h;
 
 					%IF %UPCASE(&METHOD)=FIXED_BSQ or %UPCASE(&METHOD)=ADAPTIVEN %THEN
 						%DO;
@@ -878,21 +879,26 @@ y[pos1]#log(y[pos1, ]/(_par_[pos1]+y[pos1,
 						int=1;
 
 						do while(abs(h3-h0) > tol*(abs(h1)+abs(h2)) & int<200);
+							print int;
 							if CV2<CV1 then
 								do;
+									print ("entrou no if");
 									h0=h1;
 									h1=h3-r*(h3-h0);
 									h2=h0+r*(h3-h0);
 									CV1=CV2;
+									print h2;
 									res2=cv(h2);
 									CV2=res2[1];
 								end;
 							else
 								do;
+									print ("entrou no else");
 									h3=h2;
 									h1=h3-r*(h3-h0);
 									h2=h0+r*(h3-h0);
 									CV2=CV1;
+									print h1;
 									res1=cv(h1);
 									CV1=res1[1];
 								end;
@@ -903,6 +909,8 @@ y[pos1]#log(y[pos1, ]/(_par_[pos1]+y[pos1,
 									append;
 								%END;
 							int=int+1;
+							print cv1;
+							print cv2;
 						end;
 
 						if CV1<CV2 then
