@@ -3,6 +3,21 @@ estão com problema -> investigar S e Si
 Si está ok, S tem problemas nos elementos >>59<< e 198 --> investigar construção dos S[i]
 o problema em S[59] é o Ai --> investigar construção do Ai (4 ocorrências)
 o problema é na 4a ocorrência, porém existem muitas iterações (não sei qual é a problemática) --> investigar por pedaços
+o problema do Ai vem do uj (usando a iteração i=57, contador4=1, contador5=12 como referência) --> investigar uj
+uj sofre 10 alterações --> erro na 10a (usando a iteração i=57, contador4=1, contador5=11 como referência)
+
+
+*** loop while (contador5) ***
+
+modifica:
+
+Ai, uj, denz, zj, b, nj, olddev, gamma1, dev, ddev, aux1
+
+usa:
+
+uj, zk, alpha, y, Ai, denz, nj, Offset, w, x, wt, nvar, b, dev, par, gamma1, zj, olddev, aux1
+
+******
 
 
 testes:
