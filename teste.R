@@ -78,7 +78,8 @@ Golden <- function(data, formula, xvarinf, weight,
   pos1 <- which(y>0)
   
   # /**** global estimates ****/
-  uj <- (y+mean(y))/2 
+  uj <- (y+mean(y))/2
+  #print(uj)
   nj <- log(uj)
   #parg <<- sum((y-uj)^2/uj)/(N-nvar)
   parg <- sum((y-uj)^2/uj)/(N-nvar)
@@ -166,6 +167,7 @@ Golden <- function(data, formula, xvarinf, weight,
       olddev <- devg
       uj <- ifelse(uj<E^-150,E^-150,uj)
       uj <- ifelse(uj>100000,100000,uj)
+      #print(uj)
       tt <- y/uj
       tt <- ifelse(tt==0,E^-10,tt)
       devg <- 2*sum(y*log(tt)-(y+1/alphag)*log((1+alphag*y)/(1+alphag*uj)))
@@ -292,6 +294,7 @@ Golden <- function(data, formula, xvarinf, weight,
       ddev <- 1
       nj <- x%*%bg+Offset
       uj <- exp(nj)
+      #print(uj)
       while (abs(ddev)>0.000001 & aux1<100){
         uj <- ifelse(uj>E^100, E^100, uj)
         Ai <- as.vector((1-zkg)*((uj/(1+alphag*uj)+(y-uj)*(alphag*uj/(1+2*alphag*uj+alphag^2*uj^2)))))
@@ -313,6 +316,7 @@ Golden <- function(data, formula, xvarinf, weight,
         nj <- ifelse(nj>700, 700, nj)
         nj <- ifelse(nj<(-700), -700, nj)
         uj <- exp(nj)
+        #print(uj)
         olddev <- devg
         gamma1 <- (uj/(uj+parg))^y*(parg/(uj+parg))^parg #(gamma(par+y)/(gamma(y+1)#gamma(par)))#
         gamma1 <- ifelse(gamma1<=0, E^-10, gamma1)
@@ -442,6 +446,7 @@ Golden <- function(data, formula, xvarinf, weight,
       b <- bg
       nj <- x%*%b+Offset #checar multiplicador
       uj <- exp(nj)
+      #if (i==57){print(uj)}
       par <- parg
       # if (i==244){
       #   print(par)
@@ -493,6 +498,7 @@ Golden <- function(data, formula, xvarinf, weight,
             alpha <- 1/par
             b <- bg
             uj <- exp(x%*%b+Offset)
+            #print(uj)
             lambda <- lambdag
             njl <- G%*%lambda
             njl <- ifelse(njl>maxg, maxg, njl)
@@ -523,6 +529,7 @@ Golden <- function(data, formula, xvarinf, weight,
               alpha <- 1/par
               b <- bg
               uj <- exp(x%*%b+Offset)
+              #print(uj)
               lambda <- lambdag
               njl <- G%*%lambda
               njl <- ifelse(njl>maxg, maxg, njl)
@@ -539,6 +546,7 @@ Golden <- function(data, formula, xvarinf, weight,
             par <- E^6
             b <- bg
             uj <- exp(x%*%b+Offset)
+            #print(uj)
             lambda <- lambdag
             njl <- G%*%lambda
             njl <- ifelse(njl>maxg, maxg, njl)
@@ -566,15 +574,16 @@ Golden <- function(data, formula, xvarinf, weight,
         nj <- ifelse(nj>700, 700, nj)
         nj <- ifelse(nj<(-700), -700, nj)
         uj <- exp(nj)
+        #if (i==59 & contador4==1){print(uj)}
         contador5 <- 0
         while (abs(ddev)>0.000001 & aux1<100){
           contador5 <- contador5+1
           uj <- ifelse(uj>E^100,E^100,uj)
           Ai <- as.vector((1-zk)*((uj/(1+alpha*uj)+(y-uj)*(alpha*uj/(1+2*alpha*uj+alpha^2*uj^2)))))
           Ai <- ifelse(Ai<=0,E^-5,Ai)
-          if (i==58 & contador4==3 & contador5==4){
+          if (i==57 & contador4==1 & contador5==12){
             #print("Quarto Ai") problema aqui --> investigar
-            print(sum(Ai))
+            #print(uj)
           }
           # if (i==244 & contador5==1 & contador4==1){
           #   print("uj")
@@ -586,18 +595,25 @@ Golden <- function(data, formula, xvarinf, weight,
           denz <- (((uj/(1+alpha*uj)+(y-uj)*(alpha*uj/(1+2*alpha*uj+alpha^2*uj^2))))*(1+alpha*uj))
           denz <- ifelse(denz==0,E^-5,denz)
           zj <- (nj+(y-uj)/denz)-Offset
+          #if (i==57 & contador4==1 & contador5==11){print(det(t(x)%*%(w*Ai*x*wt)))}
           if (det(t(x)%*%(w*Ai*x*wt))==0){
+          #if (det(t(x)%*%(w*Ai*x*wt))<E^-70){ #o problema era aqui!!!
             #b <- matrix(0, nvar, 1)
             b <- rep(0, nvar)
+            print(c(i, contador4, contador5))
           }
           else{
             #b <- solve(t(x)%*%(w*Ai*x*wt), tol=E^-60)%*%t(x)%*%(w*Ai*wt*zj)
             b <- MASS::ginv(t(x)%*%(w*Ai*x*wt))%*%t(x)%*%(w*Ai*wt*zj)
           }
           nj <- x%*%b+Offset
+          #if (i==57 & contador4==1 & contador5==11){print(Offset)}
+          #erro no b
           nj <- ifelse(nj>700, 700, nj)
           nj <- ifelse(nj<(-700), -700, nj)
           uj <- exp(nj)
+          #if (i==57 & contador4==1 & contador5==11){print(nj)}
+          #nj deu diferente
           olddev <- dev
           uj <- ifelse(uj>E^10, E^10, uj)
           uj <- ifelse(uj==0, E^-10, uj)
