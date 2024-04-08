@@ -460,16 +460,20 @@ Golden <- function(data, formula, xvarinf, weight,
           denz <- (((uj/(1+alpha*uj)+(y-uj)*(alpha*uj/(1+2*alpha*uj+alpha^2*uj^2))))*(1+alpha*uj))
           denz <- ifelse(denz==0,E^-5,denz)
           zj <- (nj+(y-uj)/denz)-Offset
-          #if (chamada_cv==3 & i==59 & contador4==1 & contador5==4){print(c(sum(x), sum(w), sum(Ai), sum(wt)))}
+          #if (chamada_cv==3 & i==59 & contador4==1 & contador5==4){print(c(sum(uj), sum(Ai), sum(denz), sum(zj)))}
+          #if (chamada_cv==3 & i==59 & contador4==1 & contador5==4){print(det(t(x)%*%(w*Ai*x*wt)))}
           if (det(t(x)%*%(w*Ai*x*wt))==0){
             #if (det(t(x)%*%(w*Ai*x*wt))<E^-70){ #o problema era aqui!!!
+            #if (chamada_cv==3 & i==59 & contador4==1 & contador5==4){print("entrou no if")}
             b <- rep(0, nvar)
             #print(c(i, contador4, contador5))
           }
           else{
-            #b <- solve(t(x)%*%(w*Ai*x*wt), tol=E^-60)%*%t(x)%*%(w*Ai*wt*zj)
-            b <- MASS::ginv(t(x)%*%(w*Ai*x*wt))%*%t(x)%*%(w*Ai*wt*zj)
+            #if (chamada_cv==3 & i==59 & contador4==1 & contador5==4){print("entrou no else")}
+            b <- solve(t(x)%*%(w*Ai*x*wt), tol=E^-30)%*%t(x)%*%(w*Ai*wt*zj)
+            #b <- MASS::ginv(t(x)%*%(w*Ai*x*wt))%*%t(x)%*%(w*Ai*wt*zj)
           }
+          if (chamada_cv==3 & i==59 & contador4==1 & contador5==4){print(b)}
           nj <- x%*%b+Offset
           nj <- ifelse(nj>700, 700, nj)
           nj <- ifelse(nj<(-700), -700, nj)
@@ -489,11 +493,11 @@ Golden <- function(data, formula, xvarinf, weight,
           dev <- sum((1-zk)*(log(gamma1)))
           ddev <- dev-olddev
           aux1 <- aux1+1
-          if (chamada_cv==3 & i==59 & contador4==1 & contador5==4){print(c(sum(Ai), sum(uj), sum(denz), sum(zj), sum(b), sum(nj), sum(gamma1)))}
-          if (chamada_cv==3 & i==59 & contador4==1 & contador5==4){print(c(olddev, dev, ddev, aux1))}
-          #Ai, uj, denz, zj estão ok no começo
-          #b, nj, gamma1, dev, ddev e olddev estão com problema
-          #origem --> gamma1 (par) ou b
+          # if (chamada_cv==3 & i==59 & contador4==1 & contador5==4){print(c(sum(Ai), sum(uj), sum(denz), sum(zj), sum(b), sum(nj), sum(gamma1)))}
+          # if (chamada_cv==3 & i==59 & contador4==1 & contador5==4){print(c(olddev, dev, ddev, aux1))}
+          #Ai, denz, zj estão ok no começo
+          #uj, b, nj, gamma1, dev, ddev estão com problema
+          #origem --> b
         }
         
         
