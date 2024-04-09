@@ -401,7 +401,7 @@ Golden <- function(data, formula, xvarinf, weight,
       w <- rep(0, u)
       for (jj in 1:u){
         w[jj] <- exp(-0.5*(distan[jj,3]/h)^2)
-        if (i==172){print(w)}
+        #if (i==172 & jj==1){print(-0.5*(distan[jj,3]/h)^2)}
         if (method=="fixed_bsq"){ # | method=="adaptiven"
           w[jj] <- (1-(distan[jj,3]/h)^2)^2
         }
@@ -795,7 +795,8 @@ Golden <- function(data, formula, xvarinf, weight,
   if(method=="fixed_g" | method=="fixed_bsq"){
     ax <- 0
     bx <- as.integer(max(dist(COORD))+1)
-    if(distancekm=="yes"){
+    #print(bx)
+    if(distancekm){ #flag --> estava distacekm=="yes"
       bx <- bx*111
     }
   }  
@@ -819,12 +820,14 @@ Golden <- function(data, formula, xvarinf, weight,
     upper <- cbind((1-r)*bx, r*bx, bx)
     xmin <- matrix(0, 3, 2)
   }
+  #print(upper) #errado
   for (GMY in 1:3){
     ax1 <- lower[GMY]
     bx1 <- upper[GMY]
     h0 <- ax1
     h3 <- bx1
     h1 <- bx1-r*(bx1-ax1)
+    #print(c(bx1, r, ax1)) #bx1 errado, o resto ok
     h2 <- ax1+r*(bx1-ax1)
     # print(c('h0', 'h1', 'h2', 'h3'))
     # print(c(h0, h1, h2, h3))
@@ -835,6 +838,7 @@ Golden <- function(data, formula, xvarinf, weight,
       h_values <- rbind(h_values, c(h0, h1, h2, h3))
     }
     ################################
+    #print(h1) #errado
     res1 <- cv(h1)
     CV1 <- res1[1]
     res2 <- cv(h2)
