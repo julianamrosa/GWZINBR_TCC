@@ -658,51 +658,65 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
     C <- solve(t(x)%*%(w*Ai*x*wt))%*%t(x)%*%(w*Ai*wt)
   }
   Ci <- matrix(0, ncol(G), 1)
+  if(model == "zip" || model == "zinb"){
+    if(det(t(G)%*%(w*Aii*G*wt))==0){
+      Ci <- matrix(0, ncol(G), nrow(G))
+    }
+    else{
+      Ci <- solve(t(G)%*%(w*Aii*G*wt)%*%t(G)%*%(w*Aii*wt))
+    }
+    if(any(lambda) == 0){
+      Ci <- matrix(0, ncol(G), N)
+    }
+  }
+  g1x <- par/(par+uj)
+  g2x <- uj/(par+uj)
+  hgx <- exp(njl)+g1x^par
+  hgx <- ifelse(hgx > E^10, E^10, hgx)
+  daa <- w*wt*(zk*((g1x^par*(log(g1x)+g2x))^2*(1 - 1/hgx)/hgx + g1x^par * (g2x^2/par) / hgx) + 
+                     (1-zk) * (trigamma(par+y) - trigamma(par) - 2 / (uj+par) + 1 / par + (y+par) / (uj+par))^2)
+  dab <- w*wt*(zk*(g1x^(2*par + 1)*uj*(log(g1x) + g2x) / hgx^2 - g1x^par * (-g2x^2+par*g2x*(log(g1x) + g2x)) / hgx) + 
+                     (1-zk) * (g2x*(y-uj) / (uj+par)))
+  dal <- -w*wt*zk*(exp(njl)*g1x^par*(log(g1x)+g2x) / hgx^2)
+  daa <- daa*par^4
+  dab <- dab*par^2
+  if (any(lambda) == 0) {
+    Iy <- matrix(0, nrow(y), 1)
+    exphx <- 1 + exp(njl)
+    exphx <- ifelse(exphx>E^90, E^90, exphx) 
+    dll <- w*wt*(Iy*(exp(njl)*g1x^par/hgx^2) - exp(njl)/exphx)^2
+    dbb <- sqrt(w)*wt*(Iy*(-(par*g1x^par*g2x/hgx)^2+par^2*g1x^par*g2x^2*(1 - 1/uj)/hgx) - 
+                             (1 - Iy)*(par*g2x*(1 + (y-uj)/(par + uj))))
+    dlb <- w*wt*Iy*(par*exp(njl)*g1x^par*g2x/hgx^2)
+    dll <- ifelse(is.na(dll), E^100, dll)
+    daa <- ifelse(is.na(daa), E^100, daa)
+    dab <- ifelse(is.na(dab), E^100, dab)
+    dal <- ifelse(is.na(dal), E^100, dal)
+    dbb <- ifelse(is.na(dbb), E^100, dbb)
+    dlb <- ifelse(is.na(dlb), E^100, dlb)
+    I1 <- matrix(1, nrow(y), 1)
+  }
+  if(any(b) == 0 & any(lambda) == 0){
+    II <- matrix(0, ncol(x)+ncol(G)+1, ncol(x)+ncol(G)+1)
+  }
+  else if(any(lambda) == 0){
+    dbb <- w*wt*(Iy*(-(par*g1x**par*g2x/hgx)**2 + par**2*g1x**par*g2x**2*(1 - 1/uj)/hgx)-(1 - Iy)*(par*g2x*(1 + (y-uj) / (par+uj))))
+  }
+  else{
+    #cc <- 0 
+  }
+  
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       
-/**** COMPUTING VARIANCE OF BETA AND LAMBDA ******/
-                     %if %upcase(&MODEL)=ZIP or %upcase(&MODEL)=ZINB %then
-                     %do;
-                     
-                     if det(G`*(w#Aii#G#wt))=0 then
-                                Ci=j(ncol(G), nrow(G), 0);
-                                else
-                                  Ci=inv(G`*(w#Aii#G#wt))*G`#(w#Aii#wt)`;
+#/**** COMPUTING VARIANCE OF BETA AND LAMBDA ******/
+
                                          
-                                         if any(lambda)=0 then
-                                         Ci=j(ncol(G), n, 0);
-                                         %END;
-                                         g1x=par/(par+uj);
-                                         g2x=uj/(par+uj);
-                                         hgx=exp(njl)+g1x##par;
-                                         hgx=choose(hgx>1E10, 1E10, hgx);
-                                         daa=w#wt#(zk#((g1x##par#(log(g1x)+g2x))##2#(1-1/hgx)/hgx+g1x##par#(g2x##2/par)/hgx)+(1-zk)#(trigamma(par+y)-trigamma(par)-2/(uj+par)+1/par+(y+par)/(uj+par)##2));
-                                         dab=w#wt#(zk#(g1x##(2*par+1)#uj#(log(g1x)+g2x)/hgx##2-g1x##par#(-g2x##2+par#g2x#(log(g1x)+g2x))/hgx)+(1-zk)#(g2x#(y-uj)/(uj+par)));
-                                         dal=-w#wt#zk#(exp(njl)#g1x##par#(log(g1x)+g2x)/hgx##2);
-                                         daa=daa*par**4;
-                                         dab=dab*par**2;
-                                         
-                                         if any(lambda)=0 then
-                                         Iy=j(nrow(y), 1, 0);
-                                         exphx=1+exp(njl);
-                                         exphx=choose(exphx>1E90, 1E90, exphx);
-                                         dll=w#wt#(Iy#(exp(njl)#g1x##par/hgx##2)-exp(njl)/(exphx)##2);
-                                         dbb=sqrt(w)#wt#(Iy#(-(par*g1x##par#g2x/hgx)##2+par**2*g1x##par#g2x##2#(1-1/uj)/hgx)-(1-Iy)#(par*g2x#(1+(y-uj)/(par+uj))));
-                                         dlb=w#wt#Iy#(par*exp(njl)#g1x##par#g2x/hgx##2);
-                                         dll=choose(dll=., 1E100, dll);
-                                         daa=choose(daa=., 1E100, daa);
-                                         dab=choose(dab=., 1E100, dab);
-                                         dal=choose(dal=., 1E100, dal);
-                                         dbb=choose(dbb=., 1E100, dbb);
-                                         dlb=choose(dlb=., 1E100, dlb);
-                                         I1=j(nrow(y), 1, 1);
-                                         
-                                         if any(b)=0 & any(lambda)=0 then
-                                         do;
-                                         II=j(ncol(x)+ncol(G)+1, ncol(x)+ncol(G)+1, 0);
-                                         end;
-                                         else if any(lambda)=0 then
-                                         do;
-                                         dbb=w#wt#(Iy#(-(par*g1x##par#g2x/hgx)##2+par**2*g1x##par#g2x##2#(1-1/uj)/hgx)-(1-Iy)#(par*g2x#(1+(y-uj)/(par+uj))));
+ if any(b)=0 & any(lambda)=0 then
+ do;
+ II=j(ncol(x)+ncol(G)+1, ncol(x)+ncol(G)+1, 0);
+ end;
+ else if any(lambda)=0 then
+ do;
+ dbb=w#wt#(Iy#(-(par*g1x##par#g2x/hgx)##2+par**2*g1x##par#g2x##2#(1-1/uj)/hgx)-(1-Iy)#(par*g2x#(1+(y-uj)/(par+uj))));
                                          
                                          if det((X#dbb#dbb/Ai)`*X)=0 then
                                                  II=-(I1#daa)`*I1||-(I1#dab)`*X||-(I1#dal)`*G//(-X`*(dab#I1)||-((X#dbb)`*X)||-(X#dlb)`*G)//(-G`*(dal#I1)||-G`*(X#dlb)||-(G#dll)`*G);
