@@ -698,108 +698,108 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
   }
   if(any(b) == 0 & any(lambda) == 0){
     II <- matrix(0, ncol(x)+ncol(G)+1, ncol(x)+ncol(G)+1)
+  } else if(any(lambda) == 0){
+    dbb <- w*wt*(Iy*(-(par*g1x^par*g2x/hgx)^2 + par^2*g1x^par*g2x^2*(1 - 1/uj)/hgx)-(1 - Iy)*(par*g2x*(1 + (y-uj) / (par+uj))))
+    if(det(t(x%*%dbb%*%dbb/Ai) %*% x) == 0){
+      II <- rbind(
+        cbind(-(t(I1)%*%daa)%*%I1, -(t(I1)%*%dab)%*%x, -(t(I1)%*%dal)%*%G),
+        cbind(-t(x)%*%(dab%*%I1), -(t(x%*%dbb)%*%x), -t(x%*%dlb)%*%G),
+        cbind(-t(G)%*%(dal%*%I1), -t(G)%*%(x%*%dlb), -(t(G%*%dll)%*%G))
+        )   
+    }
+    else{
+      II <- rbind(
+        cbind(-t(I1%*%daa)%*%I1, -t(I1%*%dab)%*%x, -t(I1%*%dal)%*%G),
+        cbind(-t(x)%*%(dab%*%I1), -(t(x%*%dbb)%*%x)%*%solve(t(x%*%dbb%*%dbb/Ai)%*%x)%*%t(x%*%dbb)%*%x, -(t(x%*%dlb)%*%G)),
+        cbind(-t(G)%*%(dal%*%I1), -t(G)%*%(x%*%dlb), -t(G%*%dll)%*%G)      
+      )   
+    }
+  } else{
+    II <- rbind(
+      cbind(-t(I1%*%daa)%*%I1, -t(I1%*%dab)%*%x, -t(I1%*%dal)%*%G),
+      cbind(-t(x)%*%(dab%*%I1), -(t(x%*%dbb)%*%x), -t(x%*%dlb)%*%G),
+      cbind(-t(G)%*%(dal%*%I1), -t(G)%*%(x%*%dlb), -t(G%*%dll)%*%G)
+    )     
   }
-  else if(any(lambda) == 0){
-    dbb <- w*wt*(Iy*(-(par*g1x**par*g2x/hgx)**2 + par**2*g1x**par*g2x**2*(1 - 1/uj)/hgx)-(1 - Iy)*(par*g2x*(1 + (y-uj) / (par+uj))))
-  }
-  else{
-    #cc <- 0 
+  if (all(lambda) > 0 & alpha == E^-6) {
+    II <- II[2:nrow(II), 2:nrow(II)]
+  } else if (any(lambda) == 0 & alpha > E^-6) {
+    II <- II[1:(ncol(x)+1), 1:(ncol(x)+1)]
+  } else if (any(lambda) == 0 & alpha == E^-6) {
+    II <- II[2:(ncol(x)+1), 2:(ncol(x)+1)]
   }
   
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      
-#/**** COMPUTING VARIANCE OF BETA AND LAMBDA ******/
 
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        
+#/**** COMPUTING VARIANCE OF BETA AND LAMBDA ******/
                                          
- if any(b)=0 & any(lambda)=0 then
- do;
- II=j(ncol(x)+ncol(G)+1, ncol(x)+ncol(G)+1, 0);
- end;
- else if any(lambda)=0 then
- do;
- dbb=w#wt#(Iy#(-(par*g1x##par#g2x/hgx)##2+par**2*g1x##par#g2x##2#(1-1/uj)/hgx)-(1-Iy)#(par*g2x#(1+(y-uj)/(par+uj))));
-                                         
-                                         if det((X#dbb#dbb/Ai)`*X)=0 then
-                                                 II=-(I1#daa)`*I1||-(I1#dab)`*X||-(I1#dal)`*G//(-X`*(dab#I1)||-((X#dbb)`*X)||-(X#dlb)`*G)//(-G`*(dal#I1)||-G`*(X#dlb)||-(G#dll)`*G);
-                                                      else
-                                                        II=-(I1#daa)`*I1||-(I1#dab)`*X||-(I1#dal)`*G//(-X`*(dab#I1)||-((X#dbb)`*X)*inv((X#dbb#dbb/Ai)`*X)*((X#dbb)`*X)||-(X#dlb)`*G)//(-G`*(dal#I1)||-G`*(X#dlb)||-(G#dll)`*G);
-                                                             end;
-                                                             else
-                                                               II=-(I1#daa)`*I1||-(I1#dab)`*X||-(I1#dal)`*G//(-X`*(dab#I1)||-((X#dbb)`*X)||-(X#dlb)`*G)//(-G`*(dal#I1)||-G`*(X#dlb)||-(G#dll)`*G);
-                                                                    
-                                                                    if all(lambda)>0 & alpha=1E-6 then
-                                                                    II=II[2:nrow(II), 2:nrow(II)];
-                                                                    else if any(lambda)=0 & alpha>1E-6 then
-                                                                    II=II[1:ncol(x)+1, 1:ncol(x)+1];
-                                                                    else if any(lambda)=0 & alpha=1E-6 then
-                                                                    II=II[2:ncol(x)+1, 2:ncol(x)+1];
-                                                                    
-                                                                    if det(II)=0 then
-                                                                    do;
-                                                                    
-                                                                    if all(lambda)>0 & alpha=1E-6 then
-                                                                    do;
-                                                                    II=II[1:ncol(x), 1:ncol(x)];
-                                                                    
-                                                                    if det(II)=0 then
-                                                                    varabetalambda=j(nrow(II), 1, 0)//j(ncol(G), 1, 0);
-                                                                    else
-                                                                      varabetalambda=vecdiag(inv(II))//j(ncol(G), 1, 0);
-                                                                    end;
-                                                                    else if any(lambda)=0 & alpha=1E-6 then
-                                                                    do;
-                                                                    II=II[1:ncol(x), 1:ncol(x)];
-                                                                    
-                                                                    if det(II)=0 then
-                                                                    varabetalambda=j(nrow(II), 1, 0)//j(ncol(G), 1, 0);
-                                                                    else
-                                                                      varabetalambda=vecdiag(inv(II))//j(ncol(G), 1, 0);
-                                                                    end;
-                                                                    else
-                                                                      do;
-                                                                    II=II[1:ncol(x)+1, 1:ncol(x)+1];
-                                                                    
-                                                                    if det(II)=0 then
-                                                                    varabetalambda=j(nrow(II), 1, 0)//j(ncol(G), 1, 0);
-                                                                    ;
-                                                                    else
-                                                                      varabetalambda=vecdiag(inv(II))//j(ncol(G), 1, 0);
-                                                                    end;
-                                                                    end;
-                                                                    else
-                                                                      varabetalambda=vecdiag(inv(II));
-                                                                    
-                                                                    if all(lambda)>0 & alpha>1E-6 then
-                                                                    do;
-                                                                    varb=varabetalambda[2:ncol(x)+1];
-                                                                    varl=varabetalambda[ncol(x)+2:nrow(varabetalambda)];
-                                                                    alphai[i, 1]=i;
-                                                                    alphai[i, 2]=alpha;
-                                                                    alphai[i, 3]=sqrt(abs(varabetalambda[1]));
-                                                                    end;
-                                                                    else if all(lambda)>0 & alpha=1E-6 then
-                                                                    do;
-                                                                    varb=varabetalambda[1:ncol(x)];
-                                                                    varl=varabetalambda[ncol(x)+1:nrow(varabetalambda)];
-                                                                    alphai[i, 1]=i;
-                                                                    alphai[i, 2]=alpha;
-                                                                    alphai[i, 3]=sqrt(1/abs(-(I1#daa)`*I1));
-                                                                                              end;
-                                                                                              else if any(lambda)=0 & alpha>1E-6 then
-                                                                                              do;
-                                                                                              varb=varabetalambda[2:ncol(x)+1];
-                                                                                              varl=j(ncol(G), 1, 0);
-                                                                                              alphai[i, 1]=i;
-                                                                                              alphai[i, 2]=alpha;
-                                                                                              alphai[i, 3]=sqrt(abs(varabetalambda[1]));
-                                                                                              end;
-                                                                                              else if any(lambda)=0 & alpha=1E-6 then
-                                                                                              do;
-                                                                                              varb=varabetalambda[1:ncol(x)];
-                                                                                              varl=j(ncol(G), 1, 0);
-                                                                                              alphai[i, 1]=i;
-                                                                                              alphai[i, 2]=alpha;
-                                                                                              alphai[i, 3]=sqrt(1/abs(-(I1#daa)`*I1));
-                                                                                                                        end;
+if det(II)=0 then
+do;
+
+if all(lambda)>0 & alpha=1E-6 then
+do;
+II=II[1:ncol(x), 1:ncol(x)];
+
+if det(II)=0 then
+varabetalambda=j(nrow(II), 1, 0)//j(ncol(G), 1, 0);
+else
+  varabetalambda=vecdiag(inv(II))//j(ncol(G), 1, 0);
+end;
+else if any(lambda)=0 & alpha=1E-6 then
+do;
+II=II[1:ncol(x), 1:ncol(x)];
+
+if det(II)=0 then
+varabetalambda=j(nrow(II), 1, 0)//j(ncol(G), 1, 0);
+else
+  varabetalambda=vecdiag(inv(II))//j(ncol(G), 1, 0);
+end;
+else
+  do;
+II=II[1:ncol(x)+1, 1:ncol(x)+1];
+
+if det(II)=0 then
+varabetalambda=j(nrow(II), 1, 0)//j(ncol(G), 1, 0);
+;
+else
+  varabetalambda=vecdiag(inv(II))//j(ncol(G), 1, 0);
+end;
+end;
+else
+  varabetalambda=vecdiag(inv(II));
+
+if all(lambda)>0 & alpha>1E-6 then
+do;
+varb=varabetalambda[2:ncol(x)+1];
+varl=varabetalambda[ncol(x)+2:nrow(varabetalambda)];
+alphai[i, 1]=i;
+alphai[i, 2]=alpha;
+alphai[i, 3]=sqrt(abs(varabetalambda[1]));
+end;
+else if all(lambda)>0 & alpha=1E-6 then
+do;
+varb=varabetalambda[1:ncol(x)];
+varl=varabetalambda[ncol(x)+1:nrow(varabetalambda)];
+alphai[i, 1]=i;
+alphai[i, 2]=alpha;
+alphai[i, 3]=sqrt(1/abs(-(I1#daa)`*I1));
+                          end;
+                          else if any(lambda)=0 & alpha>1E-6 then
+                          do;
+                          varb=varabetalambda[2:ncol(x)+1];
+                          varl=j(ncol(G), 1, 0);
+                          alphai[i, 1]=i;
+                          alphai[i, 2]=alpha;
+                          alphai[i, 3]=sqrt(abs(varabetalambda[1]));
+                          end;
+                          else if any(lambda)=0 & alpha=1E-6 then
+                          do;
+                          varb=varabetalambda[1:ncol(x)];
+                          varl=j(ncol(G), 1, 0);
+                          alphai[i, 1]=i;
+                          alphai[i, 2]=alpha;
+                          alphai[i, 3]=sqrt(1/abs(-(I1#daa)`*I1));
+                                                    end;
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               /*******************************/
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 m1=(i-1)*ncol(x)+1;
