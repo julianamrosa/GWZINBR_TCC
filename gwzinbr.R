@@ -648,10 +648,7 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
     #   print(c(i, j, b, alpha, lambda, llike, dllike))
     j <- j+1
   }
-}
-
-# /**** COMPUTING VARIANCE OF BETA AND LAMBDA ******/
-  # Vou construir essa parte do lado de fora até saber onde fecha o while indicado
+  # /**** COMPUTING VARIANCE OF BETA AND LAMBDA ******/
   if(det(t(x)%*%(w*Ai*x*wt))==0){
     C <- matrix(0, ncol(x),nrow(x)) 
   } else{
@@ -674,9 +671,9 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
   hgx <- exp(njl)+g1x^par
   hgx <- ifelse(hgx > E^10, E^10, hgx)
   daa <- w*wt*(zk*((g1x^par*(log(g1x)+g2x))^2*(1 - 1/hgx)/hgx + g1x^par * (g2x^2/par) / hgx) + 
-                     (1-zk) * (trigamma(par+y) - trigamma(par) - 2 / (uj+par) + 1 / par + (y+par) / (uj+par))^2)
+                 (1-zk) * (trigamma(par+y) - trigamma(par) - 2 / (uj+par) + 1 / par + (y+par) / (uj+par))^2)
   dab <- w*wt*(zk*(g1x^(2*par + 1)*uj*(log(g1x) + g2x) / hgx^2 - g1x^par * (-g2x^2+par*g2x*(log(g1x) + g2x)) / hgx) + 
-                     (1-zk) * (g2x*(y-uj) / (uj+par)))
+                 (1-zk) * (g2x*(y-uj) / (uj+par)))
   dal <- -w*wt*zk*(exp(njl)*g1x^par*(log(g1x)+g2x) / hgx^2)
   daa <- daa*par^4
   dab <- dab*par^2
@@ -686,7 +683,7 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
     exphx <- ifelse(exphx>E^90, E^90, exphx) 
     dll <- w*wt*(Iy*(exp(njl)*g1x^par/hgx^2) - exp(njl)/exphx)^2
     dbb <- sqrt(w)*wt*(Iy*(-(par*g1x^par*g2x/hgx)^2+par^2*g1x^par*g2x^2*(1 - 1/uj)/hgx) - 
-                             (1 - Iy)*(par*g2x*(1 + (y-uj)/(par + uj))))
+                         (1 - Iy)*(par*g2x*(1 + (y-uj)/(par + uj))))
     dlb <- w*wt*Iy*(par*exp(njl)*g1x^par*g2x/hgx^2)
     dll <- ifelse(is.na(dll), E^100, dll)
     daa <- ifelse(is.na(daa), E^100, daa)
@@ -705,7 +702,7 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
         cbind(-(t(I1)%*%daa)%*%I1, -(t(I1)%*%dab)%*%x, -(t(I1)%*%dal)%*%G),
         cbind(-t(x)%*%(dab%*%I1), -(t(x%*%dbb)%*%x), -t(x%*%dlb)%*%G),
         cbind(-t(G)%*%(dal%*%I1), -t(G)%*%(x%*%dlb), -(t(G%*%dll)%*%G))
-        )   
+      )   
     }
     else{
       II <- rbind(
@@ -786,306 +783,300 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
   }
   
   # /*******************************/
-
-                                         
-/*******************************/
-  m1=(i-1)*ncol(x)+1;
-m2=m1+(ncol(x)-1);
-bi[m1:m2, 1]=i;
-bi[m1:m2, 2]=b;
-bi[m1:m2, 3]=POINTS[i, 1];
-bi[m1:m2, 4]=POINTS[i, 2];
-varbi[m1:m2, 1]=varb;
-
-%if %upcase(&MODEL)=ZIP or %upcase(&MODEL)=ZINB %then
-%do;
-m1=(i-1)*ncol(G)+1;
-m2=m1+(ncol(G)-1);
-li[m1:m2, 1]=i;
-li[m1:m2, 2]=lambda;
-li[m1:m2, 3]=POINTS[i, 1];
-li[m1:m2, 4]=POINTS[i, 2];
-varli[m1:m2, 1]=varl;
-%end;
-
-%if &grid=%then
-%do;
-r=x[i, ]*C;
-S[i]=r[i];
-S2[i]=r*r`;
-yhat[i]=uj[i];
-pihat[i]=njl[i];
-
-%if %upcase(&MODEL)=ZIP or %upcase(&MODEL)=ZINB %then
-%do;
-ri=G[i, ]*Ci;
-Si[i]=ri[i];
-yhat2[i]=uj[i];
-yhat[i]=(uj#(1-exp(njl)/(1+exp(njl))))[i];
-         %end;
-         
-         /** creating non-stationarity matrix **/
-           
-           %IF %UPCASE(&METHOD) ne ADAPTIVE_BSQ %THEN
-         %DO;
-         CCC=x||w||wt;
-         m1=(i-1)*ncol(x)+1;
-         m2=m1+(ncol(x)-1);
-         
-         if det(CCC[, 1:ncol(x)]`*(CCC[, ncol(CCC)-1]#CCC[, 1:ncol(x)]#CCC[, 
-                                   ncol(CCC)]))=0 then
-         BB[m1:m2, ]=j(ncol(x), nrow(x), 0);
-         else
-           BB[m1:m2, ]=inv(CCC[, 1:ncol(x)]`*(CCC[, ncol(CCC)-1]#CCC[, 
-                                              1:ncol(x)]#CCC[, ncol(CCC)]))*CCC[, 1:ncol(x)]`#(CCC[, ncol(CCC)-1]#CCC[, ncol(CCC)])`;
-
-%if %upcase(&MODEL)=ZIP or %upcase(&MODEL)=ZINB %then
-%do;
-CCCl=G||w||wt;
-m1=(i-1)*ncol(G)+1;
-m2=m1+(ncol(G)-1);
-
-if det(CCCl[, 1:ncol(G)]`*(CCCl[, ncol(CCCl)-1]#CCCl[, 
-                           1:ncol(G)]#CCCl[, ncol(CCCl)]))=0 then
-BBl[m1:m2, ]=j(ncol(G), nrow(G), 0);
-else
-  BBl[m1:m2, ]=inv(CCCl[, 1:ncol(G)]`*(CCCl[, ncol(CCCl)-1]#CCCl[, 
-                                       1:ncol(G)]#CCCl[, ncol(CCCl)]))*CCCl[, 1:ncol(G)]`#(CCCl[, 
-ncol(CCCl)-1]#CCCl[, ncol(CCCl)])`;
-%end;
-%END;
-
-/*************************************/
-  _w_=w;
-  call sort(_w_, {1});
-  sumwi[i]=_w_[1:int(nrow(_w_)*1)][+];
-  %end;
+  m1 <- (i-1)*ncol(x)+1
+  m2 <- m1+(ncol(x)-1)
+  bi[m1:m2, 1] <- i
+  bi[m1:m2, 2] <- b
+  bi[m1:m2, 3] <- COORD[i, 1]
+  bi[m1:m2, 4] <- COORD[i, 2]
+  varbi[m1:m2, 1] <- varb
   
-  if i=1 then
-  W_f=W||(1:nrow(w))`;
-  else
-    W_f=W_f//(W||(1:nrow(w))`);
-  end;
-  create w_f from W_f;
-  append from W_f;
-  close w_f;
-  free w_f;
+  if (model == "zip" || model == "zinb") {
+    m1 <- (i-1)*ncol(G)+1
+    m2 <- m1 + (ncol(G)-1)
+    li[m1:m2, 1] <- i
+    li[m1:m2, 2] <- lambda
+    li[m1:m2, 3] <- COORD[i, 1]
+    li[m1:m2, 4] <- COORD[i, 2]
+    varli[m1:m2, 1] <- varl
+  }
+  if (is.null(grid)) {
+    r <- x[i, ]%*%C #multiplicação vetor por matriz
+    S[i] <- r[i]
+    S2[i] <- r%*%t(r)
+    yhat[i] <- uj[i]
+    pihat[i] <- njl[i]
+  }
+  if (model == "zip" | model == "zinb") {
+    ri <- G[i, ]%*%Ci
+    Si[i] <- ri[i]
+    yhat2[i] <- uj[i]
+    yhat[i] <- (uj*(1-exp(njl)/(1+exp(njl))))[i]
+  }
+  # /** creating non-stationarity matrix **/
+  if (method != "adaptive_bsq"){
+    CCC <- cbind(x, w, wt)
+    m1 <- (i-1)*ncol(x)+1
+    m2 <- m1 + (ncol(x)-1)
+    
+    if(det(t(CCC[, 1:ncol(x)])%*%(CCC[, ncol(CCC)-1]*CCC[, 1:ncol(x)]*CCC[, ncol(CCC)])) == 0){
+      BB[m1:m2, ] <- matrix(0, ncol(x), nrow(x))
+    } else {
+      BB[m1:m2, ] <- solve(t(CCC[, 1:ncol(x)])%*%(CCC[, ncol(CCC)-1]*CCC[, 1:ncol(x)]*CCC[, ncol(CCC)]))%*%t(CCC[, 1:ncol(x)])%*%(CCC[, ncol(CCC)-1]*CCC[, ncol(CCC)])
+    }
+    if (model == "zip" || model == "zinb"){
+      CCCl <- cbind(G, w, wt)
+      m1 <- (i-1)*ncol(G)+1
+      m2 <- m1+(ncol(G)-1)
+      
+      if (det(t(CCCl[, 1:ncol(G)])%*%(CCCl[, ncol(CCCl)-1]*CCCl[, 1:ncol(G)]*CCCl[, ncol(CCCl)])) == 0) {
+        BBl[m1:m2, ] <- matrix(0, ncol(G), nrow(G))
+      } else {
+        BBl[m1:m2, ] <- solve(t(CCCl[, 1:ncol(G)])%*%(CCCl[, ncol(CCCl)-1] * CCCl[, 1:ncol(G)]*CCCl[, ncol(CCCl)]))%*%t(CCCl[, 1:ncol(G)])%*%(CCCl[, ncol(CCCl)-1]*CCCl[, ncol(CCCl)])
+      }
+    }
+  }
+  # /*************************************/
+  # substituicao: _w_ <- w_
+  w_ <- w
+  w_ <- sort(w_, 1)
+  sumwi[i] <- sum(w_[1:min(nrow(w_), nrow(w_)*0.1), ])
+  
+  if (i == 1){
+    W_f <- cbind(w, 1:nrow(w))
+  } else {
+    W_f <- rbind(W_f, cbind(W, 1:nrow(w)))
+    # W_f <- as.data.frame(W_f)
+    # View(W_f)
+    # verificar se essas demais linhas fazem sentido 
+  }
+  if (!is.null(grid)) {
+    v1 <- sum(S) + sum(Si)
+    v11 <- sum(S) + sum(Si)
+    v2 <- sum(S2)
+    nparmodel <- n-v11
+    if (v11 < v2) {
+      v1 <- v11
+    }
+    res <- y-yhat
+    rsqr1 <- t(res)%*%res
+    ym <- t(y)%*%y
+    rsqr2 <- ym-sum((y*wt)^2)/sum(wt)
+    rsqr <- 1-rsqr1/rsqr2
+    rsqradj <- 1-((n-1)/(n-v1))*(1-rsqr)
+    sigma2 <- n*rsqr1/((n-v1)*sum(wt))
+    root_mse <- sqrt(sigma2)
+    print(sigma2, label = 'Sigma2e')
+    print(root_mse, label = 'Root MSE')
+    print(v1, label = '#GWR parameters')
+    print(nparmodel, label = '#GWR parameters (model)')
+    print(v2, label = '#GWR parameters (variance)')
+    #sera que todos esses prints fazem sentido? 
+    
+    influence <- S
+    resstd <- res/(sqrt(sigma2)*sqrt(abs(1-influence)))
+    CooksD <- resstd^2*influence/(v1*(1-influence))
+    df <- n-(nvar+ncol(G))
+    stdbi <- sqrt(abs(varbi))
+    tstat <- bi[, 2]/stdbi
+    probt <- 2*(1-pt(abs(tstat), df))
+    malpha <- 0.05*(nvar/v1)
+    #substituicai: _malpha_ <- malpha 
+    
+    if (model == "zip" || model == "zinb") {
+      stdli <- sqrt(abs(varli))
+      tstati <- li[, 2]
+      
+      for (j in 1:nrow(stdli)) {
+        if (stdli[j] == 0) {
+          tstati[j] <- 0
+        } else {
+          tstati[j] <- li[j, 2]/stdli[j]
+        }
+      }
+      tstati <- ifelse(is.na(tstati), 0, tstati)
+      probti <- 2*(1-pt(abs(tstati), df))
+      malpha <- 0.05*((nvar+ncol(G))/v1)
+    }
+    t_critical <- abs(qt(malpha/2, df))
+    par_ <- 1/alphai[, 2] #substituicao: _par_ por par_
+    
+    if (model == "zinb" || model == "zip") {
+      if (any(lambda) == 0) {
+        ll <- sum(-log(0+exp(pihat[pos0])) + log(0*exp(pihat[pos0]) + (par_[pos0]/(par_[pos0]+yhat2[pos0]))^par_[pos0])) +
+        sum(-log(0+exp(pihat[pos1])) + lgamma(par_[pos1]+y[pos1, ]) - lgamma(y[pos1, ]+1) - lgamma(par_[pos1]) +
+        y[pos1]*log(yhat2[pos1]/(par_[pos1]+yhat2[pos1]))+par_[pos1] * log(par_[pos1]/(par_[pos1]+yhat2[pos1])))
+        
+        llnull1 <- sum(-log(1+zk[pos0]) + log(zk[pos0]+(par_[pos0]/(par_[pos0] + y[pos0, ]))^par_[pos0])) +
+        sum(-log(1+zk[pos1])+lgamma(par_[pos1] + y[pos1, ])-lgamma(y[pos1, ]+1) - lgamma(par_[pos1]) +
+        y[pos1]*log(y[pos1, ]/(par_[pos1] + y[pos1, ])) + par_[pos1]*log(par_[pos1]/(par_[pos1] + y[pos1, ])))
+        
+        llnull2 <- sum(-log(1+0) + log(0+(par_/(par_ + mean(y)))^par_)) + #pq log de 1+0? 
+        sum(-log(1+0) + lgamma(par_+y) - lgamma(y+1) - lgamma(par_) +
+        y*log(mean(y)/(par_ + mean(y))) + par_*log(par_/(par_+mean(y))))
+      } else {
+        ll <- sum(-log(1+exp(pihat[pos0])) + log(exp(pihat[pos0]) + (par_[pos0]/(par_[pos0]+yhat2[pos0]))^par_[pos0])) +
+        sum(-log(1+exp(pihat[pos1])) + lgamma(par_[pos1]+y[pos1]) - lgamma(y[pos1]+1) - lgamma(par_[pos1]) +
+        y[pos1]*log(yhat2[pos1]/(par_[pos1]+yhat2[pos1])) + par_[pos1]*log(par_[pos1]/(par_[pos1]+yhat2[pos1])))
+        
+        llnull1 <- sum(-log(1+zk[pos0]) + log(zk[pos0] + (par_[pos0]/(par_[pos0] + y[pos0]))^par_[pos0])) +
+        sum(-log(1 + zk[pos1]) + lgamma(par_[pos1] + y[pos1]) - lgamma(y[pos1]+1) - lgamma(par_[pos1]) +
+        y[pos1]*log(y[pos1]/(par_[pos1]+y[pos1])) + par_[pos1]*log(par_[pos1]/(par_[pos1] + y[pos1])))
+        
+        llnull2 <- sum(-log(1+0) + log(0+(mean(par_)/(mean(par_)+mean(y)))^mean(par_))) +
+        sum(-log(1+0) + lgamma(mean(par_)+y) - lgamma(y+1) - lgamma(mean(par_)) +
+        y*log(mean(y)/(mean(par_)+mean(y))) + mean(par_)*log(mean(par_)/(mean(par_) + mean(y))))
+      }
+      dev <- 2*(llnull1-ll)
+      pctll <- 1-(llnull1-ll)/(llnull1-llnull2)
+      AIC <- 2*v1-2*ll
+      AICc <- AIC+2*(v1*(v1+1)/(n-v1-1))
+      adjpctll <- 1-(llnull1-ll+v1+0.5)/(llnull1-llnull2)
+    }
+  }
+} # fecha gwzinbr 
+
+
+
+
   
   /***********************************************/
     
     %if &grid=%then
-  %do;
-  v1=sum(S)+sum(Si);
-  v11=sum(S)+sum(Si);
-  v2=sum(S2);
-  nparmodel=n-v11;
   
-  if v11<v2 then
-  v1=v11;
-  res=(y-yhat);
-  rsqr1=(res#wt)`*res;
-         ym=(y#wt)`*y;
-             rsqr2=ym-((y#wt)[+]**2)/wt[+];
-                        rsqr=1-rsqr1/rsqr2;
-                        rsqradj=1-((n-1)/(n-v1))*(1-rsqr);
-                        sigma2=n*rsqr1/((n-v1)*wt[+]);
-                        root_mse=sqrt(sigma2);
-                        print sigma2[label='Sigma2e'] root_mse[label='Root MSE'] 
-                        v1[label='#GWR parameters'] nparmodel[label='#GWR parameters (model)'] 
-                        v2[label='#GWR parameters (variance)'];
-                        influence=S;
-                        resstd=res/(sqrt(sigma2)*sqrt(abs(1-influence)));
-                        CooksD=resstd#resstd#influence/(v1*(1-influence));
-                        df=n-(nvar+ncol(G));
-                        stdbi=sqrt(abs(varbi));
-                        tstat=bi[, 2]/stdbi;
-                        probt=2*(1-probt(abs(tstat), df));
-                        _malpha_=0.05*(nvar/v1);
-                        
-                        %if %upcase(&MODEL)=ZIP or %upcase(&MODEL)=ZINB %then
-                        %do;
-                        stdli=sqrt(abs(varli));
-                        tstati=li[, 2];
-                        
-                        do j=1 to nrow(stdli);
-                        
-                        if stdli[j]=0 then
-                        tstati[j]=0;
-                        else
-                          tstati[j]=li[j, 2]/stdli[j];
-                        end;
-                        tstati=choose(tstati=., 0, tstati);
-                        probti=2*(1-probt(abs(tstati), df));
-                        _malpha_=0.05*((nvar+ncol(G))/v1);
-                        %end;
-                        _t_critical_=abs(tinv(_malpha_/2, df));
-                        _par_=1/alphai[, 2];
-                        
-                        %IF %UPCASE(&MODEL)=ZINB or %UPCASE(&MODEL)=ZIP %THEN
-                        %DO;
-                        
-                        if any(lambda)=0 then
-                        do;
-                        ll=sum(-log(0+exp(pihat[pos0]))+log(0*exp(pihat[pos0])+(_par_[pos0]/(_par_[pos0]+yhat2[pos0]))##_par_[pos0]))+
-                                                            sum(-log(0+exp(pihat[pos1]))+lgamma(_par_[pos1]+y[pos1, ])-lgamma(y[pos1, 
-                                                            ]+1)-lgamma(_par_[pos1])+
-                                                              y[pos1]#log(yhat2[pos1]/(_par_[pos1]+yhat2[pos1]))+_par_[pos1]#log(_par_[pos1]/(_par_[pos1]+yhat2[pos1])));
-                                                            llnull1=sum(-log(1+zk[pos0])+log(zk[pos0]+(_par_[pos0]/(_par_[pos0]+y[pos0, 
-                                                            ]))##_par_[pos0]))+
-                                                            sum(-log(1+zk[pos1])+lgamma(_par_[pos1]+y[pos1, ])-lgamma(y[pos1, 
-                                                            ]+1)-lgamma(_par_[pos1])+
-                                                              y[pos1]#log(y[pos1, ]/(_par_[pos1]+y[pos1, 
-                                                            ]))+_par_[pos1]#log(_par_[pos1]/(_par_[pos1]+y[pos1, ])));
-                                                            llnull2=sum(-log(1+0)+log(0+(_par_/(_par_+y[:]))##_par_))+
-                                                                                      sum(-log(1+0)+lgamma(_par_+y)-lgamma(y+1)-lgamma(_par_)+
-                                                                                            y#log(y[:]/(_par_+y[:]))+_par_#log(_par_/(_par_+y[:])));
-                                                                                          end;
-                                                                                          else
-                                                                                            do;
-                                                                                          ll=sum(-log(1+exp(pihat[pos0]))+log(exp(pihat[pos0])+(_par_[pos0]/(_par_[pos0]+yhat2[pos0]))##_par_[pos0]))+
-                                                                                                                              sum(-log(1+exp(pihat[pos1]))+lgamma(_par_[pos1]+y[pos1])-lgamma(y[pos1]+1)-lgamma(_par_[pos1])+
-                                                                                                                                    y[pos1]#log(yhat2[pos1]/(_par_[pos1]+yhat2[pos1]))+_par_[pos1]#log(_par_[pos1]/(_par_[pos1]+yhat2[pos1])));
-                                                                                                                                  llnull1=sum(-log(1+zk[pos0])+log(zk[pos0]+(_par_[pos0]/(_par_[pos0]+y[pos0]))##_par_[pos0]))+
-                                                                                                                                                                   sum(-log(1+zk[pos1])+lgamma(_par_[pos1]+y[pos1])-lgamma(y[pos1]+1)-lgamma(_par_[pos1])+
-                                                                                                                                                                         y[pos1]#log(y[pos1]/(_par_[pos1]+y[pos1]))+_par_[pos1]#log(_par_[pos1]/(_par_[pos1]+y[pos1])));
-                                                                                                                                                                       llnull2=sum(-log(1+0)+log(0+(_par_[:]/(_par_[:]+y[:]))##_par_[:]))+
-                                                                                                                                                                                                 sum(-log(1+0)+lgamma(_par_[:]+y)-lgamma(y+1)-lgamma(_par_[:])+
-                                                                                                                                                                                                       y#log(y[:]/(_par_[:]+y[:]))+_par_[:]#log(_par_[:]/(_par_[:]+y[:])));
-                                                                                                                                                                                                     end;
-                                                                                                                                                                                                     dev=2*(llnull1-ll);
-                                                                                                                                                                                                     pctll=1-(llnull1-ll)/(llnull1-llnull2);
-                                                                                                                                                                                                     AIC=2*v1-2*ll;
-                                                                                                                                                                                                     AICc=AIC+2*(v1*(v1+1)/(n-v1-1));
-                                                                                                                                                                                                     adjpctll=1-(llnull1-ll+v1+0.5)/(llnull1-llnull2);
-                                                                                                                                                                                                     
-                                                                                                                                                                                                     %IF %UPCASE(&MODEL)=ZINB %THEN
-                                                                                                                                                                                                     %DO;
-                                                                                                                                                                                                     AIC=2*(v1+v1/(ncol(x)+ncol(G)))-2*ll;
-                                                                                                                                                                                                     AICc=AIC+2*((v1+v1/(ncol(x)+ncol(G)))*((v1+v1/(ncol(x)+ncol(G)))+1)/(n-(v1+v1/(ncol(x)+ncol(G)))-1));
-                                                                                                                                                                                                     adjpctll=1-(llnull1-ll+(v1+v1/(ncol(x)+ncol(G)))+0.5)/(llnull1-llnull2);
-                                                                                                                                                                                                     %END;
-                                                                                                                                                                                                     print dev[label='Deviance'] ll[label='Full Log Likelihood'] pctll 
-                                                                                                                                                                                                     adjpctll AIC AICc;
-                                                                                                                                                                                                     %END;
-                                                                                                                                                                                                     
-                                                                                                                                                                                                     %IF %UPCASE(&MODEL)=POISSON or %UPCASE(&MODEL)=NEGBIN %THEN
-                                                                                                                                                                                                     %DO;
-                                                                                                                                                                                                     
-                                                                                                                                                                                                     if ncol(pos02)=0 then
-                                                                                                                                                                                                     do;
-                                                                                                                                                                                                     pos0=pos1;
-                                                                                                                                                                                                     pos0x=1;
-                                                                                                                                                                                                     pos0xl=1;
-                                                                                                                                                                                                     end;
-                                                                                                                                                                                                     else
-                                                                                                                                                                                                       do;
-                                                                                                                                                                                                     pos0x=(_par_[pos0]/(_par_[pos0]+yhat[pos0]))##_par_[pos0];
-                                                                                                                                                                                                     pos0xl=(_par_[pos0]/(_par_[pos0]+y[pos0, ]))##_par_[pos0];
-                                                                                                                                                                                                     end;
-                                                                                                                                                                                                     ll=sum(-log(0+exp(pihat[pos0]))+log(0*exp(pihat[pos0])+pos0x))+
-                                                                                                                                                                                                       sum(-log(0+exp(pihat[pos1]))+lgamma(_par_[pos1]+y[pos1, ])-lgamma(y[pos1, 
-                                                                                                                                                                                                       ]+1)-lgamma(_par_[pos1])+
-                                                                                                                                                                                                         y[pos1]#log(yhat[pos1]/(_par_[pos1]+yhat[pos1]))+
-                                                                                                                                                                                                       _par_[pos1]#log(_par_[pos1]/(_par_[pos1]+yhat[pos1])));
-                                                                                                                                                                                                       llnull1=sum(-log(1+zk)+log(zk+pos0xl))+
-                                                                                                                                                                                                         sum(-log(1+zk)+lgamma(_par_[pos1]+y[pos1, ])-lgamma(y[pos1, 
-                                                                                                                                                                                                         ]+1)-lgamma(_par_[pos1])+
-                                                                                                                                                                                                           y[pos1]#log(y[pos1, ]/(_par_[pos1]+y[pos1, 
-                                                                                                                                                                                                         ]))+_par_[pos1]#log(_par_[pos1]/(_par_[pos1]+y[pos1, ])));
-                                                                                                                                                                                                     pos1xx=0+(_par_[pos0]/(_par_[pos0]+y[:]))##_par_[pos0];
-                                                                                                                                                                                                     pos1xx=choose(pos0x<=0, 1E-100, pos0x);
-                                                                                                                                                                                                     llnull2=sum(-log(1+0)+log(pos1xx))+
-                                                                                                                                                                                                       sum(-log(1+0)+lgamma(_par_[pos1]+y[pos1])-lgamma(y[pos1]+1)-lgamma(_par_[pos1])+
-                                                                                                                                                                                                             y[pos1]#log(y[:]/(_par_[pos1]+y[:]))+_par_[pos1]#log(_par_[pos1]/(_par_[pos1]+y[:])));
-                                                                                                                                                                                                           dev=2*(llnull1-ll);
-                                                                                                                                                                                                           AIC=-2*ll+2*v1;
-                                                                                                                                                                                                           AICc=AIC+2*(v1*(v1+1)/(n-v1-1));
-                                                                                                                                                                                                           pctll=1-(llnull1-ll)/(llnull1-llnull2);
-                                                                                                                                                                                                           adjpctll=1-(llnull1-ll+v1+0.5)/(llnull1-llnull2);
-                                                                                                                                                                                                           
-                                                                                                                                                                                                           %IF %UPCASE(&MODEL)=NEGBIN %THEN
-                                                                                                                                                                                                           %DO;
-                                                                                                                                                                                                           AIC=2*(v1+v1/ncol(x))-2*ll;
-                                                                                                                                                                                                           AICc=AIC+2*(v1+v1/ncol(x))*(v1+v1/ncol(x)+1)/(n-(v1+v1/ncol(x))-1);
-                                                                                                                                                                                                           adjpctll=1-(llnull1-ll+v1+v1/ncol(x)+0.5)/(llnull1-llnull2);
-                                                                                                                                                                                                           %END;
-                                                                                                                                                                                                           print dev[label='Deviance'] ll[label='Full Log Likelihood'] pctll 
-                                                                                                                                                                                                           adjpctll AIC AICc;
-                                                                                                                                                                                                           %END;
-                                                                                                                                                                                                           _beta_=shape(bi[, 1:2], n);
-                                                                                                                                                                                                           _beta2_=_beta_;
-                                                                                                                                                                                                           
-                                                                                                                                                                                                           %IF %UPCASE(&MODEL)=NEGBIN or %UPCASE(&MODEL)=ZINB %THEN
-                                                                                                                                                                                                           %DO;
-                                                                                                                                                                                                           _alpha_=shape(alphai[, 1:2], n);
-                                                                                                                                                                                                           _beta2_=_beta_||_alpha_;
-                                                                                                                                                                                                           %END;
-                                                                                                                                                                                                           i=do(2, ncol(_beta_), 2);
-                                                                                                                                                                                                           _beta_=_beta_[, i];
-                                                                                                                                                                                                           i=do(2, ncol(_beta2_), 2);
-                                                                                                                                                                                                           _beta2_=_beta2_[, i];
-                                                                                                                                                                                                           call qntl(qntl, _beta2_);
-                                                                                                                                                                                                           qntl=qntl//(qntl[3, ]-qntl[1, ]);
-                                                                                                                                                                                                           descriptb=_beta2_[:, ]//_beta2_[><, ]//_beta2_[<>, ];
-                                                                                                                                                                                                           print qntl[label="Quantiles of GWR Parameter Estimates" rowname={"P25", 
-                                                                                                                                                                                                             "P50", "P75", "IQR"} colname={'Intercept' &xvar 
-                                                                                                                                                                                                               %IF %UPCASE(&MODEL)=NEGBIN or %UPCASE(&MODEL)=ZINB %THEN
-                                                                                                                                                                                                               %DO;
-                                                                                                                                                                                                               'alpha' %END;
-                                                                                                                                                                                                             }], , descriptb[label="Descriptive Statistics" rowname={"Mean", "Min", 
-                                                                                                                                                                                                               "Max"} colname={'Intercept' &xvar 
-                                                                                                                                                                                                                 %IF %UPCASE(&MODEL)=NEGBIN or %UPCASE(&MODEL)=ZINB %THEN
-                                                                                                                                                                                                                 %DO;
-                                                                                                                                                                                                                 'alpha' %END;
-                                                                                                                                                                                                               }];
-                                                                                                                                                                                                           _stdbeta_=shape(stdbi, n);
-                                                                                                                                                                                                           _stdbeta2_=_stdbeta_;
-                                                                                                                                                                                                           
-                                                                                                                                                                                                           %IF %UPCASE(&MODEL)=NEGBIN or %UPCASE(&MODEL)=ZINB %THEN
-                                                                                                                                                                                                           %DO;
-                                                                                                                                                                                                           _stdalpha_=shape(alphai[, 3], n);
-                                                                                                                                                                                                           _stdbeta2_=_stdbeta_||_stdalpha_;
-                                                                                                                                                                                                           %END;
-                                                                                                                                                                                                           call qntl(qntls, _stdbeta2_);
-                                                                                                                                                                                                           qntls=qntls//(qntls[3, ]-qntls[1, ]);
-                                                                                                                                                                                                           descripts=_stdbeta2_[:, ]//_stdbeta2_[><, ]//_stdbeta2_[<>, ];
-                                                                                                                                                                                                           print _malpha_[label="alpha-level=0.05"] _t_critical_[format=comma6.2 
-                                                                                                                                                                                                                                                                 label="t-Critical"] df;
-                                                                                                                                                                                                           print qntls[label="Quantiles of GWR Standard Errors" rowname={"P25", 
-                                                                                                                                                                                                             "P50", "P75", "IQR"} colname={'Intercept' &xvar 
-                                                                                                                                                                                                               %IF %UPCASE(&MODEL)=NEGBIN or %UPCASE(&MODEL)=ZINB %THEN
-                                                                                                                                                                                                               %DO;
-                                                                                                                                                                                                               'alpha' %END;
-                                                                                                                                                                                                             }], , descripts[label="Descriptive Statistics of Standard Errors" 
-                                                                                                                                                                                                                             rowname={"Mean", "Min", "Max"} colname={'Intercept' &xvar 
-                                                                                                                                                                                                                               %IF %UPCASE(&MODEL)=NEGBIN or %UPCASE(&MODEL)=ZINB %THEN
-                                                                                                                                                                                                                               %DO;
-                                                                                                                                                                                                                               'alpha' %END;
-                                                                                                                                                                                                                             }];
-                                                                                                                                                                                                           
-                                                                                                                                                                                                           %if %upcase(&MODEL)=ZIP or %upcase(&MODEL)=ZINB %then
-                                                                                                                                                                                                           %do;
-                                                                                                                                                                                                           _lambda_=shape(li[, 1:2], n);
-                                                                                                                                                                                                           _lambda2_=_lambda_;
-                                                                                                                                                                                                           i=do(2, ncol(_lambda_), 2);
-                                                                                                                                                                                                           _lambda_=_lambda_[, i];
-                                                                                                                                                                                                           i=do(2, ncol(_lambda2_), 2);
-                                                                                                                                                                                                           _lambda2_=_lambda2_[, i];
-                                                                                                                                                                                                           call qntl(qntl, _lambda2_);
-                                                                                                                                                                                                           qntl=qntl//(qntl[3, ]-qntl[1, ]);
-                                                                                                                                                                                                           descriptl=_lambda2_[:, ]//_lambda2_[><, ]//_lambda2_[<>, ];
-                                                                                                                                                                                                           print qntl[label="Quantiles of GWR Zero Inflation Parameter Estimates" 
-                                                                                                                                                                                                                      rowname={"P25", "P50", "P75", "IQR"} 
-                                                                                                                                                                                                                      %IF %UPCASE(&INT_INF)=YES %THEN
-                                                                                                                                                                                                                      %DO;
-                                                                                                                                                                                                                      colname={'Intercept' &XVARINF}], , %END;
-                                                                                                                                                                                                           %ELSE
-                                                                                                                                                                                                           %DO;
-                                                                                                                                                                                                           colname={&XVARINF}], , %END;
+
+%IF %UPCASE(&MODEL)=ZINB or %UPCASE(&MODEL)=ZIP %THEN
+%DO;
+
+
+%IF %UPCASE(&MODEL)=ZINB %THEN
+%DO;
+AIC=2*(v1+v1/(ncol(x)+ncol(G)))-2*ll;
+AICc=AIC+2*((v1+v1/(ncol(x)+ncol(G)))*((v1+v1/(ncol(x)+ncol(G)))+1)/(n-(v1+v1/(ncol(x)+ncol(G)))-1));
+adjpctll=1-(llnull1-ll+(v1+v1/(ncol(x)+ncol(G)))+0.5)/(llnull1-llnull2);
+%END;
+print dev[label='Deviance'] ll[label='Full Log Likelihood'] pctll 
+adjpctll AIC AICc;
+%END;
+
+%IF %UPCASE(&MODEL)=POISSON or %UPCASE(&MODEL)=NEGBIN %THEN
+%DO;
+
+if ncol(pos02)=0 then
+do;
+pos0=pos1;
+pos0x=1;
+pos0xl=1;
+end;
+else
+ do;
+pos0x=(_par_[pos0]/(_par_[pos0]+yhat[pos0]))##_par_[pos0];
+pos0xl=(_par_[pos0]/(_par_[pos0]+y[pos0, ]))##_par_[pos0];
+end;
+ll=sum(-log(0+exp(pihat[pos0]))+log(0*exp(pihat[pos0])+pos0x))+
+ sum(-log(0+exp(pihat[pos1]))+lgamma(_par_[pos1]+y[pos1, ])-lgamma(y[pos1, 
+ ]+1)-lgamma(_par_[pos1])+
+   y[pos1]#log(yhat[pos1]/(_par_[pos1]+yhat[pos1]))+
+ _par_[pos1]#log(_par_[pos1]/(_par_[pos1]+yhat[pos1])));
+ llnull1=sum(-log(1+zk)+log(zk+pos0xl))+
+   sum(-log(1+zk)+lgamma(_par_[pos1]+y[pos1, ])-lgamma(y[pos1, 
+   ]+1)-lgamma(_par_[pos1])+
+     y[pos1]#log(y[pos1, ]/(_par_[pos1]+y[pos1, 
+   ]))+_par_[pos1]#log(_par_[pos1]/(_par_[pos1]+y[pos1, ])));
+pos1xx=0+(_par_[pos0]/(_par_[pos0]+y[:]))##_par_[pos0];
+pos1xx=choose(pos0x<=0, 1E-100, pos0x);
+llnull2=sum(-log(1+0)+log(pos1xx))+
+ sum(-log(1+0)+lgamma(_par_[pos1]+y[pos1])-lgamma(y[pos1]+1)-lgamma(_par_[pos1])+
+       y[pos1]#log(y[:]/(_par_[pos1]+y[:]))+_par_[pos1]#log(_par_[pos1]/(_par_[pos1]+y[:])));
+     dev=2*(llnull1-ll);
+     AIC=-2*ll+2*v1;
+     AICc=AIC+2*(v1*(v1+1)/(n-v1-1));
+     pctll=1-(llnull1-ll)/(llnull1-llnull2);
+     adjpctll=1-(llnull1-ll+v1+0.5)/(llnull1-llnull2);
+     
+     %IF %UPCASE(&MODEL)=NEGBIN %THEN
+     %DO;
+     AIC=2*(v1+v1/ncol(x))-2*ll;
+     AICc=AIC+2*(v1+v1/ncol(x))*(v1+v1/ncol(x)+1)/(n-(v1+v1/ncol(x))-1);
+     adjpctll=1-(llnull1-ll+v1+v1/ncol(x)+0.5)/(llnull1-llnull2);
+     %END;
+     print dev[label='Deviance'] ll[label='Full Log Likelihood'] pctll 
+     adjpctll AIC AICc;
+     %END;
+     _beta_=shape(bi[, 1:2], n);
+     _beta2_=_beta_;
+     
+     %IF %UPCASE(&MODEL)=NEGBIN or %UPCASE(&MODEL)=ZINB %THEN
+     %DO;
+     _alpha_=shape(alphai[, 1:2], n);
+     _beta2_=_beta_||_alpha_;
+     %END;
+     i=do(2, ncol(_beta_), 2);
+     _beta_=_beta_[, i];
+     i=do(2, ncol(_beta2_), 2);
+     _beta2_=_beta2_[, i];
+     call qntl(qntl, _beta2_);
+     qntl=qntl//(qntl[3, ]-qntl[1, ]);
+     descriptb=_beta2_[:, ]//_beta2_[><, ]//_beta2_[<>, ];
+     print qntl[label="Quantiles of GWR Parameter Estimates" rowname={"P25", 
+       "P50", "P75", "IQR"} colname={'Intercept' &xvar 
+         %IF %UPCASE(&MODEL)=NEGBIN or %UPCASE(&MODEL)=ZINB %THEN
+         %DO;
+         'alpha' %END;
+       }], , descriptb[label="Descriptive Statistics" rowname={"Mean", "Min", 
+         "Max"} colname={'Intercept' &xvar 
+           %IF %UPCASE(&MODEL)=NEGBIN or %UPCASE(&MODEL)=ZINB %THEN
+           %DO;
+           'alpha' %END;
+         }];
+     _stdbeta_=shape(stdbi, n);
+     _stdbeta2_=_stdbeta_;
+     
+     %IF %UPCASE(&MODEL)=NEGBIN or %UPCASE(&MODEL)=ZINB %THEN
+     %DO;
+     _stdalpha_=shape(alphai[, 3], n);
+     _stdbeta2_=_stdbeta_||_stdalpha_;
+     %END;
+     call qntl(qntls, _stdbeta2_);
+     qntls=qntls//(qntls[3, ]-qntls[1, ]);
+     descripts=_stdbeta2_[:, ]//_stdbeta2_[><, ]//_stdbeta2_[<>, ];
+     print _malpha_[label="alpha-level=0.05"] _t_critical_[format=comma6.2 
+                                                           label="t-Critical"] df;
+     print qntls[label="Quantiles of GWR Standard Errors" rowname={"P25", 
+       "P50", "P75", "IQR"} colname={'Intercept' &xvar 
+         %IF %UPCASE(&MODEL)=NEGBIN or %UPCASE(&MODEL)=ZINB %THEN
+         %DO;
+         'alpha' %END;
+       }], , descripts[label="Descriptive Statistics of Standard Errors" 
+                       rowname={"Mean", "Min", "Max"} colname={'Intercept' &xvar 
+                         %IF %UPCASE(&MODEL)=NEGBIN or %UPCASE(&MODEL)=ZINB %THEN
+                         %DO;
+                         'alpha' %END;
+                       }];
+     
+     %if %upcase(&MODEL)=ZIP or %upcase(&MODEL)=ZINB %then
+     %do;
+     _lambda_=shape(li[, 1:2], n);
+     _lambda2_=_lambda_;
+     i=do(2, ncol(_lambda_), 2);
+     _lambda_=_lambda_[, i];
+     i=do(2, ncol(_lambda2_), 2);
+     _lambda2_=_lambda2_[, i];
+     call qntl(qntl, _lambda2_);
+     qntl=qntl//(qntl[3, ]-qntl[1, ]);
+     descriptl=_lambda2_[:, ]//_lambda2_[><, ]//_lambda2_[<>, ];
+     print qntl[label="Quantiles of GWR Zero Inflation Parameter Estimates" 
+                rowname={"P25", "P50", "P75", "IQR"} 
+                %IF %UPCASE(&INT_INF)=YES %THEN
+                %DO;
+                colname={'Intercept' &XVARINF}], , %END;
+     %ELSE
+     %DO;
+     colname={&XVARINF}], , %END;
 descriptl[label="Descriptive Statistics" rowname={"Mean", "Min", "Max"} 
-          %IF %UPCASE(&INT_INF)=YES %THEN
-          %DO;
-          colname={'Intercept' &XVARINF}];
+%IF %UPCASE(&INT_INF)=YES %THEN
+%DO;
+colname={'Intercept' &XVARINF}];
 %END;
 %ELSE
 %DO;
@@ -1097,20 +1088,20 @@ call qntl(qntls, _stdlambda2_);
 qntls=qntls//(qntls[3, ]-qntls[1, ]);
 descriptls=_stdlambda2_[:, ]//_stdlambda2_[><, ]//_stdlambda2_[<>, ];
 print _malpha_[label="alpha-level=0.05"] _t_critical_[format=comma6.2 
-                                                      label="t-Critical"] df;
+label="t-Critical"] df;
 print qntls[label="Quantiles of GWR Zero Inflation Standard Errors" 
-            rowname={"P25", "P50", "P75", "IQR"} 
-            %IF %UPCASE(&INT_INF)=YES %THEN
-            %DO;
-            colname={'Intercept' &XVARINF}], , %END;
+rowname={"P25", "P50", "P75", "IQR"} 
+%IF %UPCASE(&INT_INF)=YES %THEN
+%DO;
+colname={'Intercept' &XVARINF}], , %END;
 %ELSE
 %DO;
 colname={&XVARINF}], , %END;
 descriptls[label="Descriptive Statistics of Zero Inflation Standard Errors" 
-           rowname={"Mean", "Min", "Max"} 
-           %IF %UPCASE(&INT_INF)=YES %THEN
-           %DO;
-           colname={'Intercept' &XVARINF}];
+rowname={"Mean", "Min", "Max"} 
+%IF %UPCASE(&INT_INF)=YES %THEN
+%DO;
+colname={'Intercept' &XVARINF}];
 %END;
 %ELSE
 %DO;
