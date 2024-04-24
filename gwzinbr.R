@@ -932,8 +932,66 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
       AIC <- 2*v1-2*ll
       AICc <- AIC+2*(v1*(v1+1)/(n-v1-1))
       adjpctll <- 1-(llnull1-ll+v1+0.5)/(llnull1-llnull2)
+      
+      if(model == "zinb"){
+        AIC <- 2*(v1+v1/(ncol(x)+ncol(G)))-2*ll
+        AICc <- AIC + 2*((v1+v1/(ncol(x)+ncol(G)))*((v1+v1/(ncol(x)+ncol(G)))+1)/ (n-(v1+v1/(ncol(x)+ncol(G))) - 1))
+        adjpctll <- 1 - (llnull1-ll+(v1+v1/(ncol(x) + ncol(G))) + 0.5) / (llnull1 - llnull2)
+      }
+      print(paste("Deviance:", dev))
+      print(paste("Full Log Likelihood:", ll))
+      print(paste("Pseudo R-squared:", pctll))
+      print(paste("Adjusted Pseudo R-squared:", adjpctll))
+      print(paste("AIC:", AIC))
+      print(paste("AICc:", AICc))
     }
-  }
+    if(model == "poisson" || model == "negbin"){
+      if (ncol(pos02) == 0){ #acredito que podemos substituir ncol por length, mas prefiro manter assim por enquanto
+        pos0 <- pos1
+        pos0x <- rep(1, length(pos1))
+        pos0xl <- rep(1, length(pos1))
+      } else {
+        pos0x <- (par_[pos0]/(par_[pos0] + yhat[pos0]))^par_[pos0]
+        pos0xl <- (par_[pos0]/(par_[pos0] + y[pos0, ]))^par_[pos0]
+      }
+      ll <- sum(-log(0+exp(pihat[pos0])) + log(0*exp(pihat[pos0]) + pos0x)) + sum(-log(0+exp(pihat[pos1])) +
+      lgamma(par_[pos1] + y[pos1, ]) - lgamma(y[pos1, ] + 1) - lgamma(par_[pos1]) + y[pos1]*log(yhat[pos1]/(par_[pos1] + yhat[pos1])) +
+      par_[pos1]*log(par_[pos1]/(par_[pos1] + yhat[pos1])))
+      
+      llnull1 <- sum(-log(1+zk) + log(zk+pos0xl)) + sum(-log(1+zk) + 
+      lgamma(par_[pos1]+y[pos1, ]) - lgamma(y[pos1, ]+1) - lgamma(par_[pos1])+y[pos1]*log(y[pos1, ]/(par_[pos1]+y[pos1, ])) +
+      par_[pos1]*log(par_[pos1]/(par_[pos1] + y[pos1, ])))
+      
+      pos1xx <- 0+(par_[pos0]/(par_[pos0] + mean(y)))*par_[pos0]
+      pos1xx <- ifelse(pos0x <= 0, E^-100, pos0x)
+      
+      llnull2 <- sum(-log(1+0) + log(pos1xx)) +
+      sum(-log(1+0) + lgamma(par_[pos1]+y[pos1]) - lgamma(y[pos1]+1) - lgamma(par_[pos1]) +
+      y[pos1]*log(mean(y)/(par_[pos1]+ mean(y))) + par_[pos1]*log(par_[pos1]/(par_[pos1]+ mean(y))))
+      
+      dev <- 2*(llnull1-ll)
+      AIC <- -2*ll+2*v1
+      AICc <- AIC+2*(v1*(v1+1)/(n-v1-1))
+      pctll <- 1-(llnull1-ll)/(llnull1-llnull2)
+      adjpctll <- 1-(llnull1-ll+v1+0.5)/(llnull1-llnull2)
+      
+      if(model == "negbin"){
+        AIC <- 2*(v1+v1/ncol(x))-2*ll
+        AICc <- AIC+2*(v1+v1/ncol(x))*(v1+v1/ncol(x)+1)/(n-(v1+v1/ncol(x))-1)
+        adjpctll <- 1-(llnull1-ll+v1+v1/ncol(x)+0.5)/(llnull1-llnull2)
+      }
+      print(paste("Deviance:", dev))
+      print(paste("Full Log Likelihood:", ll))
+      print(paste("Pctll:", pctll))
+      print(paste("AdjPctll:", adjpctll))
+      print(paste("AIC:", AIC))
+      print(paste("AICc:", AICc))
+    }
+    # substituicoes: _beta_ por beta_ ; _beta2_ por beta2_
+    beta_ <- matrix(bi[, 1:2], nrow = n) #shape: cria matriz a partir de outra matriz. Conferir se isso funciona no  R
+    beta2_ <- beta_
+    
+  } # ainda nao tenho certeza de onde esse grid fecha no SAS 
 } # fecha gwzinbr 
 
 
@@ -944,68 +1002,6 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
     
     %if &grid=%then
   
-
-%IF %UPCASE(&MODEL)=ZINB or %UPCASE(&MODEL)=ZIP %THEN
-%DO;
-
-
-%IF %UPCASE(&MODEL)=ZINB %THEN
-%DO;
-AIC=2*(v1+v1/(ncol(x)+ncol(G)))-2*ll;
-AICc=AIC+2*((v1+v1/(ncol(x)+ncol(G)))*((v1+v1/(ncol(x)+ncol(G)))+1)/(n-(v1+v1/(ncol(x)+ncol(G)))-1));
-adjpctll=1-(llnull1-ll+(v1+v1/(ncol(x)+ncol(G)))+0.5)/(llnull1-llnull2);
-%END;
-print dev[label='Deviance'] ll[label='Full Log Likelihood'] pctll 
-adjpctll AIC AICc;
-%END;
-
-%IF %UPCASE(&MODEL)=POISSON or %UPCASE(&MODEL)=NEGBIN %THEN
-%DO;
-
-if ncol(pos02)=0 then
-do;
-pos0=pos1;
-pos0x=1;
-pos0xl=1;
-end;
-else
- do;
-pos0x=(_par_[pos0]/(_par_[pos0]+yhat[pos0]))##_par_[pos0];
-pos0xl=(_par_[pos0]/(_par_[pos0]+y[pos0, ]))##_par_[pos0];
-end;
-ll=sum(-log(0+exp(pihat[pos0]))+log(0*exp(pihat[pos0])+pos0x))+
- sum(-log(0+exp(pihat[pos1]))+lgamma(_par_[pos1]+y[pos1, ])-lgamma(y[pos1, 
- ]+1)-lgamma(_par_[pos1])+
-   y[pos1]#log(yhat[pos1]/(_par_[pos1]+yhat[pos1]))+
- _par_[pos1]#log(_par_[pos1]/(_par_[pos1]+yhat[pos1])));
- llnull1=sum(-log(1+zk)+log(zk+pos0xl))+
-   sum(-log(1+zk)+lgamma(_par_[pos1]+y[pos1, ])-lgamma(y[pos1, 
-   ]+1)-lgamma(_par_[pos1])+
-     y[pos1]#log(y[pos1, ]/(_par_[pos1]+y[pos1, 
-   ]))+_par_[pos1]#log(_par_[pos1]/(_par_[pos1]+y[pos1, ])));
-pos1xx=0+(_par_[pos0]/(_par_[pos0]+y[:]))##_par_[pos0];
-pos1xx=choose(pos0x<=0, 1E-100, pos0x);
-llnull2=sum(-log(1+0)+log(pos1xx))+
- sum(-log(1+0)+lgamma(_par_[pos1]+y[pos1])-lgamma(y[pos1]+1)-lgamma(_par_[pos1])+
-       y[pos1]#log(y[:]/(_par_[pos1]+y[:]))+_par_[pos1]#log(_par_[pos1]/(_par_[pos1]+y[:])));
-     dev=2*(llnull1-ll);
-     AIC=-2*ll+2*v1;
-     AICc=AIC+2*(v1*(v1+1)/(n-v1-1));
-     pctll=1-(llnull1-ll)/(llnull1-llnull2);
-     adjpctll=1-(llnull1-ll+v1+0.5)/(llnull1-llnull2);
-     
-     %IF %UPCASE(&MODEL)=NEGBIN %THEN
-     %DO;
-     AIC=2*(v1+v1/ncol(x))-2*ll;
-     AICc=AIC+2*(v1+v1/ncol(x))*(v1+v1/ncol(x)+1)/(n-(v1+v1/ncol(x))-1);
-     adjpctll=1-(llnull1-ll+v1+v1/ncol(x)+0.5)/(llnull1-llnull2);
-     %END;
-     print dev[label='Deviance'] ll[label='Full Log Likelihood'] pctll 
-     adjpctll AIC AICc;
-     %END;
-     _beta_=shape(bi[, 1:2], n);
-     _beta2_=_beta_;
-     
      %IF %UPCASE(&MODEL)=NEGBIN or %UPCASE(&MODEL)=ZINB %THEN
      %DO;
      _alpha_=shape(alphai[, 1:2], n);
