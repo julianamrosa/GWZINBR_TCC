@@ -104,7 +104,7 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
     devg <- 0
     ddev <- 1
     cont2 <- 0
-    while (abs(ddev)>0.000001 & cont2<100){
+    while (abs(ddev)>0.000001 & cont2<200){
       Ai <- (uj/(1+alphag*uj))+(y-uj)*(alphag*uj/(1+2*alphag*uj+alphag^2*uj*uj))
       Ai <- ifelse(Ai<=0,E^-5,Ai)
       zj <- nj+(y-uj)/(Ai*(1+alphag*uj))-Offset
@@ -279,12 +279,12 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
         Ai <- pig*(1-pig)
         Ai <- ifelse(Ai<=0, E^-5, Ai)
         zj <- njl+(zkg-pig)*1/Ai
-        if (det(t(G)%*%(Ai*G))==0){ #se der erro, conferir aqui
+        if (det(t(G)%*%(Ai*G))==0){ 
           lambdag <- matrix(0, ncol(G), 1)
         }  
         else {
           #lambdag <<- solve(t(G*Ai)%*%G)%*%t(G*Ai)%*%zj
-          lambdag <- solve(t(G)%*%(Ai%*%G))%*%t(G)*(Ai%*%zj) #se der erro, conferir aqui tbm
+          lambdag <- solve(t(G)%*%(Ai*G))%*%t(G)*(Ai*zj)
         }
         njl <- G%*%lambdag
         njl <- ifelse(njl > maxg, maxg, njl)
@@ -326,9 +326,9 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
   dlb <- Iy*(parg*exp(njl)*g1x^parg*g2x/hgx^2)
   I1 <- matrix(1, nrow(y), 1)
   # II <- -(t(I1) %*% daa) %*% I1 || -(t(I1) %*% dab) %*% X || -(t(I1) %*% dal) %*% G // (-t(X) %*% (dab * I1) || -t(X) %*% dbb %*% X || -t(X) %*% dlb %*% G) // (-t(G) %*% (dal * I1) || -t(G) %*% (X %*% dlb) || -t(G) %*% t(G) %*% dll %*% G)
-  II <- rbind(cbind(-(t(I1) %*% daa) %*% I1, -(t(I1) %*% dab) %*% x, -(t(I1) %*% dal) %*% G), 
-              cbind(-(t(x) %*% (dab * I1)), -t(x) %*% dbb %*% x, -t(x) %*% dlb %*% G), 
-              cbind(-(t(G) %*% (dal * I1)), -t(G) %*% (x %*% dlb),  -t(G) %*% t(G) %*% dll %*% G)) #revisar
+  II <- rbind(cbind(-(t(I1 * daa)) %*% I1, -(t(I1 * dab)) %*% x, -(t(I1 * dal)) %*% G), 
+              cbind(-(t(x) %*% (dab * I1)), -t(x * dbb) %*% x, -t(x * dlb) %*% G), 
+              cbind(-(t(G) %*% (dal * I1)), -t(G) %*% (x * dlb), -t(G * dll) %*% G))
   if (all(lambdag)>0 & alphag==E^-6){
     II <- II[2:nrow(II), 2:nrow(II)]
   }
@@ -699,23 +699,23 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
     dbb <- w*wt*(Iy*(-(par*g1x^par*g2x/hgx)^2 + par^2*g1x^par*g2x^2*(1 - 1/uj)/hgx)-(1 - Iy)*(par*g2x*(1 + (y-uj) / (par+uj))))
     if(det(t(x%*%dbb%*%dbb/Ai) %*% x) == 0){
       II <- rbind(
-        cbind(-(t(I1)%*%daa)%*%I1, -(t(I1)%*%dab)%*%x, -(t(I1)%*%dal)%*%G),
-        cbind(-t(x)%*%(dab%*%I1), -(t(x%*%dbb)%*%x), -t(x%*%dlb)%*%G),
-        cbind(-t(G)%*%(dal%*%I1), -t(G)%*%(x%*%dlb), -(t(G%*%dll)%*%G))
+        cbind(-(t(I1*daa))%*%I1, -(t(I1*dab))%*%x, -(t(I1*dal))%*%G),
+        cbind(-t(x)%*%(dab*I1), -(t(x*dbb)%*%x), -t(x*dlb)%*%G),
+        cbind(-t(G)%*%(dal*I1), -t(G)%*%(x*dlb), -(t(G*dll)%*%G))
       )   
     }
     else{
       II <- rbind(
-        cbind(-t(I1%*%daa)%*%I1, -t(I1%*%dab)%*%x, -t(I1%*%dal)%*%G),
-        cbind(-t(x)%*%(dab%*%I1), -(t(x%*%dbb)%*%x)%*%solve(t(x%*%dbb%*%dbb/Ai)%*%x)%*%t(x%*%dbb)%*%x, -(t(x%*%dlb)%*%G)),
-        cbind(-t(G)%*%(dal%*%I1), -t(G)%*%(x%*%dlb), -t(G%*%dll)%*%G)      
+        cbind(-t(I1*daa)%*%I1, -t(I1*dab)%*%x, -t(I1*dal)%*%G),
+        cbind(-t(x)%*%(dab*I1), -(t(x*dbb)%*%x)%*%solve(t(x*dbb*dbb/Ai)%*%x)%*%t(x*dbb)%*%x, -(t(x*dlb)%*%G)),
+        cbind(-t(G)%*%(dal*I1), -t(G)%*%(x*dlb), -t(G*dll)%*%G)      
       )   
     }
   } else{
     II <- rbind(
-      cbind(-t(I1%*%daa)%*%I1, -t(I1%*%dab)%*%x, -t(I1%*%dal)%*%G),
-      cbind(-t(x)%*%(dab%*%I1), -(t(x%*%dbb)%*%x), -t(x%*%dlb)%*%G),
-      cbind(-t(G)%*%(dal%*%I1), -t(G)%*%(x%*%dlb), -t(G%*%dll)%*%G)
+      cbind(-t(I1*daa)%*%I1, -t(I1*dab)%*%x, -t(I1*dal)%*%G),
+      cbind(-t(x)%*%(dab*I1), -(t(x*dbb)%*%x), -t(x*dlb)%*%G),
+      cbind(-t(G)%*%(dal*I1), -t(G)%*%(x*dlb), -t(G*dll)%*%G)
     )     
   }
   if (all(lambda) > 0 & alpha == E^-6) {
@@ -767,7 +767,7 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
     varl <- varabetalambda[(ncol(x)+1):nrow(varabetalambda), ]
     alphai[i, 1] <- i
     alphai[i, 2] <- alpha
-    alphai[i, 3] <- sqrt(1/abs(-(t(I1%*%daa))%*%I1))
+    alphai[i, 3] <- sqrt(1/abs(-(t(I1*daa))%*%I1))
   } else if (any(lambda) == 0 & alpha > E^-6) {
     varb <- varabetalambda[2:(ncol(x)+1), ]
     varl <- matrix(0, ncol(G), 1)
@@ -779,7 +779,7 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
     varl <- matrix(0, ncol(G), 1)
     alphai[i, 1] <- i
     alphai[i, 2] <- alpha
-    alphai[i, 3] <- sqrt(1/abs(-(t(I1%*%daa))%*%I1))
+    alphai[i, 3] <- sqrt(1/abs(-(t(I1*daa))%*%I1))
   }
   
   # /*******************************/
@@ -801,7 +801,7 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
     varli[m1:m2, 1] <- varl
   }
   if (is.null(grid)) {
-    r <- x[i, ]%*%C #multiplicação vetor por matriz
+    r <- x[i, ]%*%C 
     S[i] <- r[i]
     S2[i] <- r%*%t(r)
     yhat[i] <- uj[i]
@@ -822,7 +822,7 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
     if(det(t(CCC[, 1:ncol(x)])%*%(CCC[, ncol(CCC)-1]*CCC[, 1:ncol(x)]*CCC[, ncol(CCC)])) == 0){
       BB[m1:m2, ] <- matrix(0, ncol(x), nrow(x))
     } else {
-      BB[m1:m2, ] <- solve(t(CCC[, 1:ncol(x)])%*%(CCC[, ncol(CCC)-1]*CCC[, 1:ncol(x)]*CCC[, ncol(CCC)]))%*%t(CCC[, 1:ncol(x)])%*%(CCC[, ncol(CCC)-1]*CCC[, ncol(CCC)])
+      BB[m1:m2, ] <- solve(t(CCC[, 1:ncol(x)])%*%(CCC[, ncol(CCC)-1]*CCC[, 1:ncol(x)]*CCC[, ncol(CCC)]))%*%t(CCC[, 1:ncol(x)])*(CCC[, ncol(CCC)-1]*CCC[, ncol(CCC)])
     }
     if (model == "zip" || model == "zinb"){
       CCCl <- cbind(G, w, wt)
@@ -832,7 +832,7 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
       if (det(t(CCCl[, 1:ncol(G)])%*%(CCCl[, ncol(CCCl)-1]*CCCl[, 1:ncol(G)]*CCCl[, ncol(CCCl)])) == 0) {
         BBl[m1:m2, ] <- matrix(0, ncol(G), nrow(G))
       } else {
-        BBl[m1:m2, ] <- solve(t(CCCl[, 1:ncol(G)])%*%(CCCl[, ncol(CCCl)-1] * CCCl[, 1:ncol(G)]*CCCl[, ncol(CCCl)]))%*%t(CCCl[, 1:ncol(G)])%*%(CCCl[, ncol(CCCl)-1]*CCCl[, ncol(CCCl)])
+        BBl[m1:m2, ] <- solve(t(CCCl[, 1:ncol(G)])%*%(CCCl[, ncol(CCCl)-1] * CCCl[, 1:ncol(G)]*CCCl[, ncol(CCCl)]))%*%t(CCCl[, 1:ncol(G)])*(CCCl[, ncol(CCCl)-1]*CCCl[, ncol(CCCl)])
       }
     }
   }
@@ -859,8 +859,8 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
       v1 <- v11
     }
     res <- y-yhat
-    rsqr1 <- t(res)%*%res
-    ym <- t(y)%*%y
+    rsqr1 <- t(res*wt)%*%res
+    ym <- t(y*wt)%*%y
     rsqr2 <- ym-sum((y*wt)^2)/sum(wt)
     rsqr <- 1-rsqr1/rsqr2
     rsqradj <- 1-((n-1)/(n-v1))*(1-rsqr)
@@ -988,32 +988,29 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
       print(paste("AICc:", AICc))
     }
     # substituicoes: _beta_ por beta_ ; _beta2_ por beta2_
-    beta_ <- matrix(bi[, 1:2], nrow = n) #shape: cria matriz a partir de outra matriz. Conferir se isso funciona no  R
+    beta_ <- matrix(bi[, 1:2], nrow = n) #shape: cria matriz a partir de outra matriz. Conferir se resultado eh o mesmo no SAS
     beta2_ <- beta_
+    if(model == "negbin" || model == "zinb"){
+      alpha_= matrix(alphai[, 1:2], n);
+      beta2_= cbind(beta_, alpha_)
+    }
+    i <- seq(2, ncol(beta_), 2)  
+    beta_ <- beta_[, i]         
+    i <- seq(2, ncol(beta2_), 2) 
+    beta2_ <- beta2_[, i]
+    qntl <- quantile(beta2_)
+    qntl <- rbind(qntl, qntl[3, ]-qntl[1, ])
+    descriptb <- rbind(rowMeans(beta2_), apply(beta2_, 1, "min"), apply(beta2_, 1, "max"))
+  
     
   } # ainda nao tenho certeza de onde esse grid fecha no SAS 
 } # fecha gwzinbr 
 
 
 
-
-  
   /***********************************************/
     
     %if &grid=%then
-  
-     %IF %UPCASE(&MODEL)=NEGBIN or %UPCASE(&MODEL)=ZINB %THEN
-     %DO;
-     _alpha_=shape(alphai[, 1:2], n);
-     _beta2_=_beta_||_alpha_;
-     %END;
-     i=do(2, ncol(_beta_), 2);
-     _beta_=_beta_[, i];
-     i=do(2, ncol(_beta2_), 2);
-     _beta2_=_beta2_[, i];
-     call qntl(qntl, _beta2_);
-     qntl=qntl//(qntl[3, ]-qntl[1, ]);
-     descriptb=_beta2_[:, ]//_beta2_[><, ]//_beta2_[<>, ];
      print qntl[label="Quantiles of GWR Parameter Estimates" rowname={"P25", 
        "P50", "P75", "IQR"} colname={'Intercept' &xvar 
          %IF %UPCASE(&MODEL)=NEGBIN or %UPCASE(&MODEL)=ZINB %THEN
