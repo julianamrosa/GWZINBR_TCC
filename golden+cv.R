@@ -196,8 +196,8 @@ Golden <- function(data, formula, xvarinf, weight,
     pargg <- parg
     #ujg <<- uj
     ujg <- uj
-    if (is.null(nrow(pos0)) | any(lambdag)==0){ 
-      if (is.null(nrow(pos0))) {
+    if (length(pos0)==0 | !any(lambdag)){ 
+      if (length(pos0)==0) {
         #pos0 <<- pos1
         pos0 <- pos1
         if (model=="zinb" | model=="zip"){
@@ -208,7 +208,8 @@ Golden <- function(data, formula, xvarinf, weight,
         model <- "negbin"
       }
     }
-  } #para o teste que estamos rodando, o SAS e o R nao entram aqui
+    #print(model) #flag 29/04
+  }
   njl <- G%*%lambdag
   if (model!="zip" & model!="zinb"){
     zkg <- 0
@@ -332,7 +333,7 @@ Golden <- function(data, formula, xvarinf, weight,
       contador3 <- 0
       while (abs(ddev)>0.000001 & aux3<100){
         contador3 <- contador3 + 1
-        Ai <- pig*(1-pig)
+        Ai <- as.vector(pig*(1-pig))
         Ai <- ifelse(Ai<=0, E^-5, Ai)
         zj <- njl+(zkg-pig)*1/Ai
         if (det(t(G*Ai)%*%G)==0){
@@ -642,7 +643,7 @@ Golden <- function(data, formula, xvarinf, weight,
             contador6 <- 0
             while (abs(ddev)>0.000001 & aux3<100){
               contador6 <- contador6+1
-              Aii <- pi*(1-pi)
+              Aii <- as.vector(pi*(1-pi))
               Aii <- ifelse(Aii<=0, E^-5, Aii)	
               zj <- njl+(zk-pi)/Aii
               if (det(t(G*Aii*w*wt)%*%G)==0){ #multiplicador
