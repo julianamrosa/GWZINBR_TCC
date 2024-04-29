@@ -344,10 +344,18 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
   # *print bg lambdag alphag devg llikeg stdabetalambdag;
   
             # /*****************************************/
-  
+  print(c("bandwidth", h))
   long <- unlist(data[, long])
   lat <- unlist(data[, lat])
   COORD <- matrix(c(long, lat), ncol=2)
+  if (is.null(grid)){
+    POINTS <- matrix(c(long, lat), ncol=2)
+  }
+  else{
+    long2 <- unlist(grid[, long])
+    lat2 <- unlist(grid[, lat])
+    POINTS <- matrix(c(long2, lat2), ncol=2)
+  }
   mm <- nrow(COORD) #substituicao: 'm' por 'mm', pois m representa nosso modelo no R
   bi <- matrix(0, ncol(x)*mm, 4)
   li <- matrix(0, ncol(G)*mm, 4)
@@ -403,27 +411,26 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
         }
         w[jj, 2] <- dist[jj, 2]
       }
-    }
-    if (method == "adaptive_bsq"){
-      distan <- distan[order(distan[, 3]),]
-      distan <- cbind(distan, 1:N)
-      w <- matrix(0,N,2)
-      hn <- dist[h, 3]
-      
-      for (jj in 1:n) {
-        if (dist[jj, 4] <= h) {
-          w[jj, 1] <- (1 - (dist[jj, 3] / hn)^2)^2
-        } else {
-          w[jj, 1] <- 0
-        }
-        w[jj, 2] <- dist[jj, 2]
-      }
-      
       w <- w[order(w[, 2]), 1]
     }
-    # obs: Uma condicional exatamente igual a anterior (if(method=="adaptive_bsq)) viria logo a seguir
-    # so que fora do if(grid), que foi retirado do R
-    # ver com o professor Alan se é correto 
+    # if (method == "adaptive_bsq"){
+    #   distan <- distan[order(distan[,3]),]
+    #   distan <- cbind(distan, 1:N)
+    #   w <- matrix(0,N,2)
+    #   hn <- distan[h,3]
+    #   
+    #   for (jj in 1:N) {
+    #     if(dist[jj, 4] <= h){
+    #       w[jj, 1] <- (1 -(dist[jj, 3]/hn)^2)^2
+    #     }
+    #     else{
+    #       w[jj, 1] <- 0
+    #     }
+    #     w[jj, 2] <- dist[jj, 2]
+    #   }
+    #   w <- w[order(w[, 2]), 1]
+    # }
+    # obs: essa condicional é igual à anterior
   }
   # /****** MODEL SELECTION *************/
   Iy <- Iy2
@@ -850,7 +857,7 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
     # View(W_f)
     # verificar se essas demais linhas fazem sentido 
   }
-  if (!is.null(grid)) {
+  if (is.null(grid)) {
     v1 <- sum(S) + sum(Si)
     v11 <- sum(S) + sum(Si)
     v2 <- sum(S2)
@@ -866,11 +873,11 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
     rsqradj <- 1-((n-1)/(n-v1))*(1-rsqr)
     sigma2 <- n*rsqr1/((n-v1)*sum(wt))
     root_mse <- sqrt(sigma2)
-    print(sigma2, label = 'Sigma2e')
-    print(root_mse, label = 'Root MSE')
-    print(v1, label = '#GWR parameters')
-    print(nparmodel, label = '#GWR parameters (model)')
-    print(v2, label = '#GWR parameters (variance)')
+    print(c('Sigma2e', sigma2))
+    print(c('Root MSE', root_mse))
+    print(c('#GWR parameters', v1))
+    print(c('#GWR parameters (model)', nparmodel))
+    print(c('#GWR parameters (variance)', v2))
     #sera que todos esses prints fazem sentido? 
     
     influence <- S
@@ -988,7 +995,7 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
       print(paste("AICc:", AICc))
     }
     # substituicoes: _beta_ por beta_ ; _beta2_ por beta2_
-    beta_ <- matrix(bi[, 1:2], nrow = n) #shape: cria matriz a partir de outra matriz. Conferir se resultado eh o mesmo no SAS
+    beta_ <- matrix(bi[, 1:2], nrow = N, byrow=TRUE) #shape: cria matriz a partir de outra matriz. Conferir se resultado eh o mesmo no SAS
     beta2_ <- beta_
     if(model == "negbin" || model == "zinb"){
       alpha_= matrix(alphai[, 1:2], n);
@@ -998,941 +1005,524 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
     beta_ <- beta_[, i]         
     i <- seq(2, ncol(beta2_), 2) 
     beta2_ <- beta2_[, i]
-    qntl <- quantile(beta2_)
-    qntl <- rbind(qntl, qntl[3, ]-qntl[1, ])
-    descriptb <- rbind(rowMeans(beta2_), apply(beta2_, 1, "min"), apply(beta2_, 1, "max"))
-  
-    
-  } # ainda nao tenho certeza de onde esse grid fecha no SAS 
-} # fecha gwzinbr 
-
-
-
-  /***********************************************/
-    
-    %if &grid=%then
-     print qntl[label="Quantiles of GWR Parameter Estimates" rowname={"P25", 
-       "P50", "P75", "IQR"} colname={'Intercept' &xvar 
-         %IF %UPCASE(&MODEL)=NEGBIN or %UPCASE(&MODEL)=ZINB %THEN
-         %DO;
-         'alpha' %END;
-       }], , descriptb[label="Descriptive Statistics" rowname={"Mean", "Min", 
-         "Max"} colname={'Intercept' &xvar 
-           %IF %UPCASE(&MODEL)=NEGBIN or %UPCASE(&MODEL)=ZINB %THEN
-           %DO;
-           'alpha' %END;
-         }];
-     _stdbeta_=shape(stdbi, n);
-     _stdbeta2_=_stdbeta_;
-     
-     %IF %UPCASE(&MODEL)=NEGBIN or %UPCASE(&MODEL)=ZINB %THEN
-     %DO;
-     _stdalpha_=shape(alphai[, 3], n);
-     _stdbeta2_=_stdbeta_||_stdalpha_;
-     %END;
-     call qntl(qntls, _stdbeta2_);
-     qntls=qntls//(qntls[3, ]-qntls[1, ]);
-     descripts=_stdbeta2_[:, ]//_stdbeta2_[><, ]//_stdbeta2_[<>, ];
-     print _malpha_[label="alpha-level=0.05"] _t_critical_[format=comma6.2 
-                                                           label="t-Critical"] df;
-     print qntls[label="Quantiles of GWR Standard Errors" rowname={"P25", 
-       "P50", "P75", "IQR"} colname={'Intercept' &xvar 
-         %IF %UPCASE(&MODEL)=NEGBIN or %UPCASE(&MODEL)=ZINB %THEN
-         %DO;
-         'alpha' %END;
-       }], , descripts[label="Descriptive Statistics of Standard Errors" 
-                       rowname={"Mean", "Min", "Max"} colname={'Intercept' &xvar 
-                         %IF %UPCASE(&MODEL)=NEGBIN or %UPCASE(&MODEL)=ZINB %THEN
-                         %DO;
-                         'alpha' %END;
-                       }];
-     
-     %if %upcase(&MODEL)=ZIP or %upcase(&MODEL)=ZINB %then
-     %do;
-     _lambda_=shape(li[, 1:2], n);
-     _lambda2_=_lambda_;
-     i=do(2, ncol(_lambda_), 2);
-     _lambda_=_lambda_[, i];
-     i=do(2, ncol(_lambda2_), 2);
-     _lambda2_=_lambda2_[, i];
-     call qntl(qntl, _lambda2_);
-     qntl=qntl//(qntl[3, ]-qntl[1, ]);
-     descriptl=_lambda2_[:, ]//_lambda2_[><, ]//_lambda2_[<>, ];
-     print qntl[label="Quantiles of GWR Zero Inflation Parameter Estimates" 
-                rowname={"P25", "P50", "P75", "IQR"} 
-                %IF %UPCASE(&INT_INF)=YES %THEN
-                %DO;
-                colname={'Intercept' &XVARINF}], , %END;
-     %ELSE
-     %DO;
-     colname={&XVARINF}], , %END;
-descriptl[label="Descriptive Statistics" rowname={"Mean", "Min", "Max"} 
-%IF %UPCASE(&INT_INF)=YES %THEN
-%DO;
-colname={'Intercept' &XVARINF}];
-%END;
-%ELSE
-%DO;
-colname={&XVARINF}];
-%END;
-_stdlambda_=shape(stdli, n);
-_stdlambda2_=_stdlambda_;
-call qntl(qntls, _stdlambda2_);
-qntls=qntls//(qntls[3, ]-qntls[1, ]);
-descriptls=_stdlambda2_[:, ]//_stdlambda2_[><, ]//_stdlambda2_[<>, ];
-print _malpha_[label="alpha-level=0.05"] _t_critical_[format=comma6.2 
-label="t-Critical"] df;
-print qntls[label="Quantiles of GWR Zero Inflation Standard Errors" 
-rowname={"P25", "P50", "P75", "IQR"} 
-%IF %UPCASE(&INT_INF)=YES %THEN
-%DO;
-colname={'Intercept' &XVARINF}], , %END;
-%ELSE
-%DO;
-colname={&XVARINF}], , %END;
-descriptls[label="Descriptive Statistics of Zero Inflation Standard Errors" 
-rowname={"Mean", "Min", "Max"} 
-%IF %UPCASE(&INT_INF)=YES %THEN
-%DO;
-colname={'Intercept' &XVARINF}];
-%END;
-%ELSE
-%DO;
-colname={&XVARINF}];
-%END;
-%end;
-%end;
-
-/****** Non-Stationarity Test *****************/
-  
-  %if &grid=%then
-%do;
-
-%IF %UPCASE(&METHOD) ne ADAPTIVE_BSQ %THEN
-%DO;
-BBk=j(n, n, 0);
-Vk=j(ncol(x), 1, 0);
-df1k=j(ncol(x), 1, 0);
-df2k=j(ncol(x), 1, 0);
-
-do k=1 to ncol(x);
-ek=j(ncol(x), 1, 0);
-ek[k]=1;
-
-do i=1 to n;
-m1=(i-1)*ncol(x)+1;
-m2=m1+(ncol(x)-1);
-BBk[i, ]=ek`*BB[m1:m2, ];
-end;
-Vk[k]=y`*(1/n)*BBk`*(I(n)-(1/n)*J(n, n, 1))*BBk*y;
-df1k[k]=trace((1/n)*BBk`*(I(n)-(1/n)*J(n, n, 1))*BBk);
-df2k[k]=trace(((1/n)*BBk`*(I(n)-(1/n)*J(n, n, 1))*BBk)**2);
-end;
-Vk=choose(abs(Vk)<=1E-8, 0, Vk);
-Fk=(Vk/df1k)/sigma2;
-ndf=df1k##2/df2k;
-ddf=n-v1;
-ddf=repeat(ddf, ncol(x));
-probf=1-probf(Fk, ndf, ddf);
-print , , "Non-Stationarity Test (Leung et al., 2000)", , Vk[label='' 
-                                                             rowname={'Intercept' &xvar} colname={"V"}] Fk[label='' colname={"F"}] 
-ndf ddf probf[format=pvalue6. label="Pr > F"];
-
-%if %upcase(&MODEL)=ZIP or %upcase(&MODEL)=ZINB %then
-%do;
-BBkl=j(n, n, 0);
-Vkl=j(ncol(G), 1, 0);
-df1kl=j(ncol(G), 1, 0);
-df2kl=j(ncol(G), 1, 0);
-
-do k=1 to ncol(G);
-ekl=j(ncol(G), 1, 0);
-ekl[k]=1;
-
-do i=1 to n;
-m1=(i-1)*ncol(G)+1;
-m2=m1+(ncol(G)-1);
-BBkl[i, ]=ekl`*BBl[m1:m2, ];
-end;
-Vkl[k]=y`*(1/n)*BBkl`*(I(n)-(1/n)*J(n, n, 1))*BBkl*y;
-df1kl[k]=trace((1/n)*BBkl`*(I(n)-(1/n)*J(n, n, 1))*BBkl);
-df2kl[k]=trace(((1/n)*BBkl`*(I(n)-(1/n)*J(n, n, 1))*BBkl)**2);
-end;
-Vkl=choose(abs(Vkl)<=1E-8, 0, Vkl);
-Fkl=(Vkl/df1kl)/sigma2;
-ndfl=df1kl##2/df2kl;
-ddfl=n-v1;
-ddfl=repeat(ddfl, ncol(G));
-probfl=1-probf(Fkl, ndfl, ddfl);
-print , , 
-"Non-Stationarity Test (Leung et al., 2000) - Zero Inflation", , 
-%IF %UPCASE(&INT_INF)=YES %THEN
-%DO;
-Vkl[label='' rowname={'Intercept' &XVARINF} %END;
-    %ELSE
-    %DO;
-    Vkl[label='' rowname={&XVARINF} %END;
-        colname={"V"}] Fkl[label='' colname={"F"}] ndfl ddfl 
-    probfl[format=pvalue6. label="Pr > F"];
-    %end;
-    %END;
-    %end;
-    
-    /***** global estimates ***************/
-      
-      
-      %IF &WEIGHT=%THEN
-    %DO;
-    dfg=n-nvar;
-    %END;
-    
-    %IF %UPCASE(&MODEL)=ZINB %THEN
-    %DO;
-    b2=bg//alphag;
-    
-    if alphag=1E-6 then
-    stdg=stdabetalambdag[1:ncol(x)]//(sqrt(1/abs(hessg))/(parg**2));
-    else
-      stdg=stdabetalambdag[2:ncol(x)+1]//stdabetalambdag[1];
-    tg=b2/stdg;
-    dfg=nrow(y)-ncol(x);
-    probtg=2#(1-probt(abs(tg), dfg));
-    lambdag=lambdag;
-    
-    if alphag=1E-6 then
-    stdlambdag=stdabetalambdag[ncol(x)+1:nrow(stdabetalambdag)];
-    else
-      stdlambdag=stdabetalambdag[ncol(x)+2:nrow(stdabetalambdag)];
-    tlambdag=lambdag/stdlambdag;
-    dflg=nrow(y)-ncol(G);
-    probtlambdag=2#(1-probt(abs(tlambdag), dflg));
-    p=ncol(x)+1+ncol(G);
-    %END;
-    
-    %IF %UPCASE(&MODEL)=ZIP %THEN
-    %DO;
-    b2=bg;
-    stdg=stdabetalambdag[1:ncol(x)];
-    tg=b2/stdg;
-    dfg=nrow(y)-ncol(x);
-    probtg=2#(1-probt(abs(tg), dfg));
-    lambdag=lambdag;
-    stdlambdag=stdabetalambdag[ncol(x)+1:nrow(stdabetalambdag)];
-    tlambdag=lambdag/stdlambdag;
-    dflg=nrow(y)-ncol(G);
-    probtlambdag=2#(1-probt(abs(tlambdag), dflg));
-    p=ncol(x)+ncol(G);
-    %END;
-    
-    %IF %UPCASE(&MODEL)=NEGBIN %THEN
-    %DO;
-    b2=bg//alphag;
-    
-    if alphag=1E-6 then
-    stdg=stdabetalambdag[1:nrow(stdabetalambdag)]//(sqrt(1/abs(hessg))/(parg**2));
-    else
-      stdg=stdabetalambdag[2:nrow(stdabetalambdag)]//stdabetalambdag[1];
-    tg=b2/stdg;
-    dfg=nrow(y)-ncol(x);
-    probtg=2#(1-probt(abs(tg), dfg));
-    p=ncol(x)+1;
-    %END;
-    
-    %IF %UPCASE(&MODEL)=POISSON %THEN
-    %DO;
-    b2=bg;
-    stdg=stdabetalambdag;
-    tg=b2/stdg;
-    dfg=nrow(y)-ncol(x);
-    probtg=2#(1-probt(abs(tg), dfg));
-    p=ncol(x);
-    %END;
-    bg_stdg=b2||stdg;
-    print "Global Parameter Estimates", , bg_stdg[label=' ' 
-                                                  rowname={'Intercept' &xvar 
-                                                    %IF %UPCASE(&MODEL)=NEGBIN or %UPCASE(&MODEL)=ZINB %THEN
-                                                    %DO;
-                                                    'alpha' %END;
-                                                  } colname={"Par. Est." "Std Error"}] tg[format=comma6.2 label="t Value"] 
-    probtg[format=pvalue6. label="Pr > |t|"], , 
-    "NOTE: The denominator degrees of freedom for the t tests is" 
-    dfg[label=' ']".";
-    
-    %IF %UPCASE(&MODEL)=ZIP or %UPCASE(&MODEL)=ZINB %THEN
-    %DO;
-    print "Analysis Of Maximum Likelihood Zero Inflation Parameter Estimate";
-    
-    %if &XVARINF ne %then
-    %do;
-    varnamezip1=varnamezip`;
-    
-    %IF %UPCASE(&INT_INF)=YES %THEN
-    %DO;
-    varnamezip1="Intercept"//varnamezip`;
-    %END;
-    %end;
-    %else
-      %do;
-    
-    %IF %UPCASE(&INT_INF)=YES %THEN
-    %DO;
-    varnamezip1={"Intercept"};
-    %END;
-    %end;
-    print varnamezip1[label="Parameter"] lambdag[label="Estimate" 
-                                                 format=12.6] stdlambdag[label="Standard Error" format=12.6] 
-    tlambdag[label="t Value" format=12.2] probtlambdag[label="Pr > |t|" 
-                                                       format=pvalue6.4], , 
-    "NOTE: The denominator degrees of freedom for the t tests is" 
-    dflg[label=' ']".";
-    %END;
-    
-    %IF %UPCASE(&MODEL)=ZINB or %UPCASE(&MODEL)=ZIP %THEN
-    %DO;
-    ll=sum(-log(1+exp(G[pos0, ]*lambdag))+log(exp(G[pos0, 
-    ]*lambdag)+(parg/(parg+exp(X[pos0, ]*bg+offset[pos0, ])))##parg))+
-    sum(-log(1+exp(G[pos1, ]*lambdag))+lgamma(parg+y[pos1, ])-lgamma(y[pos1, 
-    ]+1)-lgamma(parg)+
-      y[pos1]#log(exp(X[pos1, ]*bg+offset[pos1, ])/(parg+exp(X[pos1, 
-]*bg+offset[pos1, ])))+parg*log(parg/(parg+exp(X[pos1, ]*bg+offset[pos1, 
-]))));
-                                                                                                                                                                                                     AIC=2*p-2*ll;
-                                                                                                                                                                                                     AICc=AIC+2*(p*(p+1)/(n-p-1));
-                                                                                                                                                                                                     llnull1=sum(-log(1+zkg[pos0, ])+log(zkg[pos0, ]+(parg/(parg+y[pos0, 
-                                                                                                                                                                                                     ]))##parg))+
-                                                                                                                                                                                                     sum(-log(1+zkg[pos1, ])+lgamma(parg+y[pos1, ])-lgamma(y[pos1, 
-                                                                                                                                                                                                     ]+1)-lgamma(parg)+
-                                                                                                                                                                                                       y[pos1]#log(y[pos1, ]/(parg+y[pos1, ]))+parg*log(parg/(parg+y[pos1, ])));
-                                                                                                                                                                                                     llnull2=sum(-log(1+0)+log(0+(parg/(parg+y[:]))##parg))+
-                                                                                                                                                                                                                               sum(-log(1+0)+lgamma(parg+y)-lgamma(y+1)-lgamma(parg)+
-                                                                                                                                                                                                                                     y#log(y[:]/(parg+y[:]))+parg*log(parg/(parg+y[:])));
-                                                                                                                                                                                                                                   devg=2*(llnull1-ll);
-                                                                                                                                                                                                                                   pctll=1-(llnull1-ll)/(llnull1-llnull2);
-                                                                                                                                                                                                                                   adjpctll=1-(llnull1-ll+p+0.5)/(llnull1-llnull2);
-                                                                                                                                                                                                                                   print devg[label='Deviance'] ll[label='Full Log Likelihood'] pctll 
-                                                                                                                                                                                                                                   adjpctll AIC AICc;
-                                                                                                                                                                                                                                   %END;
-                                                                                                                                                                                                                                   
-                                                                                                                                                                                                                                   %IF %UPCASE(&MODEL)=POISSON or %UPCASE(&MODEL)=NEGBIN %THEN
-                                                                                                                                                                                                                                   %DO;
-                                                                                                                                                                                                                                   yhatg=exp(x*bg+offset);
-                                                                                                                                                                                                                                   
-                                                                                                                                                                                                                                   if ncol(pos02)=0 then
-                                                                                                                                                                                                                                   do;
-                                                                                                                                                                                                                                   pos0=pos1;
-                                                                                                                                                                                                                                   pos0x=1;
-                                                                                                                                                                                                                                   pos0xl=1;
-                                                                                                                                                                                                                                   end;
-                                                                                                                                                                                                                                   else
-                                                                                                                                                                                                                                     do;
-                                                                                                                                                                                                                                   pos0x=(parg/(parg+exp(X[pos0, ]*bg+offset[pos0, ])))##parg;
-                                                                                                                                                                                                                                   pos0xl=(parg/(parg+y[pos0, ]))##parg;
-                                                                                                                                                                                                                                   end;
-                                                                                                                                                                                                                                   ll=sum(-log(0+exp(G[pos0, ]*lambdag))+log(0*exp(G[pos0, 
-                                                                                                                                                                                                                                   ]*lambdag)+pos0x))+
-                                                                                                                                                                                                                                     sum(-log(0+exp(G[pos1, ]*lambdag))+lgamma(parg+y[pos1, ])-lgamma(y[pos1, 
-                                                                                                                                                                                                                                     ]+1)-lgamma(parg)+
-                                                                                                                                                                                                                                       y[pos1]#log(exp(X[pos1, ]*bg+offset[pos1, ])/(parg+exp(X[pos1, 
-                                                                                                                                                                                                                                     ]*bg+offset[pos1, ])))+parg*log(parg/(parg+exp(X[pos1, ]*bg+offset[pos1, 
-                                                                                                                                                                                                                                     ]))));
-                                                                                                                                                                                                     llnull1=sum(-log(1+zkg)+log(zkg+pos0xl))+
-                                                                                                                                                                                                       sum(-log(1+zkg)+lgamma(parg+y[pos1, ])-lgamma(y[pos1, ]+1)-lgamma(parg)+
-                                                                                                                                                                                                             y[pos1]#log(y[pos1, ]/(parg+y[pos1, ]))+parg*log(parg/(parg+y[pos1, ])));
-                                                                                                                                                                                                           devg=2*(llnull1-ll);
-                                                                                                                                                                                                           AIC=-2*ll+2*nvar;
-                                                                                                                                                                                                           AICc=-2*ll+2*nvar*(n/(n-nvar-1));
-                                                                                                                                                                                                           tt2=y/y[:];
-                                                                                                                                                                                                           tt2=choose(tt2=0, 1E-10, tt2);
-                                                                                                                                                                                                           devnullg=2*sum(y#log(tt2)-(y-y[:]));
-                                                                                                                                                                                                                          pctdevg=1-devg/devnullg;
-                                                                                                                                                                                                                          adjpctdevg=1-((n-1)/(n-nvar))*(1-pctdevg);
-                                                                                                                                                                                                                          
-                                                                                                                                                                                                                          %IF %UPCASE(&MODEL)=NEGBIN %THEN
-                                                                                                                                                                                                                          %DO;
-                                                                                                                                                                                                                          AIC=-2*ll+2*(nvar+1);
-                                                                                                                                                                                                                          AICc=-2*ll+2*(nvar+1)*(n/(n-(nvar+1)-1));
-                                                                                                                                                                                                                          tt2=y/y[:];
-                                                                                                                                                                                                                          tt2=choose(tt2=0, 1E-10, tt2);
-                                                                                                                                                                                                                          devnullg=2*sum(y#log(tt2)-(y+1/alphag)#log((1+alphag#y)/(1+alphag#y[:])));
-                                                                                                                                                                                                                                         pctdevg=1-devg/devnullg;
-                                                                                                                                                                                                                                         adjpctdevg=1-((n-1)/(n-(nvar+1)))*(1-pctdevg);
-                                                                                                                                                                                                                                         %END;
-                                                                                                                                                                                                                                         print devg[label='Deviance'] ll[label='Full Log Likelihood'] pctdevg 
-                                                                                                                                                                                                                                         adjpctdevg AIC AICc;
-                                                                                                                                                                                                                                         %END;
-                                                                                                                                                                                                                                         print 'Variance-Covariance Matrix', , varcovg[label=''];
-                                                                                                                                                                                                                                         
-                                                                                                                                                                                                                                         /****************************************/
-                                                                                                                                                                                                                                           
-                                                                                                                                                                                                                                           %if &grid=%then
-                                                                                                                                                                                                                                         %do;
-                                                                                                                                                                                                                                         pihat=exp(pihat)/(1+exp(pihat));
-                                                                                                                                                                                                                                         create _res_ var{wt y yhat res resstd influence cooksD sumwi pihat};
-                                                                                                                                                                                                                                         append;
-                                                                                                                                                                                                                                         create _beta_ from bi[colname={"id" "B" "x" "y"}];
-                                                                                                                                                                                                                                         append from bi;
-                                                                                                                                                                                                                                         bistdt=bi||stdbi||tstat||probt;
-                                                                                                                                                                                                                                         create _parameters_ from bistdt[colname={"id" "B" "x" "y" "stdbi" "tstat" 
-                                                                                                                                                                                                                                           "probt"}];
-                                                                                                                                                                                                                                         append from bistdt;
-                                                                                                                                                                                                                                         _tstat_=_beta_;
-                                                                                                                                                                                                                                         
-                                                                                                                                                                                                                                         do j=1 to nrow(_stdbeta_);
-                                                                                                                                                                                                                                         
-                                                                                                                                                                                                                                         do k=1 to ncol(_stdbeta_);
-                                                                                                                                                                                                                                         
-                                                                                                                                                                                                                                         if _stdbeta_[j, k]=0 then
-                                                                                                                                                                                                                                         _tstat_[j, k]=0;
-                                                                                                                                                                                                                                         else
-                                                                                                                                                                                                                                           _tstat_[j, k]=_beta_[j, k]/_stdbeta_[j, k];
-                                                                                                                                                                                                                                         end;
-                                                                                                                                                                                                                                         end;
-                                                                                                                                                                                                                                         _tstat_=choose(_tstat_=., 0, _tstat_);
-                                                                                                                                                                                                                                         _probt_=2*(1-probt(abs(_tstat_), df));
-                                                                                                                                                                                                                                         _sig_=j(n, ncol(x), "not significant at 90%");
-                                                                                                                                                                                                                                         
-                                                                                                                                                                                                                                         do i=1 to n;
-                                                                                                                                                                                                                                         
-                                                                                                                                                                                                                                         do j=1 to ncol(x);
-                                                                                                                                                                                                                                         
-                                                                                                                                                                                                                                         if _probt_[i, j]<0.01*(nvar/v1) then
-                                                                                                                                                                                                                                         _sig_[i, j]="significant at 99%";
-                                                                                                                                                                                                                                         else if _probt_[i, j]<0.05*(nvar/v1) then
-                                                                                                                                                                                                                                         _sig_[i, j]="significant at 95%";
-                                                                                                                                                                                                                                         else if _probt_[i, j]<0.1*(nvar/v1) then
-                                                                                                                                                                                                                                         _sig_[i, j]="significant at 90%";
-                                                                                                                                                                                                                                         else
-                                                                                                                                                                                                                                           _sig_[i, j]="not significant at 90%";
-                                                                                                                                                                                                                                         
-                                                                                                                                                                                                                                         if _probt_[i, j]=. then
-                                                                                                                                                                                                                                         _sig_[i, j]="not significant at 90%";
-                                                                                                                                                                                                                                         end;
-                                                                                                                                                                                                                                         end;
-                                                                                                                                                                                                                                         _bistdt_=COORD||_beta_||_stdbeta_||_tstat_||_probt_;
-                                                                                                                                                                                                                                         _colname1_={"Intercept" &xvar};
-                                                                                                                                                                                                                                         _label_=repeat("std_", ncol(x))//repeat("tstat_", 
-                                                                                                                                                                                                                                                                                 ncol(x))//repeat("probt_", ncol(x));
-                                                                                                                                                                                                                                         _colname_={"x" "y"}||_colname1_||concat(_label_, repeat(_colname1_`, 3))`;
-                                                                                                                                                                                                                                                                                                 call change(_colname_, "_ ", "_");
-                                                                                                                                                                                                                                                                                                 call change(_colname_, "_ ", "_");
-                                                                                                                                                                                                                                                                                                 
-                                                                                                                                                                                                                                                                                                 %if %upcase(&MODEL)=ZIP or %upcase(&MODEL)=ZINB %then
-                                                                                                                                                                                                                                                                                                 %do;
-                                                                                                                                                                                                                                                                                                 _tstatl_=_lambda_;
-                                                                                                                                                                                                                                                                                                 
-                                                                                                                                                                                                                                                                                                 do j=1 to nrow(_stdlambda_);
-                                                                                                                                                                                                                                                                                                 
-                                                                                                                                                                                                                                                                                                 do k=1 to ncol(_stdlambda_);
-                                                                                                                                                                                                                                                                                                 
-                                                                                                                                                                                                                                                                                                 if _stdlambda_[j, k]=0 then
-                                                                                                                                                                                                                                                                                                 _tstatl_[j, k]=0;
-                                                                                                                                                                                                                                                                                                 else
-                                                                                                                                                                                                                                                                                                   _tstatl_[j, k]=_lambda_[j, k]/_stdlambda_[j, k];
-                                                                                                                                                                                                                                                                                                 end;
-                                                                                                                                                                                                                                                                                                 end;
-                                                                                                                                                                                                                                                                                                 _probtl_=2*(1-probt(abs(_tstatl_), df));
-                                                                                                                                                                                                                                                                                                 _sigl_=j(n, ncol(G), "not significant at 90%");
-                                                                                                                                                                                                                                                                                                 
-                                                                                                                                                                                                                                                                                                 do i=1 to n;
-                                                                                                                                                                                                                                                                                                 
-                                                                                                                                                                                                                                                                                                 do j=1 to ncol(G);
-                                                                                                                                                                                                                                                                                                 
-                                                                                                                                                                                                                                                                                                 if _probtl_[i, j]<0.01*((nvar+ncol(G))/v1) then
-                                                                                                                                                                                                                                                                                                 _sigl_[i, j]="significant at 99%";
-                                                                                                                                                                                                                                                                                                 else if _probtl_[i, j]<0.05*((nvar+ncol(G))/v1) then
-                                                                                                                                                                                                                                                                                                 _sigl_[i, j]="significant at 95%";
-                                                                                                                                                                                                                                                                                                 else if _probtl_[i, j]<0.1*((nvar+ncol(G))/v1) then
-                                                                                                                                                                                                                                                                                                 _sigl_[i, j]="significant at 90%";
-                                                                                                                                                                                                                                                                                                 else
-                                                                                                                                                                                                                                                                                                   _sigl_[i, j]="not significant at 90%";
-                                                                                                                                                                                                                                                                                                 
-                                                                                                                                                                                                                                                                                                 if _probtl_[i, j]=. then
-                                                                                                                                                                                                                                                                                                 _sigl_[i, j]="not significant at 90%";
-                                                                                                                                                                                                                                                                                                 end;
-                                                                                                                                                                                                                                                                                                 end;
-                                                                                                                                                                                                                                                                                                 _bistdt_=_bistdt_||_lambda_||_stdlambda_||_tstatl_||_probtl_;
-                                                                                                                                                                                                                                                                                                 _colname2_={&xvarinf};
-                                                                                                                                                                                                                                                                                                 
-                                                                                                                                                                                                                                                                                                 %IF %UPCASE(&INT_INF)=YES %THEN
-                                                                                                                                                                                                                                                                                                 %DO;
-                                                                                                                                                                                                                                                                                                 _colname2_={"Intercept" &xvarinf};
-                                                                                                                                                                                                                                                                                                 %END;
-                                                                                                                                                                                                                                                                                                 _label3_=repeat("Inf_", ncol(G));
-                                                                                                                                                                                                                                                                                                 _colname3_=concat(_label3_, _colname2_`);
-                                                                                                                                                                                                                                                                                                 _label2_=repeat("Inf_std_", ncol(G))//repeat("Inf_tstat_", 
-                                                                                                                                                                                                                                                                                                                                              ncol(G))//repeat("Inf_probt_", ncol(G));
-                                                                                                                                                                                                                                                                                                 _colname_={"x" "y"}||_colname1_||concat(_label_, repeat(_colname1_`, 
-                                                                                                                                                                                                                                                                                                                                                         3))`||_colname3_`||concat(_label2_, repeat(_colname2_`, 3))`;
-                                                                                                                                                                                                                                                                                                                                                                                                    call change(_colname_, "_ ", "_");
-                                                                                                                                                                                                                                                                                                                                                                                                    call change(_colname_, "_ ", "_");
-                                                                                                                                                                                                                                                                                                                                                                                                    _labell_=repeat("sig_Inf_", ncol(G));
-                                                                                                                                                                                                                                                                                                                                                                                                    _colnamel_=concat(_labell_, repeat(_colname2_`, 1))`;
-                                                                                                                                                                                                                                                                                                                                                                                                                                       create _sig_inf_parameters2_ from _sigl_[colname=_colnamel_];
-                                                                                                                                                                                                                                                                                                                                                                                                                                       append from _sigl_;
-                                                                                                                                                                                                                                                                                                                                                                                                                                       %end;
-                                                                                                                                                                                                                                                                                                                                                                                                                                       create _parameters2_ from _bistdt_[colname=_colname_];
-                                                                                                                                                                                                                                                                                                                                                                                                                                       append from _bistdt_;
-                                                                                                                                                                                                                                                                                                                                                                                                                                       close _parameters2_;
-                                                                                                                                                                                                                                                                                                                                                                                                                                       _label_=repeat("sig_", ncol(x));
-                                                                                                                                                                                                                                                                                                                                                                                                                                       _colname_=concat(_label_, repeat(_colname1_`, 1))`;
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                        create _sig_parameters2_ from _sig_[colname=_colname_];
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                        append from _sig_;
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                        
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                        %IF %UPCASE(&MODEL)=NEGBIN or %UPCASE(&MODEL)=ZINB %THEN
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                        %DO;
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                        atstat=alphai[, 2];
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                        
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                        do j=1 to nrow(alphai);
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                        
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                        if alphai[j, 3]=0 then
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                        atstat[j]=0;
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                        else
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                          atstat[j]=alphai[j, 2]/alphai[j, 3];
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                        end;
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                        atstat=choose(atstat=., 0, atstat);
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                        aprobtstat=2*(1-probnorm(abs(atstat)));
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                        _siga_=j(n, 1, "not significant at 90%");
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                        
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                        do i=1 to n;
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                        
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                        if aprobtstat[i]<0.01*(nvar/v1) then
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                        _siga_[i]="significant at 99%";
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                        else if aprobtstat[i]<0.05*(nvar/v1) then
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                        _siga_[i]="significant at 95%";
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                        else if aprobtstat[i]<0.1*(nvar/v1) then
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                        _siga_[i]="significant at 90%";
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                        else
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                          _siga_[i]="not significant at 90%";
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                        end;
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                        alphai=alphai||atstat||aprobtstat;
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                        create _alpha_ from alphai[colname={"id" "alpha" "std" "tstat" 
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                          "probt"}];
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                        append from alphai;
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                        create _sig_alpha_ from _siga_[colname={"sig_alpha"}];
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                        append from _siga_;
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                        %END;
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                        %end;
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                        %else
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                          %do;
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                        create _beta_ from bi[colname={"id" "B" "x" "y"}];
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                        append from bi;
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                        stdbi=sqrt(abs(varbi));
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                        tstat=bi[, 2]/stdbi;
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                        
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                        do i=1 to nrow(tstat);
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                        
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                        if tstat[i]=. then
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                        tstat[i]=0;
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                        end;
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                        bistdt=bi||stdbi||tstat;
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                        create _parameters_ from bistdt[colname={"id" "B" "x" "y" "stdbi" 
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                          "tstat"}];
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                        append from bistdt;
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                        close _parameters_;
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                        
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                        %IF %UPCASE(&MODEL)=NEGBIN or %UPCASE(&MODEL)=ZINB %THEN
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                        %DO;
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                        atstat=alphai[, 2];
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                        
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                        do j=1 to nrow(alphai);
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                        
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                        if alphai[j, 3]=0 then
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                        atstat[j]=0;
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                        else
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                          atstat[j]=alphai[j, 2]/alphai[j, 3];
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                        end;
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                        atstat=choose(atstat=., 0, atstat);
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                        aprobtstat=2*(1-probnorm(abs(atstat)));
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                        alphai=POINTS||alphai||atstat||aprobtstat;
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                        create _alpha_ from alphai[colname={"x" "y" "id" "alpha" "std" "tstat" 
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                          "probt"}];
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                        append from alphai;
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                        %END;
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                        _beta_=shape(bi[, 2], m);
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                        _stdbeta_=shape(stdbi, m);
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                        _tstat_=_beta_/_stdbeta_;
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                        _bistdt_=POINTS||_beta_||_stdbeta_||_tstat_;
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                        _colname1_={"Intercept" &xvar};
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                        _label_=repeat("std_", nvar)//repeat("tstat_", nvar);
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                        _colname_={"x" "y"}||_colname1_||concat(_label_, repeat(_colname1_`, 2))`;
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                call change(_colname_, "_ ", "_");
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                call change(_colname_, "_ ", "_");
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                create _parameters_grid_ from _bistdt_[colname=_colname_];
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                append from _bistdt_;
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                close _parameters2_;
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                %end;
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                quit;
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                %if &grid=%then
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                %do;
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                data _parameters2_;
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                merge _parameters2_ _sig_parameters2_;
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                run;
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                %if %upcase(&MODEL)=ZIP or %upcase(&MODEL)=ZINB %then
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                %do;
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                data _parameters2_;
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                merge _parameters2_ _sig_inf_parameters2_;
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                run;
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                %end;
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                %IF %UPCASE(&MODEL)=NEGBIN or %UPCASE(&MODEL)=ZINB %THEN
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                %DO;
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                data _alpha_;
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                merge _alpha_ _sig_alpha_;
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                run;
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                %end;
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                %END;
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                %mend GWZINBR;
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                /*****************************************************************************************/
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  /* Macro to separe the datasets of GWR Grid Estimates*/
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  /* REQUIRED PARAMETERS
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                /*     PAR = the number of explicative variables without considers the intercept
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                /*****************************************************************************************/
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  %macro MAP(PAR=);
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                proc iml;
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                use _parameters_;
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                read all into p[colname=names];
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                var=1+&par;
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                n=nrow(p)/2;
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                nvar=ncol(p);
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                _beta_=shape(p, n);
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                label=names;
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                do i=1 to var;
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                seq1=(i-1)*nvar+1;
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                seq2=seq1+(nvar-1);
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                name="B0":"B&par";
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                _betas_=_beta_[, seq1:seq2];
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                create b from _betas_[colname=label];
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                append from _betas_;
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                close b;
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                sastables=datasets("work");
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                do j=1 to nrow(sastables);
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                if sastables[j]=name[i] then
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                call delete(name[i]);
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                end;
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                call rename(b, name[i]);
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                end;
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                quit;
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                %mend MAP;
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                /*****************************************************************************************/
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  /* Macro for Drawing the Maps in 2D */
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  /* REQUIRED PARAMETERS
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                /*  TABLE = the name of the SAS data set to be used
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                /*    VAR = the name of the variable to be plotted
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                /*    MAP = the name of the SAS data set with the geographic coordinates
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                /*  SAMPLEDATA = the name of the SAS data set with the geographic coordinates of the sample
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                /*               data
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                /* METHOD = there are two choices to define the classes:
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  /*          EQUAL: using the same rule of histograms (the number of classes is defined by
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        Sturges's ruke)
-			/*            STD: using the standard deviation for creating 6 classes: media-3std;
-			/*                 media-2std;media-1std;media+1std;media+2std;media+3std;
-			/*  WHERE = using a conditional to draw the maps (for example, plot only the parameters that
-			/*          are significant at 5% level)
-			/*****************************************************************************************/
-			%macro map2d(table=, var=, map=, id=, idtype=N, sampledata=, method=EQUAL, 
-					where=);
-			data anno&table;
-				set &table;
-				length function style $10. color $8.;
-				retain line 1 xsys ysys '2' hsys '3' color 'red';
-				function='label';
-				text='U';
-				position='5';
-				style='marker';
-				size=2;
-				&where;
-			run;
-
-			proc sql noprint;
-				select count(*) into:np from anno&table where &var>=0;
-				select count(*) into:nn from anno&table where &var<0;
-				select min(&var) into:minp from anno&table where &var>=0;
-				select max(&var) into:maxp from anno&table where &var>=0;
-				select min(&var) into:minn from anno&table where &var<0;
-				select max(&var) into:maxn from anno&table where &var<0;
-			quit;
-
-			%put &np &nn;
-
-			%if &np >0 and &nn=0 %then
-				%do;
-
-					data _null_;
-						np=floor(1+3.3*log10(&np))-1;
-						call symput('np', np);
-					run;
-
-					%put &np;
-
-					%if %upcase(&method)=EQUAL %then
-						%do;
-							%put &np &minp &maxp %sysevalf((&maxp-&minp)/&np);
-							%colorscale(FFFFFF, , FF3333, &np, clist, no);
-							%patt;
-
-							data _null_;
-								set clist;
-								call symput('color'||trim(left(_n_)), 'cx'||rgb);
-							run;
-
-							%macro cl;
-
-								data anno&table;
-									set anno&table;
-
-									if &var<=&minp+(&maxp-&minp)/&np then
-										color="&color1";
-
-									%do i=2 %to &np;
-										else if &var<=&minp+&i*(&maxp-&minp)/&np then
-											color="&&color&i";
-									%end;
-								run;
-
-							%mend cl;
-
-							%cl;
-						%end;
-					%else %if %upcase(&method)=STD %then
-						%do;
-
-							data _null_;
-								np=6;
-								call symput('np', np);
-							run;
-
-							proc sql noprint;
-								select mean(&var) into:meanp from anno&table where &var>=0;
-								select std(&var) into:stdp from anno&table where &var>=0;
-							quit;
-
-							%put &meanp &stdp;
-							%colorscale(FFFFFF, , FF3333, &np, clist, no);
-							%patt;
-
-							data _null_;
-								set clist;
-								call symput('color'||trim(left(_n_)), 'cx'||rgb);
-							run;
-
-							%macro cl;
-
-								data anno&table;
-									set anno&table;
-
-									if &var<=&minp+(&meanp-3*&stdp) then
-										color="&color1";
-									else if &var<=&minp+&meanp-2*&stdp then
-										color="&color2";
-									else if &var<=&minp+&meanp-&stdp then
-										color="&color3";
-									else if &var<=&minp+&meanp+&stdp then
-										color="&color4";
-									else if &var<=&minp+&meanp+2*&stdp then
-										color="&color5";
-									else
-										color="&color6";
-								run;
-
-							%mend cl;
-
-							%cl;
-						%end;
-
-					data _null_;
-						min=left(trim(putn(round(&minp, 0.1), 'commax10.')));
-						max=left(trim(putn(round(&maxp, 0.1), 'commax10.')));
-						call symput('min', min);
-						call symput('max', max);
-					run;
-
-					%put &min &max;
-					%bar(FF3333, FFFFFF, &minp, &maxp, vertical, y_i=30, x_i=90);
-				%end;
-			%else %if &nn > 0 and &np=0 %then
-				%do;
-
-					data _null_;
-						nn=floor(1+3.3*log10(&nn))-1;
-						call symput('nn', nn);
-					run;
-
-					%put &nn;
-					%put &nn &minn &maxn %sysevalf((&maxn-&minn)/&nn);
-					%colorscale(FFFFFF, , 3333FF, &nn, clist, no);
-					%patt;
-
-					data _null_;
-						set clist;
-						call symput('color'||trim(left(_n_)), 'cx'||rgb);
-					run;
-
-					%macro cl;
-
-						data anno&table;
-							set anno&table;
-
-							if &var<=&minn+(&maxn-&minn)/&nn then
-								color="&color1";
-
-							%do i=2 %to &nn;
-								else if &var<=&minn+&i*(&maxn-&minn)/&nn then
-									color="&&color&i";
-							%end;
-						run;
-
-					%mend cl;
-
-					%cl;
-
-					data _null_;
-						min=left(trim(putn(round(&minn, 0.1), 'commax10.')));
-						max=left(trim(putn(round(&maxn, 0.1), 'commax10.')));
-						call symput('min', min);
-						call symput('max', max);
-					run;
-
-					%put &min &max;
-					%bar(3333FF, FFFFFF, &minn, &maxn, vertical, y_i=30, x_i=90);
-				%end;
-			%else
-				%do;
-
-					data _null_;
-						np=floor(1+3.3*log10(&np))-1;
-						nn=floor(1+3.3*log10(&nn))-1;
-						call symput('np', np);
-						call symput('nn', nn);
-					run;
-
-					%put &np &nn;
-					%put &np &minp &maxp %sysevalf((&maxp-&minp)/&np);
-					%put &nn &minn &maxn %sysevalf((&maxn-&minn)/&nn);
-					%colorscale(FFFFFF, , FF3333, &np, clist, no);
-					%patt;
-
-					data _null_;
-						set clist;
-						call symput('color'||trim(left(_n_)), 'cx'||rgb);
-					run;
-
-					%macro cl;
-
-						data anno&table.p;
-							set anno&table(where=(&var>=0));
-
-							if &var<=&minp+(&maxp-&minp)/&np then
-								color="&color1";
-
-							%do i=2 %to &np;
-								else if &var<=&minp+&i*(&maxp-&minp)/&np then
-									color="&&color&i";
-							%end;
-						run;
-
-					%mend cl;
-
-					%cl;
-					%colorscale(3333FF, , FFFFFF, &nn, clist, no);
-					%patt;
-
-					data _null_;
-						set clist;
-						call symput('color'||trim(left(_n_)), 'cx'||rgb);
-					run;
-
-					%macro cl;
-
-						data anno&table.n;
-							set anno&table(where=(&var<0));
-
-							if &var<=&minn+(&maxn-&minn)/&nn then
-								color="&color1";
-
-							%do i=2 %to &nn;
-								else if &var<=&minn+&i*(&maxn-&minn)/&nn then
-									color="&&color&i";
-							%end;
-						run;
-
-					%mend cl;
-
-					%cl;
-
-					data anno&table;
-						set anno&table.p anno&table.n;
-					run;
-
-					data _null_;
-						min=left(trim(putn(round(&minn, 0.1), 'commax10.')));
-						max=left(trim(putn(round(&maxp, 0.1), 'commax10.')));
-						call symput('min', min);
-						call symput('max', max);
-					run;
-
-					%put &min &max;
-					%bar(FF3333, FFFFFF, 0, &maxp, vertical, y_i=50, x_i=90);
-
-					data anno&table;
-						set _a_ anno&table;
-					run;
-
-					%bar(FFFFFF, 3333FF, &minn, 0, vertical, y_i=16, x_i=90);
-				%end;
-
-			data anno&table;
-				set _a_ anno&table;
-			run;
-
-			data a;
-				%if %upcase(&idtype)=N %then
-					%do;
-						&id=0;
-					%end;
-				%else
-					%do;
-						&id='0';
-					%end;
-				v=2;
-			run;
-
-			%if &sampledata ne %then
-				%do;
-
-					data annodata;
-						set &sampledata;
-						length function style $10. color $8.;
-						retain line 1 xsys ysys '2' hsys '3' color 'black' when 'a';
-						function='label';
-						text='J';
-						position='5';
-						style='special';
-						size=2;
-					run;
-
-				%end;
-			*goptions reset=all reset=global;
-
-			proc gmap data=a map=&map all 
-				%if &sampledata ne %then
-					%do;
-						anno=annodata%end;
-				;
-				id &id;
-				choro v / anno=anno&table nolegend;
-				run;
-			quit;
-
-		%mend map2d;
+    qntl <- apply(beta2_, 2, quantile, c(0.25, 0.5, 0.75))
+    IQR <- qntl[3, ]-qntl[1, ]
+    qntl <- rbind(qntl, IQR)
+    descriptb <- rbind(apply(beta2_, 2, "mean"), apply(beta2_, 2, "min"), apply(beta2_, 2, "max"))
+    rownames(descriptb) <- c('Mean', 'Min', 'Max')
+    if (model=='negbin' | model=="zinb"){
+      colnames(qntl) <- c('Intercept', XVAR, 'alpha')
+      colnames(descriptb) <- c('Intercept', XVAR, 'alpha')
+    }
+    else{
+      colnames(qntl) <- c('Intercept', XVAR)
+      colnames(descriptb) <- c('Intercept', XVAR)
+    }
+    print("Quantiles of GWR Parameter Estimates")
+    print(qntl)
+    print("Descriptive Statistics")
+    print(descriptb)
+    stdbeta_ <- matrix(stdbi, N, byrow=TRUE)
+    stdbeta2_ <- stdbeta_
+    if (model=="negbin" | model=="zinb"){
+      stdalpha_ <- matrix(alphai[, 3], N, byrow=TRUE)
+      stdbeta2_ <- cbind(stdbeta_, stdalpha_)
+    }
+    qntls <- apply(stdbeta2_, 2, quantile, c(0.25, 0.5, 0.75))
+    IQR <- qntls[3, ]-qntls[1, ]
+    qntls <- rbind(qntls, IQR)
+    descripts <- rbind(apply(stdbeta2_, 2, "mean"), apply(stdbeta2_, 2, "min"), apply(stdbeta2_, 2, "max"))
+    rownames(descripts) <- c('Mean', 'Min', 'Max')
+    if (model=='negbin' | model=="zinb"){
+      colnames(qntls) <- c('Intercept', XVAR, 'alpha')
+      colnames(descripts) <- c('Intercept', XVAR, 'alpha')
+    }
+    else{
+      colnames(qntls) <- c('Intercept', XVAR)
+      colnames(descripts) <- c('Intercept', XVAR)
+    }
+    print(c("alpha-level=0.05", malpha_))
+    print(c("t-Critical", t_critical))
+    print(c("degrees of freedom:", df))
+    print("Quantiles of GWR Standard Errors")
+    print(qntls)
+    print("Descriptive Statistics of Standard Errors")
+    print(descripts)
+    if (model=="zip" | model=="zinb"){
+      lambda_ <- matrix(li[, 1:2], N, byrow=TRUE)
+      lambda2_ <- lambda_
+      i <- seq(2, ncol(lambda_), 2)
+      lambda_ <- lambda_[, i]
+      i <- seq(2, ncol(lambda2_), 2)
+      lambda2_ <- lambda2_[, i]
+      qntl <- apply(lambda2_, 2, quantile, c(0.25, 0.5, 0.75))
+      IQR <- qntl[3, ]-qntl[1, ]
+      qntl <- rbind(qntl, IQR)
+      descriptl <- rbind(apply(lambda2_, 2, "mean"), apply(lambda2_, 2, "min"), apply(lambda2_, 2, "max"))
+      rownames(descriptl) <- c('Mean', 'Min', 'Max')
+      if (int_inf){
+        colnames(qntl) <- c('Intercept', xvarinf)
+        colnames(descriptl) <- c('Intercept', xvarinf)
+      }
+      else{
+        colnames(qntl) <- c(xvarinf)
+        colnames(descriptl) <- c(xvarinf)
+      }
+      print("Quantiles of GWR Zero Inflation Parameter Estimates")
+      print(qntl)
+      print("Descriptive Statistics of GWR Zero Inflation Parameter Estimates")
+      print(descriptl)
+      stdlambda_ <- matrix(stdli, N, byrow=TRUE)
+      stdlambda2_ <- stdlambda_
+      qntls <- apply(stdlambda2_, 2, quantile, c(0.25, 0.5, 0.75))
+      IQR <- qntls[3, ]-qntls[1, ]
+      qntls <- rbind(qntls, IQR)
+      descriptls <- rbind(apply(stdlambda2_, 2, "mean"), apply(stdlambda2_, 2, "min"), apply(stdlambda2_, 2, "max"))
+      rownames(descriptls) <- c('Mean', 'Min', 'Max')
+      if (int_inf){
+        colnames(qntls) <- c('Intercept', xvarinf)
+        colnames(descriptls) <- c('Intercept', xvarinf)
+      }
+      else{
+        colnames(qntls) <- c(xvarinf)
+        colnames(descriptls) <- c(xvarinf)
+      }
+      ##de novo esses prints?##
+      print(c("alpha-level=0.05", malpha_))
+      print(c("t-Critical", t_critical))
+      print(c("degrees of freedom:", df))
+      #####
+      print("Quantiles of GWR Zero Inflation Standard Errors")
+      print(qntls)
+      print("Descriptive Statistics of GWR Zero Inflation Standard Errors")
+      print(descriptls)
+    } #models
+  } #grid
+  #### Non-Stationarity Test ####
+  if (is.null(grid)){
+    if(method!="adaptive_bsq"){
+      BBk <- matrix(0, N, N)
+      Vk <- matrix(0, ncol(x), 1)
+      df1k <- matrix(0, ncol(x), 1)
+      df2k <- matrix(0, ncol(x), 1)
+      for (k in 1:ncol(x)){
+        ek <- matrix(0, ncol(x), 1)
+        ek[k] <- 1
+        for (i in 1:N){
+          m1 <- (i-1)*ncol(x)+1
+          m2 <- m1+(ncol(x)-1)
+          BBk[i, ] <- t(ek)%*%BB[m1:m2, ]
+        }
+        Vk[k] <- t(y)%*%(1/N)%*%t(BBk)%*%(diag(N)-(1/N)%*%matrix(1, N, N))%*%BBk%*%y
+        df1k[k] <- sum(diag((1/N)%*%t(BBk)%*%(diag(N)-(1/N)%*%matrix(1, N, N))%*%BBk))
+        df2k[k] <- sum(diag(((1/N)%*%t(BBk)%*%(diag(N)-(1/N)%*%matrix(1, N, N))%*%BBk)^2))
+      }
+      Vk <- ifelse(abs(Vk)<=E^-8, 0, Vk)
+      Fk <- (Vk/df1k)/sigma2
+      ndf <- df1k^2/df2k
+      ddf <- n-v1
+      ddf <- rep(ddf, ncol(x))
+      probf <- 1-pf(Fk, ndf, ddf)
+      print("Non-Stationarity Test (Leung et al., 2000)")
+      rownames(Vk) <- c('Intercept', XVAR)
+      colnames(Vk) <- "V"
+      print(Vk)
+      colnames(Fk) <- "F"
+      print(Fk)
+      print(c(ndf, ddf))
+      print(c("Pr > F", probf))
+      if (model=="zip" | model=="zinb"){
+        BBkl <- matrix(0, N, N)
+        Vkl <- matrix(0, ncol(G), 1)
+        df1kl <- matrix(0, ncol(G), 1)
+        df2kl <- matrix(0, ncol(G), 1)
+        for (k in 1:ncol(G)){
+          ekl <- matrix(0, ncol(G), 1)
+          ekl[k] <- 1
+          for (i in 1:N){
+            m1 <- (i-1)*ncol(G)+1
+            m2 <- m1+(ncol(G)-1)
+            BBkl[i, ] <- t(ekl)%*%BBl[m1:m2, ]
+          }
+          Vkl[k] <- t(y)%*%(1/N)%*%t(BBkl)%*%(diag(N)-(1/N)%*%matrix(1, N, N))%*%BBkl%*%y
+          df1kl[k] <- sum(diag((1/N)*t(BBkl)%*%(diag(N)-(1/N)%*%matrix(1, N, N))%*%BBkl))
+          df2kl[k] <- sum(diag(((1/N)%*%t(BBkl)%*%(diag(N)-(1/N)%*%matrix(1, N, N))%*%BBkl)^2))
+        }
+        Vkl <- ifelse(abs(Vkl)<=E^-8, 0, Vkl)
+        Fkl <- (Vkl/df1kl)/sigma2
+        ndfl <- df1kl^2/df2kl
+        ddfl <- N-v1
+        ddfl <- rep(ddfl, ncol(G))
+        probfl <- 1-pf(Fkl, ndfl, ddfl)
+        print("Non-Stationarity Test (Leung et al., 2000) - Zero Inflation")
+        if (int_inf){
+          rownames(Vkl) <- c('Intercept', xvarinf)
+        }
+        else{
+          rownames(Vkl) <- xvarinf
+        }
+        colnames(Vkl) <- "V"
+        colnames(Fkl) <- "F"
+        print(Vkl)
+        print(Fkl)
+        print(c(ndfl, ddfl))
+        print(c("Pr > F", probfl))
+      }
+    }
+  }
+  #### global estimates ####
+  if (is.null(weight)){
+    dfg <-N-nvar
+  }
+  if (model=="zinb"){
+    b2 <- rbind(bg, alphag)
+    if (alphag==E^-6){
+      stdg <- rbind(stdabetalambdag[1:ncol(x)], (sqrt(1/abs(hessg))/(parg^2)))
+    }
+    else{
+      stdg <- rbind(stdabetalambdag[2:ncol(x)+1], stdabetalambdag[1])
+    }
+    tg <- b2/stdg
+    dfg <- nrow(y)-ncol(x)
+    probtg <- 2*(1-pt(abs(tg), dfg))
+    lambdag <- lambdag
+    if (alphag==E^-6){
+      stdlambdag <- stdabetalambdag[ncol(x)+1:nrow(stdabetalambdag)]
+    }
+    else{
+      stdlambdag <- stdabetalambdag[ncol(x)+2:nrow(stdabetalambdag)]
+    }
+    tlambdag <- lambdag/stdlambdag
+    dflg <- nrow(y)-ncol(G)
+    probtlambdag <- 2*(1-pt(abs(tlambdag), dflg))
+    p <- ncol(x)+1+ncol(G)
+  }
+  if (model=="zip"){
+    b2 <- bg
+    stdg <- stdabetalambdag[1:ncol(x)]
+    tg <- b2/stdg
+    dfg <- nrow(y)-ncol(x)
+    probtg <- 2*(1-pt(abs(tg), dfg))
+    lambdag <- lambdag
+    stdlambdag <- stdabetalambdag[ncol(x)+1:nrow(stdabetalambdag)]
+    tlambdag <- lambdag/stdlambdag
+    dflg <- nrow(y)-ncol(G)
+    probtlambdag <- 2*(1-pt(abs(tlambdag), dflg))
+    p <- ncol(x)+ncol(G)
+  }
+  if (model=="negbin"){
+    b2 <- rbind(bg, alphag)
+    if(alphag==E^-6){
+      stdg <- rbind(stdabetalambdag[1:nrow(stdabetalambdag)], (sqrt(1/abs(hessg))/(parg^2)))
+    }
+    else{
+      stdg <- rbind(stdabetalambdag[2:nrow(stdabetalambdag)], stdabetalambdag[1])
+    }
+    tg <- b2/stdg
+    dfg <- nrow(y)-ncol(x)
+    probtg <- 2*(1-pt(abs(tg), dfg))
+    p <- ncol(x)+1
+  }
+  if (model=="poisson"){
+    b2 <- bg
+    stdg <- stdabetalambdag
+    tg <- b2/stdg
+    dfg <- nrow(y)-ncol(x)
+    probtg <- 2*(1-pt(abs(tg), dfg))
+    p <- ncol(x)
+  }
+  bg_stdg <- cbind(b2, stdg)
+  print("Global Parameter Estimates")
+  if (model=="negbin" | model=="zinb"){
+    rownames(bg_stdg) <- c('Intercept', XVAR, 'alpha')
+  }
+  else{
+    rownames(bg_stdg) <- c('Intercept', XVAR)
+  }
+  colnames(bg_stdg) <- c("Par. Est.", "Std Error")
+  print(c("t Value", bg_stdg))
+  print(c("Pr > |t|", probtg))
+  print("NOTE: The denominator degrees of freedom for the t tests is")
+  print(dfg)
+  if (model=="zip" | model=="zinb"){
+    print("Analysis Of Maximum Likelihood Zero Inflation Parameter Estimate")
+    if (!is.null(xvarinf)){
+      varnamezip1 <- t(varnamezip)
+      if (int_inf){
+        varnamezip1 <- rbind("Intercept", t(varnamezip))
+      }
+    }
+    else{
+      if(int_inf){
+        varnamezip1 <- "Intercept"
+      }
+    }
+    print(c("Parameter", varnamezip1))
+    print(c("Estimate", lambdag))
+    print(c("Standard Error", stdlambdag))
+    print(c("t Value", tlambdag))
+    print(c("Pr > |t|", probtlambdag))
+    print("NOTE: The denominator degrees of freedom for the t tests is")
+    print(dflg)
+    ll <- sum(-log(1+exp(G[pos0, ]%*%lambdag))+
+          log(exp(G[pos0, ]%*%lambdag)+
+          (parg/(parg+exp(x[pos0, ]%*%bg+Offset[pos0, ])))^parg))+
+          sum(-log(1+exp(G[pos1, ]%*%lambdag))+
+          lgamma(parg+y[pos1, ])-lgamma(y[pos1, ]+1)-
+          lgamma(parg)+y[pos1]*log(exp(x[pos1, ]%*%bg+Offset[pos1, ])/(parg+exp(x[pos1, ]%*%bg+Offset[pos1, ])))+
+          parg*log(parg/(parg+exp(x[pos1, ]%*%bg+Offset[pos1, ]))))
+    AIC <- 2*p-2*ll
+    AICc <- AIC+2*(p*(p+1)/(N-p-1))
+    llnull1 <- sum(-log(1+zkg[pos0, ])+log(zkg[pos0, ]+
+               (parg/(parg+y[pos0, ]))^parg))+
+               sum(-log(1+zkg[pos1, ])+lgamma(parg+y[pos1, ])-
+               lgamma(y[pos1, ]+1)-lgamma(parg)+
+               y[pos1]*log(y[pos1, ]/(parg+y[pos1, ]))+
+               parg*log(parg/(parg+y[pos1, ])))
+    llnull2 <- sum(-log(1+0)+log(0+(parg/(parg+mean(y)))^parg))+
+               sum(-log(1+0)+lgamma(parg+y)-lgamma(y+1)-lgamma(parg)+
+               y*log(mean(y)/(parg+mean(y)))+parg*log(parg/(parg+mean(y))))
+    devg <- 2*(llnull1-ll)
+    pctll <- 1-(llnull1-ll)/(llnull1-llnull2)
+    adjpctll <- 1-(llnull1-ll+p+0.5)/(llnull1-llnull2)
+    print('Deviance', devg)
+    print('Full Log Likelihood', ll)
+    print(pctll, adjpctll, AIC, AICc)
+  }
+  if (model=="poisson" | model=="negbin"){
+    yhatg <- exp(x%*%bg+Offset)
+    if (ncol(pos02)==0){
+      pos0 <- pos1
+      pos0x <- 1
+      pos0xl <- 1
+    }
+    else{
+      pos0x <- (parg/(parg+exp(x[pos0, ]%*%bg+Offset[pos0, ])))^parg
+      pos0xl <- (parg/(parg+y[pos0, ]))^parg
+    }
+    ll <- sum(-log(0+exp(G[pos0, ]%*%lambdag))+
+          log(0*exp(G[pos0, ]%*%lambdag)+pos0x))+
+          sum(-log(0+exp(G[pos1, ]%*%lambdag))+
+          lgamma(parg+y[pos1, ])-lgamma(y[pos1, ]+1)-
+          lgamma(parg)+y[pos1]*log(exp(x[pos1, ]%*%bg+
+          Offset[pos1, ])/(parg+exp(x[pos1, ]%*%bg+
+          Offset[pos1, ])))+
+          parg*log(parg/(parg+exp(x[pos1, ]%*%bg+Offset[pos1, ]))))
+    llnull1 <- sum(-log(1+zkg)+log(zkg+pos0xl))+
+               sum(-log(1+zkg)+lgamma(parg+y[pos1, ])-
+               lgamma(y[pos1, ]+1)-lgamma(parg)+
+               y[pos1]*log(y[pos1, ]/(parg+y[pos1, ]))+
+               parg*log(parg/(parg+y[pos1, ])))
+    devg <- 2*(llnull1-ll)
+    AIC <- -2*ll+2*nvar
+    AICc <- -2*ll+2*nvar*(N/(N-nvar-1))
+    tt2 <- y/mean(y)
+    tt2 <- ifelse(tt2==0, E^-10, tt2)
+    devnullg <- 2*sum(y*log(tt2)-(y-mean(y)))
+    pctdevg <- 1-devg/devnullg
+    adjpctdevg <- 1-((N-1)/(N-nvar))*(1-pctdevg)
+    if (model=="negbin"){
+      AIC <- -2*ll+2*(nvar+1)
+      AICc <- -2*ll+2*(nvar+1)*(N/(N-(nvar+1)-1))
+      tt2 <- y/mean(y)
+      tt2 <- ifelse(tt2==0, E^-10, tt2)
+      devnullg <- 2*sum(y*log(tt2)-(y+1/alphag)*log((1+alphag*y)/(1+alphag*mean(y))))
+      pctdevg <- 1-devg/devnullg
+      adjpctdevg <- 1-((N-1)/(N-(nvar+1)))*(1-pctdevg)
+    }
+    print(c('Deviance', devg))
+    print(c('Full Log Likelihood', ll))
+    print(c(pctdevg, adjpctdevg, AIC, AICc))
+  }
+  print('Variance-Covariance Matrix')
+  print(varcovg)
+  ##################
+  if (is.null(grid)){
+    pihat <- exp(pihat)/(1+exp(pihat))
+    res_ <- cbind(wt, y, yhat, res, resstd, influence, cooksD, sumwi, pihat)
+    print(c("wt", "y", "yhat", "res", "resstd", "influence", "cooksD", "sumwi", "pihat"))
+    print(res_)
+    beta_ <- bi
+    colnames(beta_) <- c("id", "B", "x", "y")
+    print(beta_)
+    bistdt <- cbind(bi, stdbi, tstat, probt)
+    parameters_ <- bistdt
+    colnames(parameters_) <- c("id", "B", "x", "y", "stdbi", "tstat", "probt")
+    tstat_ <- beta_
+    for (j in 1:nrow(stdbeta_)){
+      for (k in 1:ncol(stdbeta_)){
+        if (stdbeta_[j, k]==0){
+        tstat_[j, k] <- 0
+        }
+        else{
+          tstat_[j, k] <- beta_[j, k]/stdbeta_[j, k]
+        }
+      }
+    }
+    tstat_ <- ifelse(is.na(tstat_), 0, tstat_)
+    probt_ <- 2*(1-pt(abs(tstat_), df))
+    sig_ <- matrix("not significant at 90%", N, ncol(x))
+    for (i in 1:N){
+      for (j in 1:ncol(x)){
+        if (probt_[i, j]<0.01*(nvar/v1)){
+          sig_[i, j] <- "significant at 99%"
+        }
+        else if (probt_[i, j]<0.05*(nvar/v1)){
+          sig_[i, j] <- "significant at 95%"
+        }
+        else if (probt_[i, j]<0.1*(nvar/v1)){
+          sig_[i, j] <- "significant at 90%"
+        }
+        else{
+          sig_[i, j] <- "not significant at 90%"
+        }
+        if (is.na(probt_[i, j])){
+          sig_[i, j] <- "not significant at 90%"
+        }
+      }
+    }
+    bistdt_ <- cbind(COORD, beta_, stdbeta_, tstat_, probt_)
+    colname1 <- c("Intercept", XVAR)
+    label_ <- rbind(rep("std_", ncol(x)), rep("tstat_", ncol(x)), rep("probt_", ncol(x)))
+    colname <- cbind(c("x", "y"), colname1, c(label_, rep(colname1, 3)))
+    colname <- sub("_ ", "_", colname)
+    colname <- sub("_ ", "_", colname)
+    if (model=="zip" | model=="zinb"){
+      tstatl_ <- lambda_
+      for (j in 1:nrow(stdlambda_)){
+        for(k in 1:ncol(stdlambda_)){
+          if (stdlambda_[j, k]==0){
+          tstatl_[j, k] <- 0
+          }
+          else{
+            tstatl_[j, k] <- lambda_[j, k]/stdlambda_[j, k]
+          }
+        }
+      }
+      probtl_ <- 2*(1-pt(abs(tstatl_), df))
+      sigl_ <- matrix("not significant at 90%", N, ncol(G))
+      for (i in 1:N){
+        for (j in 1:ncol(G)){
+          if (probtl_[i, j]<0.01*((nvar+ncol(G))/v1)){
+            sigl_[i, j] <- "significant at 99%"
+          }
+          else if (probtl_[i, j]<0.05*((nvar+ncol(G))/v1)){
+            sigl_[i, j] <- "significant at 95%"
+          }
+          else if (probtl_[i, j]<0.1*((nvar+ncol(G))/v1)){
+            sigl_[i, j] <- "significant at 90%"
+          }
+          else{
+            sigl_[i, j] <- "not significant at 90%"
+          }
+          if (is.na(probtl_[i, j])){
+            sigl_[i, j] <- "not significant at 90%"
+          }
+        }
+      }
+      bistdt_ <- cbind(bistdt_, lambda_, stdlambda_, tstatl_, probtl_)
+      colname2 <- xvarinf
+      if (int_inf){
+        colname2 <- c("Intercept", xvarinf)
+      }
+      label3_ <- rep("Inf_", ncol(G))
+      colname3 <- c(label3_, colname2)
+      label2_ <- rbind(rep("Inf_std_", ncol(G)), rep("Inf_tstat_", ncol(G)), rep("Inf_probt_", ncol(G)))
+      colname <- cbind(c("x", "y"), colname1, c(label_, rep(colname1, 3)), colname3, c(label2_, rep(colname2, 3)))
+      sub("_ ", "_", colname)
+      sub("_ ", "_", colname)
+      labell_ <- rep("sig_Inf_", ncol(G))
+      colnamel <- c(labell_, rep(colname2, 1))
+      sig_inf_parameters2 <- sigl_
+      colnames(sig_inf_parameters2) <- colnamel
+    }
+    parameters2_ <- bistdt_
+    colnames(parameters2_) <- colname
+    label_ <- rep("sig_", ncol(x))
+    colname_ <- c(label_, rep(colname1, 1))
+    sig_parameters2 <- sig_
+    colnames(sig_parameters2) <- colname
+    if (model=="negbin" | model=="zip"){
+      atstat <- alphai[, 2]
+      for(j in 1:nrow(alphai)){
+        if (alphai[j, 3]==0){
+          atstat[j] <- 0
+        }
+        else{
+          atstat[j] <- alphai[j, 2]/alphai[j, 3]
+        }
+      }
+      atstat <- ifelse(is.na(atstat), 0, atstat)
+      aprobtstat <- 2*(1-pnorm(abs(atstat)))
+      siga_ <- matrix("not significant at 90%", N, 1)
+      for (i in 1:N){
+        if (aprobtstat[i]<0.01*(nvar/v1)){
+          siga_[i] <- "significant at 99%"
+        }
+        else if (aprobtstat[i]<0.05*(nvar/v1)){
+          siga_[i] <- "significant at 95%"
+        }
+        else if (aprobtstat[i]<0.1*(nvar/v1)){
+          siga_[i] <- "significant at 90%"
+        }
+        else{
+          siga_[i] <- "not significant at 90%"
+        }
+      }
+      alphai <- cbind(alphai, atstat, aprobtstat)
+      alpha_ <- alphai
+      colnames(alpha_) <- c("id", "alpha", "std", "tstat", "probt")
+      sig_alpha_ <- siga_
+      colnames(sig_alpha_) <- "sig_alpha"
+    }
+  }
+  else{
+    beta_ <- bi
+    colnames(beta_) <- c("id", "B", "x", "y")
+    stdbi <- sqrt(abs(varbi))
+    tstat <- bi[, 2]/stdbi
+    for (i in 1:nrow(tstat)){
+      if (is.na(tstat[i])){
+        tstat[i] <- 0
+      }
+    }
+    bistdt <- cbind(bi, stdbi, tstat)
+    parameters_ <- bistdt
+    colnames(parameters_) <- c("id", "B", "x", "y", "stdbi", "tstat")
+    if (model=="negbin" | model=="zinb"){
+      atstat <- alphai[, 2]
+      for(j in 1:nrow(alphai)){
+        if (alphai[j, 3]==0){
+          atstat[j] <- 0
+        }
+        else
+          atstat[j] <- alphai[j, 2]/alphai[j, 3]
+      }
+      atstat <- ifelse(is.na(atstat), 0, atstat)
+      aprobtstat <- 2*(1-pnorm(abs(atstat)))
+      alphai <- cbind(POINTS, alphai, atstat, aprobtstat)
+      alpha_ <- alphai
+      colnames(alpha_) <- c("x", "y", "id", "alpha", "std", "tstat", "probt")
+    }
+    beta_ <- matrix(bi[, 2], mm, byrow=TRUE)
+    stdbeta_ <- matrix(stdbi, mm, byrow=TRUE)
+    tstat_ <- beta_/stdbeta_
+    bistdt_ <- cbind(POINTS, beta_, stdbeta_, tstat_)
+    colname1 <- c("Intercept", XVAR)
+    label_ <- rbind(rep("std_", nvar), rep("tstat_", nvar))
+    colname <- cbind(c("x", "y"), colname1, c(label_, rep(colname1, 2)))
+    colname <- sub("_ ", "_", colname)
+    colname <- sub("_ ", "_", colname)
+    parameters_grid_ <- bistdt_
+    colnames(parameters_grid_) <- colname
+  }
+  if (is.null(grid)){
+    parameters2 <- cbind(parameters2_, sig_parameters2_)
+    if (model=="zip" | model=="zinb"){
+      parameters2 <- cbind(parameters2, sig_inf_parameters2_)
+    }
+    if (model=="negbin" | model=="zinb"){
+      alpha_ <- cbind(alpha_, sig_alpha_)
+    }
+  }
+} # fecha gwzinbr
