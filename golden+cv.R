@@ -2,6 +2,7 @@ Golden <- function(data, formula, xvarinf, weight,
                    lat, long, globalmin=TRUE,
                    method, model="zinb", bandwidth="cv", offset, 
                    force=FALSE, maxg=100, distancekm=FALSE){
+  int2 <- 0
   output <- list()
   E <- 10
   mf <- match.call(expand.dots = FALSE)
@@ -208,7 +209,6 @@ Golden <- function(data, formula, xvarinf, weight,
         model <- "negbin"
       }
     }
-    #print(model) #flag 29/04
   }
   njl <- G%*%lambdag
   if (model!="zip" & model!="zinb"){
@@ -434,6 +434,9 @@ Golden <- function(data, formula, xvarinf, weight,
         }
         w <- w[order(w[, 2]), ]
         w <- w[,1]
+      }
+      if (i==1 & int2==2){
+        print(w)
       }
       b <- bg
       nj <- x%*%b+Offset #checar multiplicador
@@ -839,37 +842,48 @@ Golden <- function(data, formula, xvarinf, weight,
       h_values <- rbind(h_values, c(h0, h1, h2, h3))
     }
     ################################
-    #print(h1) #errado
+    # print("primeiro")
+    # print(h1)
     res1 <- cv(h1)
     CV1 <- res1[1]
+    # print(CV1)
+    # print("segundo")
+    # print(h2)
     res2 <- cv(h2)
     CV2 <- res2[1]
+    # print(CV2)
     if (GMY==1){
       band <- data.frame('GSS_count'=GMY, 'h1'=h1, 'cv1'=CV1, 'h2'=h2, 'cv2'=CV2) #flag saída
     }
     else{
       band <- rbind(band, c(GMY, h1, CV1, h2, CV2))
     }
-    int <- 1
-    while(abs(h3-h0) > tol*(abs(h1)+abs(h2)) & int<200){
+    int2 <- 1
+    while(abs(h3-h0) > tol*(abs(h1)+abs(h2)) & int2<200){
       if (CV2<CV1){
         h0 <- h1
         h1 <- h3-r*(h3-h0)
         h2 <- h0+r*(h3-h0)
         CV1 <- CV2
+        # print("terceiro1")
+        # print(h2)
         res2 <- cv(h2)
         CV2 <- res2[1]
+        # print(CV2)
       }
       else{
         h3 <- h2
         h1 <- h3-r*(h3-h0)
         h2 <- h0+r*(h3-h0)
         CV2 <- CV1
+        # print("terceiro2")
+        # print(h1)
         res1 <- cv(h1)
         CV1 <- res1[1]
+        # print(CV1)
       }
       band <- rbind(band, c(GMY, h1, CV1, h2, CV2))
-      int <- int+1
+      int2 <- int2+1
     }
     if (CV1<CV2){
       golden <- CV1
