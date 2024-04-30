@@ -1,7 +1,7 @@
 library(readr)
 #korea_base_artigo <- read_csv("UnB/2024/TCC2/korea_base_artigo.csv")
-#korea_base_artigo <- read_csv("C:/Users/Juliana Rosa/OneDrive/Documents/TCC2/GWZINBR-main/korea_base_artigo.csv")
-korea_base_artigo <- read_csv("C:/Juliana/TCC/GWZINBR-main/korea_base_artigo.csv")
+korea_base_artigo <- read_csv("C:/Users/Juliana Rosa/OneDrive/Documents/TCC2/GWZINBR-main/korea_base_artigo.csv")
+#korea_base_artigo <- read_csv("C:/Juliana/TCC/GWZINBR-main/korea_base_artigo.csv")
 
 if(!require(sp)){
   install.packages("sp")
@@ -46,7 +46,7 @@ Golden(data = korea_base_artigo,formula = n_covid1~Morbidity+high_sch_p+Healthca
        model = "zinb", method = "adaptive_bsq", bandwidth = "aic", globalmin = FALSE, distancekm = TRUE, force=TRUE)
 endTime <- Sys.time()
 endTime-startTime
-#
+#14 mins
 
 # Teste 3: fixed_g - cv #
 
@@ -58,6 +58,14 @@ endTime <- Sys.time()
 endTime-startTime
 #1.3 mins
 
+startTime <- Sys.time()
+Golden(data = korea_base_artigo,formula = n_covid1~Morbidity+high_sch_p+Healthcare_access+
+         diff_sd+Crowding+Migration+Health_behavior, xvarinf = "Healthcare_access", weight = NULL, lat = "x", long = "y", offset = "ln_total",
+       model = "zinb", method = "fixed_g", bandwidth = "cv", globalmin = FALSE, distancekm = TRUE, force=TRUE)
+endTime <- Sys.time()
+endTime-startTime
+#20 mins
+
 # Teste 4: fixed_g - aic #
 
 startTime <- Sys.time()
@@ -68,17 +76,25 @@ endTime <- Sys.time()
 endTime-startTime
 #1.7 mins
 
+startTime <- Sys.time()
+Golden(data = korea_base_artigo,formula = n_covid1~Morbidity+high_sch_p+Healthcare_access+
+         diff_sd+Crowding+Migration+Health_behavior, xvarinf = "Healthcare_access", weight = NULL, lat = "x", long = "y", offset = "ln_total",
+       model = "zinb", method = "fixed_g", bandwidth = "aic", globalmin = FALSE, distancekm = TRUE, force=TRUE)
+endTime <- Sys.time()
+endTime-startTime
+#34 mins
+
 ## ZIP ##
 
 # Teste 9: adaptive_bsq - cv #
 
 startTime <- Sys.time()
 Golden(data = korea_base_artigo,formula = n_covid1~Morbidity+high_sch_p+Healthcare_access+
-         diff_sd+Crowding+Migration+Health_behavior, xvarinf = NULL, weight = NULL, lat = "x", long = "y", offset = "ln_total",
+         diff_sd+Crowding+Migration+Health_behavior, xvarinf = "Healthcare_access", weight = NULL, lat = "x", long = "y", offset = "ln_total",
        model = "zip", method = "adaptive_bsq", bandwidth = "cv", globalmin = FALSE, distancekm = TRUE, force=TRUE)
 endTime <- Sys.time()
 endTime-startTime
-#erro no sas --> no R 45 segs
+#2.2 mins
 
 # Teste 10: adaptive_bsq - aic #
 
@@ -162,7 +178,7 @@ Golden(data = korea_base_artigo,formula = n_covid1~Morbidity+high_sch_p+Healthca
 endTime <- Sys.time()
 endTime-startTime
 
-# Teste 27: adaptive_bsq - aic #
+# Teste 26: adaptive_bsq - aic #
 
 startTime <- Sys.time()
 Golden(data = korea_base_artigo,formula = n_covid1~Morbidity+high_sch_p+Healthcare_access+
@@ -181,7 +197,7 @@ endTime <- Sys.time()
 endTime-startTime
 #erro: depois de 22 mins
 
-# Teste 27: fixed_g - aic #
+# Teste 28: fixed_g - aic #
 
 startTime <- Sys.time()
 Golden(data = korea_base_artigo,formula = n_covid1~Morbidity+high_sch_p+Healthcare_access+

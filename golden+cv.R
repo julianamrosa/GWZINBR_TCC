@@ -650,7 +650,7 @@ Golden <- function(data, formula, xvarinf, weight,
                 lambda <- matrix(0, ncol(G), 1)
               }
               else{
-                lambda <- solve(t(G*Aii*w*wt)%*%G)%*%t(G*Aii*w*wt)%*%zj
+                lambda <- solve(t(G*Aii*w*wt)%*%G, tol=E^-60)%*%t(G*Aii*w*wt)%*%zj
                 #lambda <- MASS::ginv(t(G*Aii*w*wt)%*%G)%*%t(G*Aii*w*wt)%*%zj
               }
               njl <- G%*%lambda
