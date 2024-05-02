@@ -53,6 +53,7 @@
 			%DO;
 				read all var {&OFFSET} into offset;
 			%END;
+		int2 = 0;
 		x=j(n, 1, 1)||x;
 		nvar=ncol(x);
 		yhat=j(n, 1, 0);
@@ -383,7 +384,6 @@
 
 				do jj=1 to u;
 					w[jj]=exp(-0.5*(dist[jj, 3]/h)**2);
-					*if i=244 & jj=u then print h;
 
 					%IF %UPCASE(&METHOD)=FIXED_BSQ or %UPCASE(&METHOD)=ADAPTIVEN %THEN
 						%DO;
@@ -425,6 +425,7 @@
 						call sort(w, {2});
 						w=w[, 1];
 					%END;
+				if i=1 & int2=2 then print w;
 				b=bg;
 				nj=X*b+offset;
 				uj=exp(nj);
@@ -817,6 +818,7 @@ y[pos1]#log(y[pos1, ]/(_par_[pos1]+y[pos1,
 					%DO;
 						ax=0;
 						bx=int(max(_dist_)+1);
+						*print bx;
 
 						%IF %UPCASE(&DISTANCEKM)=YES %THEN
 							%DO;
@@ -838,6 +840,7 @@ y[pos1]#log(y[pos1, ]/(_par_[pos1]+y[pos1,
 						upper=bx;
 						xmin=j(1, 2, 0);
 
+						*print upper;
 						do GMY=1 to 1;
 							ax1=lower[GMY];
 							bx1=upper[GMY];
@@ -859,10 +862,16 @@ y[pos1]#log(y[pos1, ]/(_par_[pos1]+y[pos1,
 						print h0 h1 h2 h3;
 
 						/***************************************/
+						print("primeiro");
+						print h1;
 						res1=cv(h1);
 						CV1=res1[1];
+						print CV1;
+						print("segundo");
+						print(h2);
 						res2=cv(h2);
 						CV2=res2[1];
+						print CV2;
 
 						%IF %UPCASE(&METHOD)=FIXED_G or %UPCASE(&METHOD)=FIXED_BSQ or 
 							%UPCASE(&METHOD)=ADAPTIVE_BSQ %THEN
@@ -876,31 +885,32 @@ y[pos1]#log(y[pos1, ]/(_par_[pos1]+y[pos1,
 									append;
 								%END;
 							%END;
-						int=1;
+						int2=1;
 
-						do while(abs(h3-h0) > tol*(abs(h1)+abs(h2)) & int<200);
-							print int;
+						do while(abs(h3-h0) > tol*(abs(h1)+abs(h2)) & int2<200);
 							if CV2<CV1 then
 								do;
-									print ("entrou no if");
 									h0=h1;
 									h1=h3-r*(h3-h0);
 									h2=h0+r*(h3-h0);
 									CV1=CV2;
+									print ("terceiro1");
 									print h2;
 									res2=cv(h2);
 									CV2=res2[1];
+									print CV2;
 								end;
 							else
 								do;
-									print ("entrou no else");
 									h3=h2;
 									h1=h3-r*(h3-h0);
 									h2=h0+r*(h3-h0);
 									CV2=CV1;
+									print ("terceiro2");
 									print h1;
 									res1=cv(h1);
 									CV1=res1[1];
+									print CV1;
 								end;
 
 							%IF %UPCASE(&METHOD)=FIXED_G or %UPCASE(&METHOD)=FIXED_BSQ or 
@@ -908,9 +918,7 @@ y[pos1]#log(y[pos1, ]/(_par_[pos1]+y[pos1,
 									%DO;
 									append;
 								%END;
-							int=int+1;
-							print cv1;
-							print cv2;
+							int2=int2+1;
 						end;
 
 						if CV1<CV2 then
@@ -2285,7 +2293,7 @@ y[pos1]#log(y[:]/(_par_[pos1]+y[:]))+_par_[pos1]#log(_par_[pos1]/(_par_[pos1]+y[
 										colname={&XVARINF}];
 									%END;
 							%end;
-					%end;
+					%end; *fecha o grid;
 
 				/****** Non-Stationarity Test *****************/
 
