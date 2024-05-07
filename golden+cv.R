@@ -2,7 +2,6 @@ Golden <- function(data, formula, xvarinf, weight,
                    lat, long, globalmin=TRUE,
                    method, model="zinb", bandwidth="cv", offset, 
                    force=FALSE, maxg=100, distancekm=FALSE){
-  int2 <- 0
   output <- list()
   E <- 10
   mf <- match.call(expand.dots = FALSE)
@@ -380,7 +379,7 @@ Golden <- function(data, formula, xvarinf, weight,
   sequ <- 1:N # seq <- sequ
   cv <- function(h){
     #N, wt, x, y, G, yhat, yhat2, pihat, hv, coord, _dist_, seq, offset, alphai, S, Si, parg, pargg, ujg, bg, lambdag, pos0, pos1, pos02, nvar  
-    # if(method=="adaptiven"){
+    # if (method=="adaptiven"){
     #   #hv <- matrix(0,1,1)
     #   hv <- 0
     #   #yhat <- matrix(0,1,1)
@@ -402,7 +401,6 @@ Golden <- function(data, formula, xvarinf, weight,
       w <- rep(0, u)
       for (jj in 1:u){
         w[jj] <- exp(-0.5*(distan[jj,3]/h)^2)
-        #if (i==172 & jj==1){print(-0.5*(distan[jj,3]/h)^2)}
         if (method=="fixed_bsq"){ # | method=="adaptiven"
           w[jj] <- (1-(distan[jj,3]/h)^2)^2
         }
@@ -410,7 +408,6 @@ Golden <- function(data, formula, xvarinf, weight,
           w[i] <- 0
         }
       }
-      #if (i==172){print(w)}
       if (method=="fixed_bsq"){ # | method=="adaptiven"
         position <- which(distan[,3]<=h)
         w[position] <- 0
@@ -434,9 +431,6 @@ Golden <- function(data, formula, xvarinf, weight,
         }
         w <- w[order(w[, 2]), ]
         w <- w[,1]
-      }
-      if (i==1 & int2==2){
-        print(w)
       }
       b <- bg
       nj <- x%*%b+Offset #checar multiplicador
@@ -503,14 +497,8 @@ Golden <- function(data, formula, xvarinf, weight,
             par <- ifelse(par<E^-10, E^-10, par)
             gf <- sum(w*wt*(1-zk)*(digamma(par+y)-digamma(par)+log(par)+1-log(par+uj)-(par+y)/(par+uj)))
             hess <- sum(w*wt*(1-zk)*(trigamma(par+y)-trigamma(par)+1/par-2/(par+uj)+(y+par)/(par+uj)^2))
-            #if (i==172 & contador4==1){print(w)}
-            #if (i==172 & contador4==1){print(c(sum(w), sum(wt), sum(zk), par, sum(y), sum(uj)))}
-            #w e par com problema --> origem em w
-            #wt, zk, y e uj ok
             hess <- ifelse(hess==0, E^-23, hess)
             par0 <- par
-            #print(c(i, contador4)) #aqui
-            #if (i==172 & contador4==1){print(hess)} erro!
             par <- as.vector(par0-solve(hess)%*%gf) #multiplicador
             #par <- as.vector(par0-MASS::ginv(hess)%*%gf) #multiplicador
             dpar <- par-par0
@@ -686,7 +674,7 @@ Golden <- function(data, formula, xvarinf, weight,
         }
         oldllike <- llike
         llike <- sum(zk*(njl)-log(1+exp(njl))+(1-zk)*(log(gamma1)))
-        if(i==244){
+        if (i==244){
         }
         dllike <- llike-oldllike
         # if (i==244){
@@ -711,7 +699,7 @@ Golden <- function(data, formula, xvarinf, weight,
         S[i] <- (x[i,]%*%solve(t(x)%*%(w*Ai*x*wt), tol=E^-60)%*%t(x*w*Ai*wt))[i]
         #S[i] <- (x[i,]%*%MASS::ginv(t(x)%*%(w*Ai*x*wt))%*%t(x*w*Ai*wt))[i]
       }
-      if(model=="zip" | model=="zinb"){
+      if (model=="zip" | model=="zinb"){
         yhat[i] <- (uj*(1-exp(njl)/(1+exp(njl))))[i]
         yhat2[i] <- uj[i]
         if (det(t(G)%*%(w*Aii*G*wt))==0){
@@ -724,71 +712,77 @@ Golden <- function(data, formula, xvarinf, weight,
           }
         }
       }
-      # if(i==1){
+      # if (i==1){
       #   max_dist <<- max(dx) 
       # }
       # max_dist <<- max(max_dist,max(dx))
     }
     CV <- t((y-yhat)*wt)%*%(y-yhat)
     par_ <- 1/alphai
-    if(model=="zinb" | model == "zip"){
-      if (any(lambda)==0){
-        ll <- sum(-log(0+exp(pihat[pos0]))+log(0*exp(pihat[pos0])+(par_[pos0]/(par_[pos0]+yhat2[pos0]))^par_[pos0]))+
-          sum(-log(0+exp(pihat[pos1]))+lgamma(par_[pos1]+y[pos1])-lgamma(y[pos1]+1)-lgamma(par_[pos1])+
-                y[pos1]*log(yhat2[pos1]/(par_[pos1]+yhat2[pos1]))+par_[pos1]*log(par_[pos1]/(par_[pos1]+yhat2[pos1]))) #flag -> y vetor
-        
-        llnull1 <- sum(-log(1+zk[pos0])+log(zk[pos0]+(par_[pos0]/(par_[pos0]+y[pos0]))^par_[pos0]))+
-          sum(-log(1+zk[pos1])+lgamma(par_[pos1]+y[pos1])-lgamma(y[pos1]+1)-lgamma(par_[pos1])+
-                y[pos1]*log(y[pos1]/(par_[pos1]+y[pos1]))+par_[pos1]*log(par_[pos1]/(par_[pos1]+y[pos1]))) #flag -> y vetor
-        
-        llnull2 <- sum(-log(1+0)+log(0+(par_/(par_+mean(y)))^par_))+
-          sum(-log(1+0)+lgamma(par_+y)-lgamma(y+1)-lgamma(par_)+y*log(mean(y)/(par_+mean(y)))+par_*log(par_/(par_+mean(y)))) 
-      }
-      else{
-        ll <- sum(-log(1+exp(pihat[pos0]))+log(exp(pihat[pos0])+(par_[pos0]/(par_[pos0]+yhat2[pos0]))^par_[pos0]))+
-          sum(-log(1+exp(pihat[pos1]))+lgamma(par_[pos1]+y[pos1])-lgamma(y[pos1]+1)-lgamma(par_[pos1])+
-                y[pos1]*log(yhat2[pos1]/(par_[pos1]+yhat2[pos1]))+par_[pos1]*log(par_[pos1]/(par_[pos1]+yhat2[pos1])))
-        
-        llnull1 <- sum(-log(1+zk[pos0])+log(zk[pos0]+(par_[pos0]/(par_[pos0]+y[pos0]))^par_[pos0]))+
-          sum(-log(1+zk[pos1])+lgamma(par_[pos1]+y[pos1])-lgamma(y[pos1]+1)-lgamma(par_[pos1])+
-                y[pos1]*log(y[pos1]/(par_[pos1]+y[pos1]))+par_[pos1]*log(par_[pos1]/(par_[pos1]+y[pos1])))
-      }
-      dev <- 2*(llnull1-ll)
+    if (model=="zinb" | model == "zip"){
       npar <- sum(S)+sum(Si)
-      AIC <- 2*npar-2*ll
-      AICc <- AIC+2*(npar*(npar+1)/(N-npar-1))
-      if(model=="zinb"){
-        AIC <- 2*(npar+npar/(ncol(x)+ncol(G)))-2*ll
-        AICc <- AIC+2*((npar+npar/(ncol(x)+ncol(G)))*((npar+npar/(ncol(x)+ncol(G)))+1)/(N-(npar+npar/(ncol(x)+ncol(G)))-1))
+      if (bandwidth=="aic"){
+        if (any(lambda)==0){
+          ll <- sum(-log(0+exp(pihat[pos0]))+log(0*exp(pihat[pos0])+(par_[pos0]/(par_[pos0]+yhat2[pos0]))^par_[pos0]))+
+            sum(-log(0+exp(pihat[pos1]))+lgamma(par_[pos1]+y[pos1])-lgamma(y[pos1]+1)-lgamma(par_[pos1])+
+                  y[pos1]*log(yhat2[pos1]/(par_[pos1]+yhat2[pos1]))+par_[pos1]*log(par_[pos1]/(par_[pos1]+yhat2[pos1]))) #flag -> y vetor
+          
+          llnull1 <- sum(-log(1+zk[pos0])+log(zk[pos0]+(par_[pos0]/(par_[pos0]+y[pos0]))^par_[pos0]))+
+            sum(-log(1+zk[pos1])+lgamma(par_[pos1]+y[pos1])-lgamma(y[pos1]+1)-lgamma(par_[pos1])+
+                  y[pos1]*log(y[pos1]/(par_[pos1]+y[pos1]))+par_[pos1]*log(par_[pos1]/(par_[pos1]+y[pos1]))) #flag -> y vetor
+          
+          llnull2 <- sum(-log(1+0)+log(0+(par_/(par_+mean(y)))^par_))+
+            sum(-log(1+0)+lgamma(par_+y)-lgamma(y+1)-lgamma(par_)+y*log(mean(y)/(par_+mean(y)))+par_*log(par_/(par_+mean(y)))) 
+        }
+        else{
+          ll <- sum(-log(1+exp(pihat[pos0]))+log(exp(pihat[pos0])+(par_[pos0]/(par_[pos0]+yhat2[pos0]))^par_[pos0]))+
+            sum(-log(1+exp(pihat[pos1]))+lgamma(par_[pos1]+y[pos1])-lgamma(y[pos1]+1)-lgamma(par_[pos1])+
+                  y[pos1]*log(yhat2[pos1]/(par_[pos1]+yhat2[pos1]))+par_[pos1]*log(par_[pos1]/(par_[pos1]+yhat2[pos1])))
+          
+          llnull1 <- sum(-log(1+zk[pos0])+log(zk[pos0]+(par_[pos0]/(par_[pos0]+y[pos0]))^par_[pos0]))+
+            sum(-log(1+zk[pos1])+lgamma(par_[pos1]+y[pos1])-lgamma(y[pos1]+1)-lgamma(par_[pos1])+
+                  y[pos1]*log(y[pos1]/(par_[pos1]+y[pos1]))+par_[pos1]*log(par_[pos1]/(par_[pos1]+y[pos1])))
+        }
+        dev <- 2*(llnull1-ll)
+        npar <- sum(S)+sum(Si)
+        AIC <- 2*npar-2*ll
+        AICc <- AIC+2*(npar*(npar+1)/(N-npar-1))
+        if (model=="zinb"){
+          AIC <- 2*(npar+npar/(ncol(x)+ncol(G)))-2*ll
+          AICc <- AIC+2*((npar+npar/(ncol(x)+ncol(G)))*((npar+npar/(ncol(x)+ncol(G)))+1)/(N-(npar+npar/(ncol(x)+ncol(G)))-1))
+        }
       }
     }
-    else if(model=="poisson" | model=="negbin"){
-      if (length(pos02)==0){ #flag ncol -> length
-        pos0 <- pos1
-        pos0x <- 1
-        pos0xl <- 1
-      } 
-      else {
-        pos0x <- (par_[pos0]/(par_[pos0]+yhat[pos0]))^par_[pos0]
-        pos0xl <- (par_[pos0]/(par_[pos0]+y[pos0]))^par_[pos0] #flag -> y vetor
-      }
-      ll <- sum(-log(0+exp(pihat[pos0]))+log(0*exp(pihat[pos0])+pos0x))+
-        sum(-log(0+exp(pihat[pos1]))+lgamma(par_[pos1]+y[pos1])-lgamma(y[pos1]+1)-lgamma(par_[pos1])+
-              y[pos1]*log(yhat[pos1]/(par_[pos1]+yhat[pos1]))+
-              par_[pos1]*log(par_[pos1]/(par_[pos1]+yhat[pos1]))) #flag -> y vetor
-      
-      llnull1 <- sum(-log(1+zk)+log(zk+pos0xl))+ sum(-log(1+zk)+lgamma(par_[pos1]+y[pos1])-lgamma(y[pos1]+1)-lgamma(par_[pos1])+
-                                                       y[pos1]*log(y[pos1]/(par_[pos1]+y[pos1]))+par_[pos1]*log(par_[pos1]/(par_[pos1]+y[pos1]))) #flag -> y vetor
-      dev <- 2*(llnull1-ll)
+    else if (model=="poisson" | model=="negbin"){
       npar <- sum(S)
-      AIC <- 2*npar-2*ll
-      AICc <- AIC+2*(npar*(npar+1)/(N-npar-1))
-      if(model == "negbin"){
-        AIC <- 2*(npar+npar/ncol(x))-2*ll
-        AICc <-AIC+2*(npar+npar/ncol(x))*(npar+npar/ncol(x)+1)/(N-(npar+npar/ncol(x))-1)
+      if (bandwidth=="aic"){
+        if (length(pos02)==0){ #flag ncol -> length
+          pos0 <- pos1
+          pos0x <- 1
+          pos0xl <- 1
+        } 
+        else {
+          pos0x <- (par_[pos0]/(par_[pos0]+yhat[pos0]))^par_[pos0]
+          pos0xl <- (par_[pos0]/(par_[pos0]+y[pos0]))^par_[pos0] #flag -> y vetor
+        }
+        ll <- sum(-log(0+exp(pihat[pos0]))+log(0*exp(pihat[pos0])+pos0x))+
+          sum(-log(0+exp(pihat[pos1]))+lgamma(par_[pos1]+y[pos1])-lgamma(y[pos1]+1)-lgamma(par_[pos1])+
+                y[pos1]*log(yhat[pos1]/(par_[pos1]+yhat[pos1]))+
+                par_[pos1]*log(par_[pos1]/(par_[pos1]+yhat[pos1]))) #flag -> y vetor
+        
+        llnull1 <- sum(-log(1+zk)+log(zk+pos0xl))+ sum(-log(1+zk)+lgamma(par_[pos1]+y[pos1])-lgamma(y[pos1]+1)-lgamma(par_[pos1])+
+                                                         y[pos1]*log(y[pos1]/(par_[pos1]+y[pos1]))+par_[pos1]*log(par_[pos1]/(par_[pos1]+y[pos1]))) #flag -> y vetor
+        dev <- 2*(llnull1-ll)
+        npar <- sum(S)
+        AIC <- 2*npar-2*ll
+        AICc <- AIC+2*(npar*(npar+1)/(N-npar-1))
+        if (model == "negbin"){
+          AIC <- 2*(npar+npar/ncol(x))-2*ll
+          AICc <-AIC+2*(npar+npar/ncol(x))*(npar+npar/ncol(x)+1)/(N-(npar+npar/ncol(x))-1)
+        }
       }
     }
-    if(bandwidth == "aic"){
+    if (bandwidth == "aic"){
       CV <- AICc
     }
     res <- cbind(CV, npar)
@@ -796,15 +790,14 @@ Golden <- function(data, formula, xvarinf, weight,
   }
   
   # DEFINING GOLDEN SECTION SEARCH PARAMETERS 
-  if(method=="fixed_g" | method=="fixed_bsq"){
+  if (method=="fixed_g" | method=="fixed_bsq"){
     ax <- 0
     bx <- as.integer(max(dist(COORD))+1)
-    #print(bx)
-    if(distancekm){ #flag --> estava distacekm=="yes"
+    if (distancekm){ #flag --> estava distacekm=="yes"
       bx <- bx*111
     }
   }  
-  if(method=="adaptive_bsq"){
+  if (method=="adaptive_bsq"){
     ax <- 5
     bx <- N
   }
@@ -824,17 +817,13 @@ Golden <- function(data, formula, xvarinf, weight,
     upper <- cbind((1-r)*bx, r*bx, bx)
     xmin <- matrix(0, 3, 2)
   }
-  #print(upper) #errado
   for (GMY in 1:3){
     ax1 <- lower[GMY]
     bx1 <- upper[GMY]
     h0 <- ax1
     h3 <- bx1
     h1 <- bx1-r*(bx1-ax1)
-    #print(c(bx1, r, ax1)) #bx1 errado, o resto ok
     h2 <- ax1+r*(bx1-ax1)
-    # print(c('h0', 'h1', 'h2', 'h3'))
-    # print(c(h0, h1, h2, h3))
     if (GMY==1){
       h_values <- data.frame('h0'=h0, 'h1'=h1, 'h2'=h2, 'h3'=h3) #flag saída
     }
@@ -842,48 +831,36 @@ Golden <- function(data, formula, xvarinf, weight,
       h_values <- rbind(h_values, c(h0, h1, h2, h3))
     }
     ################################
-    # print("primeiro")
-    # print(h1)
     res1 <- cv(h1)
     CV1 <- res1[1]
-    # print(CV1)
-    # print("segundo")
-    # print(h2)
     res2 <- cv(h2)
     CV2 <- res2[1]
-    # print(CV2)
     if (GMY==1){
       band <- data.frame('GSS_count'=GMY, 'h1'=h1, 'cv1'=CV1, 'h2'=h2, 'cv2'=CV2) #flag saída
     }
     else{
       band <- rbind(band, c(GMY, h1, CV1, h2, CV2))
     }
-    int2 <- 1
-    while(abs(h3-h0) > tol*(abs(h1)+abs(h2)) & int2<200){
+    int <- 1
+    while(abs(h3-h0) > tol*(abs(h1)+abs(h2)) & int<200){
       if (CV2<CV1){
         h0 <- h1
         h1 <- h3-r*(h3-h0)
         h2 <- h0+r*(h3-h0)
         CV1 <- CV2
-        # print("terceiro1")
-        # print(h2)
         res2 <- cv(h2)
         CV2 <- res2[1]
-        # print(CV2)
       }
       else{
         h3 <- h2
         h1 <- h3-r*(h3-h0)
         h2 <- h0+r*(h3-h0)
         CV2 <- CV1
-        # print("terceiro2")
-        # print(h1)
         res1 <- cv(h1)
         CV1 <- res1[1]
-        # print(CV1)
       }
       band <- rbind(band, c(GMY, h1, CV1, h2, CV2))
-      int2 <- int2+1
+      int <- int+1
     }
     if (CV1<CV2){
       golden <- CV1

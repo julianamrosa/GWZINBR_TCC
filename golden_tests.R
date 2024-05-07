@@ -20,7 +20,7 @@ Golden(data = korea_base_artigo,formula = n_covid1~Morbidity+high_sch_p+Healthca
        model = "zinb", method = "adaptive_bsq", bandwidth = "cv", globalmin = FALSE, distancekm = TRUE, force=TRUE)
 endTime <- Sys.time()
 endTime-startTime
-#7 mins
+#7 mins OK
 
 # Teste 2: adaptive_bsq - aic #
 
@@ -30,7 +30,7 @@ Golden(data = korea_base_artigo,formula = n_covid1~Morbidity+high_sch_p+Healthca
        model = "zinb", method = "adaptive_bsq", bandwidth = "aic", globalmin = FALSE, distancekm = TRUE, force=TRUE)
 endTime <- Sys.time()
 endTime-startTime
-#14 mins
+#14 mins OK
 
 # Teste 3: fixed_g - cv #
 
@@ -82,7 +82,7 @@ Golden(data = korea_base_artigo,formula = n_covid1~Morbidity+high_sch_p+Healthca
        model = "zip", method = "fixed_g", bandwidth = "cv", globalmin = FALSE, distancekm = TRUE, force=TRUE)
 endTime <- Sys.time()
 endTime-startTime
-#1 min
+#1.1 min OK
 
 # Teste 12: fixed_g - aic #
 
@@ -104,6 +104,7 @@ Golden(data = korea_base_artigo,formula = n_covid1~Morbidity+high_sch_p+Healthca
        model = "negbin", method = "adaptive_bsq", bandwidth = "cv", globalmin = FALSE, distancekm = TRUE, force=TRUE)
 endTime <- Sys.time()
 endTime-startTime
+#57 segs OK
 
 # Teste 18: adaptive_bsq - aic #
 
@@ -113,7 +114,7 @@ Golden(data = korea_base_artigo,formula = n_covid1~Morbidity+high_sch_p+Healthca
        model = "negbin", method = "adaptive_bsq", bandwidth = "aic", globalmin = FALSE, distancekm = TRUE, force=TRUE)
 endTime <- Sys.time()
 endTime-startTime
-#57 segs
+#59 segs OK
 
 # Teste 19: fixed_g - cv #
 
@@ -123,7 +124,7 @@ Golden(data = korea_base_artigo,formula = n_covid1~Morbidity+high_sch_p+Healthca
        model = "negbin", method = "fixed_g", bandwidth = "cv", globalmin = FALSE, distancekm = TRUE, force=TRUE)
 endTime <- Sys.time()
 endTime-startTime
-#1.2 mins
+#1.2 mins OK
 
 # Teste 20: fixed_g - aic #
 
@@ -133,7 +134,7 @@ Golden(data = korea_base_artigo,formula = n_covid1~Morbidity+high_sch_p+Healthca
        model = "negbin", method = "fixed_g", bandwidth = "aic", globalmin = FALSE, distancekm = TRUE, force=TRUE)
 endTime <- Sys.time()
 endTime-startTime
-#45 segs
+#45 segs OK
 
 ## POISSON ##
 
@@ -145,6 +146,7 @@ Golden(data = korea_base_artigo,formula = n_covid1~Morbidity+high_sch_p+Healthca
        model = "poisson", method = "adaptive_bsq", bandwidth = "cv", globalmin = FALSE, distancekm = TRUE, force=TRUE)
 endTime <- Sys.time()
 endTime-startTime
+#36 segs --> não bate
 
 # Teste 26: adaptive_bsq - aic #
 
@@ -163,7 +165,7 @@ Golden(data = korea_base_artigo,formula = n_covid1~Morbidity+high_sch_p+Healthca
        model = "poisson", method = "fixed_g", bandwidth = "cv", globalmin = FALSE, distancekm = TRUE, force=TRUE)
 endTime <- Sys.time()
 endTime-startTime
-#17 segs
+#20 segs OK
 
 # Teste 28: fixed_g - aic #
 
