@@ -1,0 +1,9 @@
+DEBUG TESTE 25
+
+de trás para frente...
+res -> cv -> yhat -> soma errada -> uj -> soma errada -> continuar
+
+no adaptive_bsq, o que é modificado? w, ax, bx, xmin
+interessante verfificar se algum desses está errado. --> partir daí
+provavelmente é w, pois é a única condicional de adaptive dentro da cv()
+

@@ -92,8 +92,9 @@ Golden <- function(data, formula, xvarinf, weight,
     if (model == "zip" | model == "poisson"){
       #parg <<- 1/E^(-6)
       parg <- 1/E^(-6)
+      #if (cont==1){print(parg)}
       alphag <- 1/parg
-    }  
+    }
     if (model == "zinb" | model == "negbin"){
       if (cont>1){ 
         #parg <<- 1/(sum((y-uj)^2/uj)/(N-nvar))
@@ -146,6 +147,9 @@ Golden <- function(data, formula, xvarinf, weight,
     ddev <- 1
     cont2 <- 0
     while (abs(ddev)>0.000001 & cont2<100){
+      #if (cont==1 & cont2==0){print(alphag)}
+      #uj ok
+      #alphag errado
       Ai <- (uj/(1+alphag*uj))+(y-uj)*(alphag*uj/(1+2*alphag*uj+alphag^2*uj*uj))
       Ai <- ifelse(Ai<=0,E^-5,Ai)
       zj <- nj+(y-uj)/(Ai*(1+alphag*uj))-Offset
@@ -156,8 +160,13 @@ Golden <- function(data, formula, xvarinf, weight,
       } 
       else{
         #bg <<- solve(t(x)%*%(Ai*x))%*%t(x)%*%(Ai*zj)
+        #if (cont==1 & cont2==0){print(zj)}
+        #Ai errado
+        #zj errado
         bg <- solve(t(x)%*%(Ai*x))%*%t(x)%*%(Ai*zj)
       }
+      #if (cont==1 & cont2==0){print(bg)}
+      #errado
       nj <- as.vector(x%*%bg+Offset)
       nj <- ifelse(nj>700,700,nj)
       uj <- exp(nj)
@@ -432,6 +441,10 @@ Golden <- function(data, formula, xvarinf, weight,
         w <- w[order(w[, 2]), ]
         w <- w[,1]
       }
+      #if (i==1){print(w)}
+      #ok na primeira chamada (e para i==1)
+      #if (i==1){print(bg)}
+      #errado
       b <- bg
       nj <- x%*%b+Offset #checar multiplicador
       uj <- exp(nj)
@@ -543,32 +556,53 @@ Golden <- function(data, formula, xvarinf, weight,
         }
         dev <- 0
         ddev <- 1
+        #if (i==1 & contador4==1){print(b)}
+        #errado
         nj <- x%*%b+Offset
         nj <- ifelse(nj>700, 700, nj)
         nj <- ifelse(nj<(-700), -700, nj)
+        #if (i==1 & contador4==1){print(as.numeric(nj))}
+        #errado
         uj <- exp(nj)
         contador5 <- 0
         while (abs(ddev)>0.000001 & aux1<100){
           contador5 <- contador5+1
+          #if (i==1 & contador5==1 & contador4==1){print(as.numeric(uj))}
+          #uj já entra errado nesse loop
           uj <- ifelse(uj>E^100,E^100,uj)
           Ai <- as.vector((1-zk)*((uj/(1+alpha*uj)+(y-uj)*(alpha*uj/(1+2*alpha*uj+alpha^2*uj^2)))))
           Ai <- ifelse(Ai<=0,E^-5,Ai)
           uj <- ifelse(uj<E^-150,E^-150,uj)
+          #if (i==1 & contador5==1 & contador4==1){print(alpha)}
+          #alpha errado
           denz <- (((uj/(1+alpha*uj)+(y-uj)*(alpha*uj/(1+2*alpha*uj+alpha^2*uj^2))))*(1+alpha*uj))
           denz <- ifelse(denz==0,E^-5,denz)
+          #if (i==1 & contador5==1 & contador4==1){print(as.numeric(denz))}
+          #nj errado
+          #uj errado
+          #denz errado
           zj <- (nj+(y-uj)/denz)-Offset
           if (det(t(x)%*%(w*Ai*x*wt))==0){
             #b <- matrix(0, nvar, 1)
             b <- rep(0, nvar)
           }
           else{
+            #if (i==1 & contador5==1 & contador4==1){print(as.numeric(zj))}
+            #w ok
+            #Ai errado
+            #zj errado
             b <- solve(t(x)%*%(w*Ai*x*wt), tol=E^-60)%*%t(x)%*%(w*Ai*wt*zj)
             #b <- MASS::ginv(t(x)%*%(w*Ai*x*wt))%*%t(x)%*%(w*Ai*wt*zj)
           }
+          #if (i==1 & contador5==1 & contador4==1){print(b)}
+          #errado
           nj <- x%*%b+Offset
           nj <- ifelse(nj>700, 700, nj)
           nj <- ifelse(nj<(-700), -700, nj)
           uj <- exp(nj)
+          #if (i==1 & contador5==1 & contador4==1){print(as.vector(nj))}
+          #if (i==1 & contador5==1 & contador4==1){print(sum(uj))} --> errado (PAREI AQUI)
+          #errado
           olddev <- dev
           uj <- ifelse(uj>E^10, E^10, uj)
           uj <- ifelse(uj==0, E^-10, uj)
@@ -684,6 +718,7 @@ Golden <- function(data, formula, xvarinf, weight,
         #prints comentados
         j <- j+1
       }
+      #if (i==244){print(uj[i])}
       yhat[i] <- uj[i]
       pihat[i] <- njl[i]
       #alphai[i] <<-  alpha
@@ -717,6 +752,9 @@ Golden <- function(data, formula, xvarinf, weight,
       # }
       # max_dist <<- max(max_dist,max(dx))
     }
+    #print(sum(yhat)) errado
+    #print(yhat)
+    #print(wt) sempre ok (vetor de 1s)
     CV <- t((y-yhat)*wt)%*%(y-yhat)
     par_ <- 1/alphai
     if (model=="zinb" | model == "zip"){
@@ -785,6 +823,8 @@ Golden <- function(data, formula, xvarinf, weight,
     if (bandwidth == "aic"){
       CV <- AICc
     }
+    #print(CV)
+    #errado
     res <- cbind(CV, npar)
     return (res)
   }
