@@ -2,7 +2,7 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
                     lat, long, grid=NULL, method, model = "zinb",
                     offset=NULL, distancekm=FALSE, force=TRUE, int_inf=TRUE,
                     maxg=100, h=NULL){
-
+  
   E <- 10
   mf <- match.call(expand.dots = FALSE)
   m <- match(c("formula", "data"), names(mf), 0)
@@ -16,24 +16,24 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
   N <<- length(y) 
   x <<- model.matrix(mt, mf)
   if (is.null(xvarinf)){
-    G <<- matrix(1, N, 1)
+    G <<- matrix(1, N, 1) #certo
     # G <<- rep(1, N) #matriz coluna
     lambdag <<- matrix(0, ncol(G), 1) #ncol(G) em vez de length(G)
     # lambdag <<- rep(0, length(G))
   }
   else{
-    G <<- unlist(data[, xvarinf])
-    G <<- cbind(rep(1, N), G)
+    #G <<- unlist(data[, xvarinf])
+    G <<- as.matrix(data[, xvarinf])
   }
   if (int_inf){ #o que e int_inf? 
     G <<- cbind(rep(1, N), G)
   }
   # x <<- cbind(rep(1, N), x)
-  yhat <<- rep(0, n)
-  yhat2 <<- rep(0, n)
-  pihat <<- rep(0, n)
+  yhat <<- rep(0, N)
+  yhat2 <<- rep(0, N)
+  pihat <<- rep(0, N)
   nvar <<- ncol(x)
-  wt <<- rep(1, n)
+  wt <<- rep(1, N)
   if (!is.null(weight)){
     wt <<- unlist(data[, weight])
   }
@@ -43,9 +43,12 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
   }
   Iy <- ifelse(y>0, 1, y)
   Iy <- 1-Iy
-  pos0 <<- which(y==0)
+  pos0 <<-  which(y==0)
+  pos0 <<- t(as.matrix(pos0))
   pos02 <<- which(y==0)
+  pos02 <<- t(as.matrix(pos02))
   pos1 <<- which(y>0)
+  pos1 <<- t(as.matrix(pos1))
   
   # /**** global estimates ****/ 
   uj <- (y+mean(y))/2 
@@ -141,7 +144,7 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
       #lambdag <<- matrix(0, ncol(G),1) 
       lambdag <<- rep(0, ncol(G))
       cat("NOTE: Expected number of zeros (", round(sum((parg/(uj+parg))^parg), 2), 
-          ") >= number of zeros (", ncol(pos0), "). No Need of Zero Model.\n")
+           ") >= number of zeros (", ncol(pos0), "). No Need of Zero Model.\n")
     }
     else{
       cat("NOTE: Expected number of zeros (", round(sum((parg/(uj+parg))^parg), 2), 
@@ -191,10 +194,6 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
         parg <- 1/alphag
       }
       else{
-        if (j>0){
-          #parg <<- 1/(sum((y-uj)^2/uj)/(N-nvar))
-          parg <- 1/(sum((y-uj)^2/uj)/(N-nvar))
-        }
         while (abs(dpar)>0.0001 & aux2<200){
           if (parg<0){
             #parg <<- 0.00001
@@ -203,10 +202,10 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
           parg <- ifelse(parg<E^-10, E^-10, parg)
           gf <- sum((1-zkg)*(digamma(parg+y)-digamma(parg)+log(parg)+1-log(parg+uj)-(parg+y)/(parg+uj)))
           hessg <- sum((1-zkg)*(trigamma(parg+y)-trigamma(parg)+1/parg-2/(parg+uj)+(y+parg)/(parg+uj)^2))
-          hessg <- ifelse(hess==0, E^-23, hess)
+          hessg <- ifelse(hessg==0, E^-23, hessg)
           par0 <- parg
           parg <- as.vector(par0-solve(hessg)%*%gf)
-          if (parg > E^5) {
+          if ( aux2 > 50 |parg > E^5) {
             dpar <- 0.0001
             cont3 <- cont3+1
             if (cont3==1) {
@@ -268,21 +267,22 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
       ddpar <- parg-parold
       cont <- cont+1
     }
-    if (model == "zip" |model == 'zinb'){
+    if (model == "zip" | model == "zinb"){
       devg <- 0
       ddev <- 1
       njl <- G%*%lambdag
       njl <- ifelse(njl > maxg, maxg, njl)
       njl <- ifelse(njl < (-maxg),-maxg, njl)
       pig <- exp(njl)/(1+exp(njl))
-      while (abs(ddev)>0.000001 & aux3<100){
-        Ai <- pig*(1-pig)
+      while (abs(ddev)>0.000001 & aux3<100){ 
+        Ai <- as.vector(pig*(1-pig))
         Ai <- ifelse(Ai<=0, E^-5, Ai)
         zj <- njl+(zkg-pig)*1/Ai
-        if (det(t(G)%*%(Ai*G))==0){ 
+        if(det(t(G)%*%(Ai*G))==0){ 
           lambdag <- matrix(0, ncol(G), 1)
         }  
         else {
+          print("chegou aqui 2")
           #lambdag <<- solve(t(G*Ai)%*%G)%*%t(G*Ai)%*%zj
           lambdag <- solve(t(G)%*%(Ai*G))%*%t(G)*(Ai*zj)
         }
@@ -343,7 +343,7 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
   varcovg <- solve(II)
   # *print bg lambdag alphag devg llikeg stdabetalambdag;
   
-            # /*****************************************/
+  # /*****************************************/
   print(c("bandwidth", h))
   long <- unlist(data[, long])
   lat <- unlist(data[, lat])
@@ -911,28 +911,28 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
     if (model == "zinb" || model == "zip") {
       if (any(lambda) == 0) {
         ll <- sum(-log(0+exp(pihat[pos0])) + log(0*exp(pihat[pos0]) + (par_[pos0]/(par_[pos0]+yhat2[pos0]))^par_[pos0])) +
-        sum(-log(0+exp(pihat[pos1])) + lgamma(par_[pos1]+y[pos1, ]) - lgamma(y[pos1, ]+1) - lgamma(par_[pos1]) +
-        y[pos1]*log(yhat2[pos1]/(par_[pos1]+yhat2[pos1]))+par_[pos1] * log(par_[pos1]/(par_[pos1]+yhat2[pos1])))
+          sum(-log(0+exp(pihat[pos1])) + lgamma(par_[pos1]+y[pos1, ]) - lgamma(y[pos1, ]+1) - lgamma(par_[pos1]) +
+                y[pos1]*log(yhat2[pos1]/(par_[pos1]+yhat2[pos1]))+par_[pos1] * log(par_[pos1]/(par_[pos1]+yhat2[pos1])))
         
         llnull1 <- sum(-log(1+zk[pos0]) + log(zk[pos0]+(par_[pos0]/(par_[pos0] + y[pos0, ]))^par_[pos0])) +
-        sum(-log(1+zk[pos1])+lgamma(par_[pos1] + y[pos1, ])-lgamma(y[pos1, ]+1) - lgamma(par_[pos1]) +
-        y[pos1]*log(y[pos1, ]/(par_[pos1] + y[pos1, ])) + par_[pos1]*log(par_[pos1]/(par_[pos1] + y[pos1, ])))
+          sum(-log(1+zk[pos1])+lgamma(par_[pos1] + y[pos1, ])-lgamma(y[pos1, ]+1) - lgamma(par_[pos1]) +
+                y[pos1]*log(y[pos1, ]/(par_[pos1] + y[pos1, ])) + par_[pos1]*log(par_[pos1]/(par_[pos1] + y[pos1, ])))
         
         llnull2 <- sum(-log(1+0) + log(0+(par_/(par_ + mean(y)))^par_)) + #pq log de 1+0? 
-        sum(-log(1+0) + lgamma(par_+y) - lgamma(y+1) - lgamma(par_) +
-        y*log(mean(y)/(par_ + mean(y))) + par_*log(par_/(par_+mean(y))))
+          sum(-log(1+0) + lgamma(par_+y) - lgamma(y+1) - lgamma(par_) +
+                y*log(mean(y)/(par_ + mean(y))) + par_*log(par_/(par_+mean(y))))
       } else {
         ll <- sum(-log(1+exp(pihat[pos0])) + log(exp(pihat[pos0]) + (par_[pos0]/(par_[pos0]+yhat2[pos0]))^par_[pos0])) +
-        sum(-log(1+exp(pihat[pos1])) + lgamma(par_[pos1]+y[pos1]) - lgamma(y[pos1]+1) - lgamma(par_[pos1]) +
-        y[pos1]*log(yhat2[pos1]/(par_[pos1]+yhat2[pos1])) + par_[pos1]*log(par_[pos1]/(par_[pos1]+yhat2[pos1])))
+          sum(-log(1+exp(pihat[pos1])) + lgamma(par_[pos1]+y[pos1]) - lgamma(y[pos1]+1) - lgamma(par_[pos1]) +
+                y[pos1]*log(yhat2[pos1]/(par_[pos1]+yhat2[pos1])) + par_[pos1]*log(par_[pos1]/(par_[pos1]+yhat2[pos1])))
         
         llnull1 <- sum(-log(1+zk[pos0]) + log(zk[pos0] + (par_[pos0]/(par_[pos0] + y[pos0]))^par_[pos0])) +
-        sum(-log(1 + zk[pos1]) + lgamma(par_[pos1] + y[pos1]) - lgamma(y[pos1]+1) - lgamma(par_[pos1]) +
-        y[pos1]*log(y[pos1]/(par_[pos1]+y[pos1])) + par_[pos1]*log(par_[pos1]/(par_[pos1] + y[pos1])))
+          sum(-log(1 + zk[pos1]) + lgamma(par_[pos1] + y[pos1]) - lgamma(y[pos1]+1) - lgamma(par_[pos1]) +
+                y[pos1]*log(y[pos1]/(par_[pos1]+y[pos1])) + par_[pos1]*log(par_[pos1]/(par_[pos1] + y[pos1])))
         
         llnull2 <- sum(-log(1+0) + log(0+(mean(par_)/(mean(par_)+mean(y)))^mean(par_))) +
-        sum(-log(1+0) + lgamma(mean(par_)+y) - lgamma(y+1) - lgamma(mean(par_)) +
-        y*log(mean(y)/(mean(par_)+mean(y))) + mean(par_)*log(mean(par_)/(mean(par_) + mean(y))))
+          sum(-log(1+0) + lgamma(mean(par_)+y) - lgamma(y+1) - lgamma(mean(par_)) +
+                y*log(mean(y)/(mean(par_)+mean(y))) + mean(par_)*log(mean(par_)/(mean(par_) + mean(y))))
       }
       dev <- 2*(llnull1-ll)
       pctll <- 1-(llnull1-ll)/(llnull1-llnull2)
@@ -962,19 +962,19 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
         pos0xl <- (par_[pos0]/(par_[pos0] + y[pos0, ]))^par_[pos0]
       }
       ll <- sum(-log(0+exp(pihat[pos0])) + log(0*exp(pihat[pos0]) + pos0x)) + sum(-log(0+exp(pihat[pos1])) +
-      lgamma(par_[pos1] + y[pos1, ]) - lgamma(y[pos1, ] + 1) - lgamma(par_[pos1]) + y[pos1]*log(yhat[pos1]/(par_[pos1] + yhat[pos1])) +
-      par_[pos1]*log(par_[pos1]/(par_[pos1] + yhat[pos1])))
+                                                                                    lgamma(par_[pos1] + y[pos1, ]) - lgamma(y[pos1, ] + 1) - lgamma(par_[pos1]) + y[pos1]*log(yhat[pos1]/(par_[pos1] + yhat[pos1])) +
+                                                                                    par_[pos1]*log(par_[pos1]/(par_[pos1] + yhat[pos1])))
       
       llnull1 <- sum(-log(1+zk) + log(zk+pos0xl)) + sum(-log(1+zk) + 
-      lgamma(par_[pos1]+y[pos1, ]) - lgamma(y[pos1, ]+1) - lgamma(par_[pos1])+y[pos1]*log(y[pos1, ]/(par_[pos1]+y[pos1, ])) +
-      par_[pos1]*log(par_[pos1]/(par_[pos1] + y[pos1, ])))
+                                                          lgamma(par_[pos1]+y[pos1, ]) - lgamma(y[pos1, ]+1) - lgamma(par_[pos1])+y[pos1]*log(y[pos1, ]/(par_[pos1]+y[pos1, ])) +
+                                                          par_[pos1]*log(par_[pos1]/(par_[pos1] + y[pos1, ])))
       
       pos1xx <- 0+(par_[pos0]/(par_[pos0] + mean(y)))*par_[pos0]
       pos1xx <- ifelse(pos0x <= 0, E^-100, pos0x)
       
       llnull2 <- sum(-log(1+0) + log(pos1xx)) +
-      sum(-log(1+0) + lgamma(par_[pos1]+y[pos1]) - lgamma(y[pos1]+1) - lgamma(par_[pos1]) +
-      y[pos1]*log(mean(y)/(par_[pos1]+ mean(y))) + par_[pos1]*log(par_[pos1]/(par_[pos1]+ mean(y))))
+        sum(-log(1+0) + lgamma(par_[pos1]+y[pos1]) - lgamma(y[pos1]+1) - lgamma(par_[pos1]) +
+              y[pos1]*log(mean(y)/(par_[pos1]+ mean(y))) + par_[pos1]*log(par_[pos1]/(par_[pos1]+ mean(y))))
       
       dev <- 2*(llnull1-ll)
       AIC <- -2*ll+2*v1
@@ -1265,23 +1265,23 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
     print("NOTE: The denominator degrees of freedom for the t tests is")
     print(dflg)
     ll <- sum(-log(1+exp(G[pos0, ]%*%lambdag))+
-          log(exp(G[pos0, ]%*%lambdag)+
-          (parg/(parg+exp(x[pos0, ]%*%bg+Offset[pos0, ])))^parg))+
-          sum(-log(1+exp(G[pos1, ]%*%lambdag))+
-          lgamma(parg+y[pos1, ])-lgamma(y[pos1, ]+1)-
-          lgamma(parg)+y[pos1]*log(exp(x[pos1, ]%*%bg+Offset[pos1, ])/(parg+exp(x[pos1, ]%*%bg+Offset[pos1, ])))+
-          parg*log(parg/(parg+exp(x[pos1, ]%*%bg+Offset[pos1, ]))))
+                log(exp(G[pos0, ]%*%lambdag)+
+                      (parg/(parg+exp(x[pos0, ]%*%bg+Offset[pos0, ])))^parg))+
+      sum(-log(1+exp(G[pos1, ]%*%lambdag))+
+            lgamma(parg+y[pos1, ])-lgamma(y[pos1, ]+1)-
+            lgamma(parg)+y[pos1]*log(exp(x[pos1, ]%*%bg+Offset[pos1, ])/(parg+exp(x[pos1, ]%*%bg+Offset[pos1, ])))+
+            parg*log(parg/(parg+exp(x[pos1, ]%*%bg+Offset[pos1, ]))))
     AIC <- 2*p-2*ll
     AICc <- AIC+2*(p*(p+1)/(N-p-1))
     llnull1 <- sum(-log(1+zkg[pos0, ])+log(zkg[pos0, ]+
-               (parg/(parg+y[pos0, ]))^parg))+
-               sum(-log(1+zkg[pos1, ])+lgamma(parg+y[pos1, ])-
-               lgamma(y[pos1, ]+1)-lgamma(parg)+
-               y[pos1]*log(y[pos1, ]/(parg+y[pos1, ]))+
-               parg*log(parg/(parg+y[pos1, ])))
+                                             (parg/(parg+y[pos0, ]))^parg))+
+      sum(-log(1+zkg[pos1, ])+lgamma(parg+y[pos1, ])-
+            lgamma(y[pos1, ]+1)-lgamma(parg)+
+            y[pos1]*log(y[pos1, ]/(parg+y[pos1, ]))+
+            parg*log(parg/(parg+y[pos1, ])))
     llnull2 <- sum(-log(1+0)+log(0+(parg/(parg+mean(y)))^parg))+
-               sum(-log(1+0)+lgamma(parg+y)-lgamma(y+1)-lgamma(parg)+
-               y*log(mean(y)/(parg+mean(y)))+parg*log(parg/(parg+mean(y))))
+      sum(-log(1+0)+lgamma(parg+y)-lgamma(y+1)-lgamma(parg)+
+            y*log(mean(y)/(parg+mean(y)))+parg*log(parg/(parg+mean(y))))
     devg <- 2*(llnull1-ll)
     pctll <- 1-(llnull1-ll)/(llnull1-llnull2)
     adjpctll <- 1-(llnull1-ll+p+0.5)/(llnull1-llnull2)
@@ -1301,18 +1301,18 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
       pos0xl <- (parg/(parg+y[pos0, ]))^parg
     }
     ll <- sum(-log(0+exp(G[pos0, ]%*%lambdag))+
-          log(0*exp(G[pos0, ]%*%lambdag)+pos0x))+
-          sum(-log(0+exp(G[pos1, ]%*%lambdag))+
-          lgamma(parg+y[pos1, ])-lgamma(y[pos1, ]+1)-
-          lgamma(parg)+y[pos1]*log(exp(x[pos1, ]%*%bg+
-          Offset[pos1, ])/(parg+exp(x[pos1, ]%*%bg+
-          Offset[pos1, ])))+
-          parg*log(parg/(parg+exp(x[pos1, ]%*%bg+Offset[pos1, ]))))
+                log(0*exp(G[pos0, ]%*%lambdag)+pos0x))+
+      sum(-log(0+exp(G[pos1, ]%*%lambdag))+
+            lgamma(parg+y[pos1, ])-lgamma(y[pos1, ]+1)-
+            lgamma(parg)+y[pos1]*log(exp(x[pos1, ]%*%bg+
+                                           Offset[pos1, ])/(parg+exp(x[pos1, ]%*%bg+
+                                                                       Offset[pos1, ])))+
+            parg*log(parg/(parg+exp(x[pos1, ]%*%bg+Offset[pos1, ]))))
     llnull1 <- sum(-log(1+zkg)+log(zkg+pos0xl))+
-               sum(-log(1+zkg)+lgamma(parg+y[pos1, ])-
-               lgamma(y[pos1, ]+1)-lgamma(parg)+
-               y[pos1]*log(y[pos1, ]/(parg+y[pos1, ]))+
-               parg*log(parg/(parg+y[pos1, ])))
+      sum(-log(1+zkg)+lgamma(parg+y[pos1, ])-
+            lgamma(y[pos1, ]+1)-lgamma(parg)+
+            y[pos1]*log(y[pos1, ]/(parg+y[pos1, ]))+
+            parg*log(parg/(parg+y[pos1, ])))
     devg <- 2*(llnull1-ll)
     AIC <- -2*ll+2*nvar
     AICc <- -2*ll+2*nvar*(N/(N-nvar-1))
@@ -1352,7 +1352,7 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
     for (j in 1:nrow(stdbeta_)){
       for (k in 1:ncol(stdbeta_)){
         if (stdbeta_[j, k]==0){
-        tstat_[j, k] <- 0
+          tstat_[j, k] <- 0
         }
         else{
           tstat_[j, k] <- beta_[j, k]/stdbeta_[j, k]
@@ -1392,7 +1392,7 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
       for (j in 1:nrow(stdlambda_)){
         for(k in 1:ncol(stdlambda_)){
           if (stdlambda_[j, k]==0){
-          tstatl_[j, k] <- 0
+            tstatl_[j, k] <- 0
           }
           else{
             tstatl_[j, k] <- lambda_[j, k]/stdlambda_[j, k]
@@ -1526,3 +1526,22 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
     }
   }
 } # fecha gwzinbr
+
+# -------------------------- TEST
+
+# Com h=82 (ou seja, sem rodar a golden)
+library(readr)
+korea_base_artigo <- read_csv("C:/Users/jehhv/OneDrive/Documentos/UnB/2024/TCC2/korea_base_artigo.csv")
+
+startTime <- Sys.time()
+gwzinbr(data = korea_base_artigo, 
+        formula = n_covid1~Morbidity+high_sch_p+Healthcare_access+
+          diff_sd+Crowding+Migration+Health_behavior,
+        xvarinf = c("Morbidity", "high_sch_p", "Healthcare_access", "diff_sd",
+                    "Crowding", "Migration", "Health_behavior"),
+        lat = "x", long = "y", offset = "ln_total", method = "adaptive_bsq",
+        model = "zinb", distancekm = TRUE, h=82)
+endTime <- Sys.time()
+endTime-startTime
+
+
