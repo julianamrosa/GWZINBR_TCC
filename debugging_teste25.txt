@@ -7,3 +7,10 @@ no adaptive_bsq, o que é modificado? w, ax, bx, xmin
 interessante verfificar se algum desses está errado. --> partir daí
 provavelmente é w, pois é a única condicional de adaptive dentro da cv()
 
+cv está saindo errado por causa de yhat, que está saindo errado por causa de uj.
+Mas o uj estava certinho inicialmente, o que acontece é que as iterações dos whiles continuam
+e ele acaba sendo atualizado errado.
+Ou seja, temos mais iterações dos whiles do que deveríamos: problema na convergência.
+O problema vem de ddev (estou olhando i=128, contador4=1, contador5=6 --> ponto crucial).
+Retrospectiva do ddev:
+ddev --> dev e olddev --> zk e gamma1 --> par, uj
