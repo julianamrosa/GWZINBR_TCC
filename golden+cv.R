@@ -585,11 +585,14 @@ Golden <- function(data, formula, xvarinf, weight,
           nj <- x%*%b+Offset
           nj <- ifelse(nj>700, 700, nj)
           nj <- ifelse(nj<(-700), -700, nj)
+          #if (i==152 & contador4==1 & contador5==1){print(sum(nj))} ok
           uj <- exp(nj)
+          if (i==152 & contador4==1 & contador5==1){print(as.vector(nj))}
           olddev <- dev
           uj <- ifelse(uj>E^10, E^10, uj)
           uj <- ifelse(uj==0, E^-10, uj)
-          #if (i==128 & contador4==1 & contador5==6){print(par)} ok
+          #if (i==152 & contador4==1 & contador5==1){print(sum(uj))}
+          #errado
           if (par==E^6){
             #gamma1=/*(gamma(par+y)/(gamma(y+1)#gamma(par)))#*/(uj/(uj+par))##y#exp(-uj)
             #if (i==128 & contador4==1 & contador5==6){print(as.vector((uj/(uj+par))))}
@@ -721,7 +724,7 @@ Golden <- function(data, formula, xvarinf, weight,
         j <- j+1
         #if (i==128){print(c("loop externo", contador4))}
       }
-      #if (i==128){print(uj[i])}
+      #if (i==152){print(uj[i])}
       #errado
       yhat[i] <- uj[i]
       pihat[i] <- njl[i]
@@ -756,7 +759,7 @@ Golden <- function(data, formula, xvarinf, weight,
       # }
       # max_dist <<- max(max_dist,max(dx))
     }
-    #print(yhat[128])
+    #print(yhat)
     #errado
     #print(wt) sempre ok (vetor de 1s)
     CV <- t((y-yhat)*wt)%*%(y-yhat)
@@ -806,6 +809,7 @@ Golden <- function(data, formula, xvarinf, weight,
         else {
           pos0x <- (par_[pos0]/(par_[pos0]+yhat[pos0]))^par_[pos0]
           pos0xl <- (par_[pos0]/(par_[pos0]+y[pos0]))^par_[pos0] #flag -> y vetor
+          pos0x <- ifelse(pos0x==0, E^-10, pos0x)
         }
         ll <- sum(-log(0+exp(pihat[pos0]))+log(0*exp(pihat[pos0])+pos0x))+
           sum(-log(0+exp(pihat[pos1]))+lgamma(par_[pos1]+y[pos1])-lgamma(y[pos1]+1)-lgamma(par_[pos1])+
@@ -875,10 +879,10 @@ Golden <- function(data, formula, xvarinf, weight,
       h_values <- rbind(h_values, c(h0, h1, h2, h3))
     }
     ################################
-    #print("chama cv")
+    print("chama cv")
     res1 <- cv(h1)
     CV1 <- res1[1]
-    #print("chama cv")
+    print("chama cv")
     res2 <- cv(h2)
     CV2 <- res2[1]
     if (GMY==1){
@@ -894,7 +898,7 @@ Golden <- function(data, formula, xvarinf, weight,
         h1 <- h3-r*(h3-h0)
         h2 <- h0+r*(h3-h0)
         CV1 <- CV2
-        #print("chama cv")
+        print("chama cv")
         res2 <- cv(h2)
         CV2 <- res2[1]
       }
@@ -903,7 +907,7 @@ Golden <- function(data, formula, xvarinf, weight,
         h1 <- h3-r*(h3-h0)
         h2 <- h0+r*(h3-h0)
         CV2 <- CV1
-        #print("chama cv")
+        print("chama cv")
         res1 <- cv(h1)
         CV1 <- res1[1]
       }

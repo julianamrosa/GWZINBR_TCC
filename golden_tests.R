@@ -1,7 +1,7 @@
 library(readr)
 #korea_base_artigo <- read_csv("UnB/2024/TCC2/korea_base_artigo.csv")
-korea_base_artigo <- read_csv("C:/Users/Juliana Rosa/OneDrive/Documents/TCC2/GWZINBR-main/korea_base_artigo.csv")
-#korea_base_artigo <- read_csv("C:/Juliana/TCC/GWZINBR-main/korea_base_artigo.csv")
+#korea_base_artigo <- read_csv("C:/Users/Juliana Rosa/OneDrive/Documents/TCC2/GWZINBR-main/korea_base_artigo.csv")
+korea_base_artigo <- read_csv("C:/Juliana/TCC/GWZINBR-main/korea_base_artigo.csv")
 
 if(!require(sp)){
   install.packages("sp")
@@ -156,6 +156,7 @@ Golden(data = korea_base_artigo,formula = n_covid1~Morbidity+high_sch_p+Healthca
        model = "poisson", method = "adaptive_bsq", bandwidth = "aic", globalmin = FALSE, distancekm = TRUE, force=TRUE)
 endTime <- Sys.time()
 endTime-startTime
+# 28 segs --> errado
 
 # Teste 27: fixed_g - cv #
 
@@ -175,6 +176,7 @@ Golden(data = korea_base_artigo,formula = n_covid1~Morbidity+high_sch_p+Healthca
        model = "poisson", method = "fixed_g", bandwidth = "aic", globalmin = FALSE, distancekm = TRUE, force=TRUE)
 endTime <- Sys.time()
 endTime-startTime
+#1.72 min --> errado
 
 #lembretes:
 #3- rodar todos os testes

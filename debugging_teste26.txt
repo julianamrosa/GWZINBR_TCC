@@ -1,0 +1,5 @@
+debug teste 26
+
+problema na 3a chamada da cv --> não é na 2a? melhor, na 5a
+
+res > cv > yhat > uj
