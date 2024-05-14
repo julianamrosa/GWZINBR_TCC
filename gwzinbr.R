@@ -144,7 +144,7 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
       #lambdag <<- matrix(0, ncol(G),1) 
       lambdag <<- rep(0, ncol(G))
       cat("NOTE: Expected number of zeros (", round(sum((parg/(uj+parg))^parg), 2), 
-           ") >= number of zeros (", ncol(pos0), "). No Need of Zero Model.\n")
+          ") >= number of zeros (", ncol(pos0), "). No Need of Zero Model.\n")
     }
     else{
       cat("NOTE: Expected number of zeros (", round(sum((parg/(uj+parg))^parg), 2), 
@@ -282,9 +282,8 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
           lambdag <- matrix(0, ncol(G), 1)
         }  
         else {
-          print("chegou aqui 2")
           #lambdag <<- solve(t(G*Ai)%*%G)%*%t(G*Ai)%*%zj
-          lambdag <- solve(t(G)%*%(Ai*G))%*%t(G)*(Ai*zj)
+          lambdag <- solve(t(G)%*%(Ai*G))%*%t(G)%*%(Ai*zj)
         }
         njl <- G%*%lambdag
         njl <- ifelse(njl > maxg, maxg, njl)
@@ -319,16 +318,18 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
   daa <- daa*parg^4
   dab <- dab*parg^2
   if (any(lambdag)==0){
-    Iy <- matrix(0, nrow(y), 1)
+    Iy <- matrix(0, length(y), 1)
   }
   dll <- Iy*(exp(njl)*g1x^parg/hgx^2)-exp(njl)/(1+exp(njl))^2
   dbb <- Iy*(-(parg*g1x^parg*g2x/hgx)^2+parg^2*g1x^parg*g2x^2*(1-1/uj)/hgx)-(1-Iy)*(parg*g2x*(1+(y-uj)/(parg+uj)))
   dlb <- Iy*(parg*exp(njl)*g1x^parg*g2x/hgx^2)
-  I1 <- matrix(1, nrow(y), 1)
+  I1 <- matrix(1, length(y), 1)
   # II <- -(t(I1) %*% daa) %*% I1 || -(t(I1) %*% dab) %*% X || -(t(I1) %*% dal) %*% G // (-t(X) %*% (dab * I1) || -t(X) %*% dbb %*% X || -t(X) %*% dlb %*% G) // (-t(G) %*% (dal * I1) || -t(G) %*% (X %*% dlb) || -t(G) %*% t(G) %*% dll %*% G)
+  # II=-(I1#daa)`*I1||-(I1#dab)`*X||-(I1#dal)`*G//(-X`*(dab#I1)||-(X#dbb)`*X||-(X#dlb)`*G)//(-G`*(dal#I1)||-G`*(X#dlb)||-(G#dll)`*G);
   II <- rbind(cbind(-(t(I1 * daa)) %*% I1, -(t(I1 * dab)) %*% x, -(t(I1 * dal)) %*% G), 
               cbind(-(t(x) %*% (dab * I1)), -t(x * dbb) %*% x, -t(x * dlb) %*% G), 
               cbind(-(t(G) %*% (dal * I1)), -t(G) %*% (x * dlb), -t(G * dll) %*% G))
+  print("chegou aqui")
   if (all(lambdag)>0 & alphag==E^-6){
     II <- II[2:nrow(II), 2:nrow(II)]
   }
@@ -1532,6 +1533,7 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
 # Com h=82 (ou seja, sem rodar a golden)
 library(readr)
 korea_base_artigo <- read_csv("C:/Users/jehhv/OneDrive/Documentos/UnB/2024/TCC2/korea_base_artigo.csv")
+korea_base_artigo <- read_csv("D:/Users/jessica.abreu/Documents/UnB/tcc/korea_base_artigo.csv")
 
 startTime <- Sys.time()
 gwzinbr(data = korea_base_artigo, 
@@ -1543,5 +1545,4 @@ gwzinbr(data = korea_base_artigo,
         model = "zinb", distancekm = TRUE, h=82)
 endTime <- Sys.time()
 endTime-startTime
-
 
