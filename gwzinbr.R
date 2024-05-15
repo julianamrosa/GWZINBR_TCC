@@ -327,7 +327,7 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
   # II <- -(t(I1) %*% daa) %*% I1 || -(t(I1) %*% dab) %*% X || -(t(I1) %*% dal) %*% G // (-t(X) %*% (dab * I1) || -t(X) %*% dbb %*% X || -t(X) %*% dlb %*% G) // (-t(G) %*% (dal * I1) || -t(G) %*% (X %*% dlb) || -t(G) %*% t(G) %*% dll %*% G)
   # II=-(I1#daa)`*I1||-(I1#dab)`*X||-(I1#dal)`*G//(-X`*(dab#I1)||-(X#dbb)`*X||-(X#dlb)`*G)//(-G`*(dal#I1)||-G`*(X#dlb)||-(G#dll)`*G);
   II <- rbind(cbind(-(t(I1 * daa)) %*% I1, -(t(I1 * dab)) %*% x, -(t(I1 * dal)) %*% G), 
-              cbind(-(t(x) %*% (dab * I1)), -t(x * dbb) %*% x, -t(x * dlb) %*% G), 
+              cbind(-(t(x) %*% (dab * I1)), -t(x%*%dbb) %*% x, -t(x * dlb) %*% G), 
               cbind(-(t(G) %*% (dal * I1)), -t(G) %*% (x * dlb), -t(G * dll) %*% G))
   print("chegou aqui")
   if (all(lambdag)>0 & alphag==E^-6){
@@ -708,7 +708,7 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
     if(det(t(x%*%dbb%*%dbb/Ai) %*% x) == 0){
       II <- rbind(
         cbind(-(t(I1*daa))%*%I1, -(t(I1*dab))%*%x, -(t(I1*dal))%*%G),
-        cbind(-t(x)%*%(dab*I1), -(t(x*dbb)%*%x), -t(x*dlb)%*%G),
+        cbind(-t(x)%*%(dab*I1), -(t(x%*%dbb)%*%x), -t(x*dlb)%*%G),
         cbind(-t(G)%*%(dal*I1), -t(G)%*%(x*dlb), -(t(G*dll)%*%G))
       )   
     }
@@ -1546,3 +1546,6 @@ gwzinbr(data = korea_base_artigo,
 endTime <- Sys.time()
 endTime-startTime
 
+#Obs: dbb é uma matriz de dimensoes 244x 1 
+# x é uma matriz 244 x 8
+# Nao ta executando x%*%dbb: non conformable arguments
