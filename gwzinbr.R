@@ -43,6 +43,7 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
   }
   Iy <- ifelse(y>0, 1, y)
   Iy <- 1-Iy
+  Iy2 <- Iy
   pos0 <<-  which(y==0)
   pos0 <<- t(as.matrix(pos0))
   pos02 <<- which(y==0)
@@ -320,16 +321,21 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
   if (any(lambdag)==0){
     Iy <- matrix(0, length(y), 1)
   }
-  dll <- Iy*(exp(njl)*g1x^parg/hgx^2)-exp(njl)/(1+exp(njl))^2
-  dbb <- Iy*(-(parg*g1x^parg*g2x/hgx)^2+parg^2*g1x^parg*g2x^2*(1-1/uj)/hgx)-(1-Iy)*(parg*g2x*(1+(y-uj)/(parg+uj)))
-  dlb <- Iy*(parg*exp(njl)*g1x^parg*g2x/hgx^2)
+  dll <- as.vector(Iy*(exp(njl)*g1x^parg/hgx^2)-exp(njl)/(1+exp(njl))^2)
+  dbb <- as.vector(Iy*(-(parg*g1x^parg*g2x/hgx)^2+parg^2*g1x^parg*g2x^2*(1-1/uj)/hgx)-(1-Iy)*(parg*g2x*(1+(y-uj)/(parg+uj))))
+  dlb <- as.vector(Iy*(parg*exp(njl)*g1x^parg*g2x/hgx^2))
   I1 <- matrix(1, length(y), 1)
+  # print("Dimensões de dbb:")
+  # print(dim(dbb))
+  # print("Dimensões de x:")
+  # print(dim(x))
+  # print(dbb)
   # II <- -(t(I1) %*% daa) %*% I1 || -(t(I1) %*% dab) %*% X || -(t(I1) %*% dal) %*% G // (-t(X) %*% (dab * I1) || -t(X) %*% dbb %*% X || -t(X) %*% dlb %*% G) // (-t(G) %*% (dal * I1) || -t(G) %*% (X %*% dlb) || -t(G) %*% t(G) %*% dll %*% G)
   # II=-(I1#daa)`*I1||-(I1#dab)`*X||-(I1#dal)`*G//(-X`*(dab#I1)||-(X#dbb)`*X||-(X#dlb)`*G)//(-G`*(dal#I1)||-G`*(X#dlb)||-(G#dll)`*G);
   II <- rbind(cbind(-(t(I1 * daa)) %*% I1, -(t(I1 * dab)) %*% x, -(t(I1 * dal)) %*% G), 
-              cbind(-(t(x) %*% (dab * I1)), -t(x%*%dbb) %*% x, -t(x * dlb) %*% G), 
+              cbind(-(t(x) %*% (dab * I1)), -t(x*dbb) %*% x, -t(x * dlb) %*% G), 
               cbind(-(t(G) %*% (dal * I1)), -t(G) %*% (x * dlb), -t(G * dll) %*% G))
-  print("chegou aqui")
+  # conferir se II é matricial
   if (all(lambdag)>0 & alphag==E^-6){
     II <- II[2:nrow(II), 2:nrow(II)]
   }
@@ -376,18 +382,17 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
   ym <- y-mean(y)
   
   # /******** calculating distance **********/;
-  dist_ <- sp::spDistsN1(COORD, COORD[i,]) 
-  #substituicao: _dist_ por dist_ 
+  #substituicao: _dist_ por dist_
   sequ <- 1:N
-  for(i in 1:mm){
-    for(j in 1:N){
+  for (i in 1:mm){
+    for (j in 1:N){
       seqi <- rep(i, N)
-      distan <- cbind(seqi, sequ, dist_)
-      if (distancekm){
-        #substituicao: dist por distan
-        distan[,3] <- distan[,3]*111
-      }
-    }
+        dx <- sp::spDistsN1(COORD, COORD[i,])
+        distan <- cbind(seqi, sequ, dx)
+        if (distancekm){
+          distan[,3] <- distan[,3]*111
+        }  
+     }
     u <- nrow(distan)
     w <- rep(0, u)
     for(jj in 1:u){
@@ -404,13 +409,13 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
       w <- matrix(0,N,2)
       hn <- distan[h,3]
       for (jj in 1:N) {
-        if(dist[jj, 4] <= h){
-          w[jj, 1] <- (1 -(dist[jj, 3]/hn)^2)^2
+        if(distan[jj, 4] <= h){
+          w[jj, 1] <- (1 -(distan[jj, 3]/hn)^2)^2
         } 
         else{
           w[jj, 1] <- 0
         }
-        w[jj, 2] <- dist[jj, 2]
+        w[jj, 2] <- distan[jj, 2]
       }
       w <- w[order(w[, 2]), 1]
     }
@@ -437,12 +442,12 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
   Iy <- Iy2
   b <- bg
   b2 <- b
-  nj <- X%*%b+Offset
+  nj <- x%*%b+Offset
   uj <- exp(nj)
   par <- parg
   par2 <- par
   lambda <- lambdag
-  njl <- G%*%lambda
+  print("chegou aqui") #chegou
   njl <- ifelse(njl > maxg, maxg, njl)
   njl <- ifelse(njl < (-maxg), -maxg, njl) 
   #retirada parte comentada do codigo (linhas 1535 a 1604 do SAS)
@@ -454,11 +459,17 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
     if (lambda0 > 0){
       lambda0 <- log(lambda0/(1-lambda0))
       lambda <- cbind(lambda0, rep(0, ncol(G)-1))
+      print("Dimensão G:")
+      print(dim(G))
+      print("Dimensão lambda:")
+      print(dim(lambda))
       njl <- G%*%lambda
+      print("chegou aqui2")
     }
     zk <- 1/(1+exp(-njl)*(par/(par+uj))^par)
     zk <- ifelse(y>0, 0, zk)
   }
+  print("chegou aqui 3")
   dllike <- 1
   llike <- 0
   j <- 1
@@ -1528,7 +1539,7 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
   }
 } # fecha gwzinbr
 
-# -------------------------- TEST
+# -------------------------- TESTE
 
 # Com h=82 (ou seja, sem rodar a golden)
 library(readr)
@@ -1546,6 +1557,8 @@ gwzinbr(data = korea_base_artigo,
 endTime <- Sys.time()
 endTime-startTime
 
-#Obs: dbb é uma matriz de dimensoes 244x 1 
+# Obs: dbb é uma matriz de dimensoes 244 x 1 
 # x é uma matriz 244 x 8
 # Nao ta executando x%*%dbb: non conformable arguments
+
+# alterar para vetor: dbb dlb e todos os outros
