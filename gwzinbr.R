@@ -437,75 +437,48 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
     #   w <- w[order(w[, 2]), 1]
     # }
     # obs: essa condicional é igual à anterior
-  }
-  # /****** MODEL SELECTION *************/
-  Iy <- Iy2
-  b <- bg
-  b2 <- b
-  nj <- x%*%b+Offset
-  uj <- exp(nj)
-  par <- parg
-  par2 <- par
-  lambda <- lambdag
-  njl <- ifelse(njl > maxg, maxg, njl)
-  njl <- ifelse(njl < (-maxg), -maxg, njl) 
-  #retirada parte comentada do codigo (linhas 1535 a 1604 do SAS)
-  if(model != "zip" & model != "zinb" ){
-    zk <- 0
-  }
-  else{
-    lambda0 <- (ncol(pos0)-sum((parg/(uj+parg))^parg))/N
-    if (lambda0 > 0){
-      lambda0 <- log(lambda0/(1-lambda0))
-      lambda <- matrix(c(lambda0, rep(0, ncol(G)-1)), ncol=1)
-      njl <- G%*%lambda
+    # /****** MODEL SELECTION *************/
+    Iy <- Iy2
+    b <- bg
+    b2 <- b
+    nj <- x%*%b+Offset
+    uj <- exp(nj)
+    par <- parg
+    par2 <- par
+    lambda <- lambdag
+    njl <- ifelse(njl > maxg, maxg, njl)
+    njl <- ifelse(njl < (-maxg), -maxg, njl) 
+    #retirada parte comentada do codigo (linhas 1535 a 1604 do SAS)
+    if(model != "zip" & model != "zinb" ){
+      zk <- 0
     }
-    zk <- 1/(1+exp(-njl)*(par/(par+uj))^par)
-    zk <- ifelse(y>0, 0, zk)
-  }
-  dllike <- 1
-  llike <- 0
-  j <- 1
-  while (abs(dllike) > 0.00001 & j <= 600) { #fecha na linha 2049 do SAS? Confirmar com professor
-    ddpar <- 1
-    dpar <- 1
-    parold <- par
-    aux1 <- 1
-    aux2 <- 1
-    int <- 1
-    if (model == "zip" || model == "poisson") {
-      alpha <- E^-6
-      par <- 1/alpha
-    }
-    if(model == "zinb" || model == "negbin"){
-      #/*if par<=1E-5 then do;if i>1 then par=1/alphai[i-1,2];end;*/. 
-      if(par >= E^6){
-        par <- E^6
-        dpar <- 0
-        alpha <- 1/par
-        b <- bg
-        uj <- exp(x%*%b+Offset)
-        lambda <- lambdag
+    else{
+      lambda0 <- (ncol(pos0)-sum((parg/(uj+parg))^parg))/N
+      if (lambda0 > 0){
+        lambda0 <- log(lambda0/(1-lambda0))
+        lambda <- matrix(c(lambda0, rep(0, ncol(G)-1)), ncol=1)
         njl <- G%*%lambda
-        njl <- ifelse(njl>maxg, maxg, njl)
-        njl <- ifelse(njl<(-maxg),-maxg,njl)
-        zk <- 1/(1+exp(-njl)*(parg/(parg+uj))^parg)
-        zk <- ifelse(y>0, 0, zk)
-        #zk[y>0] <- 0
-        if (any(lambda) == 0){
-          zk <- 0
-        }
       }
-      while (abs(dpar)>0.000001 & aux2<200){
-        par <- ifelse(par < E^-10, E^-10, par)
-        gf <- sum(w*wt*(1-zk)*(digamma(par+y)-digamma(par)+log(par)+1-log(par+uj) - (par+y)/(par+uj)))
-        hess <- sum(w*wt*(1-zk)*(trigamma(par+y)-trigamma(par)+1/par - 2/(par+uj) + (y + par)/(par+uj))^2)
-        hess <- ifelse(hess == 0, E^-23, hess)
-        par0 <- par
-        par <- as.vector(par0 - solve(hess)%*%gf)
-        dpar <- par - par0
-        
-        if (par >= E^6){
+      zk <- 1/(1+exp(-njl)*(par/(par+uj))^par)
+      zk <- ifelse(y>0, 0, zk)
+    }
+    dllike <- 1
+    llike <- 0
+    j <- 1
+    while (abs(dllike) > 0.00001 & j <= 600) { #fecha na linha 2049 do SAS? Confirmar com professor
+      ddpar <- 1
+      dpar <- 1
+      parold <- par
+      aux1 <- 1
+      aux2 <- 1
+      int <- 1
+      if (model == "zip" || model == "poisson") {
+        alpha <- E^-6
+        par <- 1/alpha
+      }
+      if(model == "zinb" || model == "negbin"){
+        #/*if par<=1E-5 then do;if i>1 then par=1/alphai[i-1,2];end;*/. 
+        if(par >= E^6){
           par <- E^6
           dpar <- 0
           alpha <- 1/par
@@ -516,353 +489,381 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
           njl <- ifelse(njl>maxg, maxg, njl)
           njl <- ifelse(njl<(-maxg),-maxg,njl)
           zk <- 1/(1+exp(-njl)*(parg/(parg+uj))^parg)
-          #zk[y > 0] <- 0
+          zk <- ifelse(y>0, 0, zk)
+          #zk[y>0] <- 0
+          if (any(lambda) == 0){
+            zk <- 0
+          }
+        }
+        while (abs(dpar)>0.000001 & aux2<200){
+          par <- ifelse(par < E^-10, E^-10, par)
+          gf <- sum(w*wt*(1-zk)*(digamma(par+y)-digamma(par)+log(par)+1-log(par+uj) - (par+y)/(par+uj)))
+          hess <- sum(w*wt*(1-zk)*(trigamma(par+y)-trigamma(par)+1/par - 2/(par+uj) + (y + par)/(par+uj))^2)
+          hess <- ifelse(hess == 0, E^-23, hess)
+          par0 <- par
+          par <- as.vector(par0 - solve(hess)%*%gf)
+          dpar <- par - par0
+          
+          if (par >= E^6){
+            par <- E^6
+            dpar <- 0
+            alpha <- 1/par
+            b <- bg
+            uj <- exp(x%*%b+Offset)
+            lambda <- lambdag
+            njl <- G%*%lambda
+            njl <- ifelse(njl>maxg, maxg, njl)
+            njl <- ifelse(njl<(-maxg),-maxg,njl)
+            zk <- 1/(1+exp(-njl)*(parg/(parg+uj))^parg)
+            #zk[y > 0] <- 0
+            zk <- ifelse(y>0, 0, zk)
+            if (any(lambda) == 0){
+              zk <- 0
+            }
+          }
+          # print(par, aux2, dpar)
+          aux2 <- aux2 + 1
+        }
+        if (par <= E^-5){
+          par <- E^6
+          b <- bg
+          uj <- exp(x%*%b+Offset)
+          lambda <- lambdag
+          njl <- G %*% lambda
+          njl <- ifelse(njl>maxg, maxg, njl)
+          njl <- ifelse(njl<(-maxg),-maxg,njl)
+          zk <- 1/(1+exp(-njl)*(parg/(parg+uj))^parg)
           zk <- ifelse(y>0, 0, zk)
           if (any(lambda) == 0){
             zk <- 0
           }
         }
-        # print(par, aux2, dpar)
-        aux2 <- aux2 + 1
+        alpha <- 1/par
+        # print(i, j, b, lambda, par, alpha, aux2)
       }
-      if (par <= E^-5){
-        par <- E^6
-        b <- bg
-        uj <- exp(x%*%b+Offset)
-        lambda <- lambdag
-        njl <- G %*% lambda
-        njl <- ifelse(njl>maxg, maxg, njl)
-        njl <- ifelse(njl<(-maxg),-maxg,njl)
-        zk <- 1/(1+exp(-njl)*(parg/(parg+uj))^parg)
-        zk <- ifelse(y>0, 0, zk)
-        if (any(lambda) == 0){
-          zk <- 0
-        }
-      }
-      alpha <- 1/par
-      # print(i, j, b, lambda, par, alpha, aux2)
-    }
-    dev <- 0
-    ddev <- 1
-    nj <- x%*%b+Offset
-    nj <- ifelse(nj>700,700,nj)
-    nj <- ifelse(nj<(-700), -700, nj)
-    uj <- exp(nj)
-    while (abs(ddev)>0.000001 & aux1<100){
-      uj <- ifelse(uj>E^100, E^100, uj)
-      Ai <- as.vector((1-zk)*((uj/(1+alpha*uj) + (y-uj) * (alpha*uj/(1+2*alpha*uj+alpha^2*uj^2)))))
-      Ai <- ifelse(Ai <=0, E^-5, Ai)
-      uj <- ifelse(uj < E^-150, E^-150, uj)
-      denz <- (((uj/(1+alpha*uj)+(y-uj)*(alpha*uj/(1+2*alpha*uj+alpha^2*uj^2))))*(1+alpha*uj))
-      denz <- ifelse(denz == 0, E^-5, denz)
-      zj <- (nj+(y-uj)/denz)-Offset
-      if(det(t(x) %*% (w*Ai*x*wt)) == 0){
-        b <- matrix(0, nvar, 1)
-      } 
-      else {
-        b <- solve(t(x) %*% (w*Ai*x*wt)) %*% t(x) %*% (w*Ai*wt*zj)
-      }
+      dev <- 0
+      ddev <- 1
       nj <- x%*%b+Offset
       nj <- ifelse(nj>700,700,nj)
       nj <- ifelse(nj<(-700), -700, nj)
       uj <- exp(nj)
-      olddev <- dev
-      uj <- ifelse(uj > E^10, E^10, uj) 
-      uj <- ifelse(uj == 0, E^10, uj) 
-      if (par == E^6) {
-        # gamma1=/*(gamma(par+y)/(gamma(y+1)#gamma(par)))#*/(uj/(uj+par))##y#exp(-uj);
-        gamma1 <- (uj/(uj+par))^y*exp(-uj)
-      } 
-      else {
-        # gamma1=/*(gamma(par+y)/(gamma(y+1)#gamma(par)))#*/(uj/(uj+par))##y#(par/(uj+par))##par;
-        gamma1 <- (uj/(uj+par))^y*(par/(uj+par))^par
+      while (abs(ddev)>0.000001 & aux1<100){
+        uj <- ifelse(uj>E^100, E^100, uj)
+        Ai <- as.vector((1-zk)*((uj/(1+alpha*uj) + (y-uj) * (alpha*uj/(1+2*alpha*uj+alpha^2*uj^2)))))
+        Ai <- ifelse(Ai <=0, E^-5, Ai)
+        uj <- ifelse(uj < E^-150, E^-150, uj)
+        denz <- (((uj/(1+alpha*uj)+(y-uj)*(alpha*uj/(1+2*alpha*uj+alpha^2*uj^2))))*(1+alpha*uj))
+        denz <- ifelse(denz == 0, E^-5, denz)
+        zj <- (nj+(y-uj)/denz)-Offset
+        if(det(t(x) %*% (w*Ai*x*wt)) == 0){
+          b <- matrix(0, nvar, 1)
+        } 
+        else {
+          b <- solve(t(x)%*%(w*Ai*x*wt), tol=E^-60)%*%t(x)%*%(w*Ai*wt*zj)
+        }
+        nj <- x%*%b+Offset
+        nj <- ifelse(nj>700,700,nj)
+        nj <- ifelse(nj<(-700), -700, nj)
+        uj <- exp(nj)
+        olddev <- dev
+        uj <- ifelse(uj > E^10, E^10, uj) 
+        uj <- ifelse(uj == 0, E^10, uj) 
+        if (par == E^6) {
+          # gamma1=/*(gamma(par+y)/(gamma(y+1)#gamma(par)))#*/(uj/(uj+par))##y#exp(-uj);
+          gamma1 <- (uj/(uj+par))^y*exp(-uj)
+        } 
+        else {
+          # gamma1=/*(gamma(par+y)/(gamma(y+1)#gamma(par)))#*/(uj/(uj+par))##y#(par/(uj+par))##par;
+          gamma1 <- (uj/(uj+par))^y*(par/(uj+par))^par
+        }
+        gamma1 <- ifelse(gamma1 <=0, E^-10, gamma1)
+        dev <- sum((1-zk)*log(gamma1))
+        ddev <- dev - olddev
+        # print(b, par, aux1, dev, olddev, ddev)
+        aux1 <- aux1 + 1
       }
-      gamma1 <- ifelse(gamma1 <=0, E^-10, gamma1)
-      dev <- sum((1-zk)*log(gamma1))
-      ddev <- dev - olddev
-      # print(b, par, aux1, dev, olddev, ddev)
-      aux1 <- aux1 + 1
-    }
-    ddpar <- par-parold
-    if (model=="zip" | model=="zinb"){
-      if (j==1){
-        alphatemp <- alpha
-        lambdatemp <- lambda[1] 
-      }
-      else{
-        alphatemp <- c(alphatemp, alpha)
-        lambdatemp <- c(lambdatemp, lambda[1])
-      }
-      alphatemp <- round(alphatemp, 7)
-      lambdatemp <- round(lambdatemp, 7)
-      if (model=="zinb"){
-        condition <- (j>300 & length(alphatemp)>length(unique(alphatemp)) & length(lambdatemp)>length(unique(lambdatemp)))
-      }
-      else if (model=="zip"){
-        #print('i', 'j', 'lambdatemp', '(length(lambdatemp))', '(length(unique(lambdatemp)))')
-        #print(i, j, lambdatemp, (length(lambdatemp)), (length(unique(lambdatemp))))
-        condition <- (j>300 & length(lambdatemp)>length(unique(lambdatemp)))
-      }
-      if (condition){
-        #lambda <- matrix(0, ncol(G), 1)
-        lambda <- rep(0, ncol(G))
-        njl <- G%*%lambda
-        #zk <- matrix(0, n, 1)
-        zk <- rep(0, N)
-      }
-      else{
-        aux3 <- 1
-        dev <- 0
-        ddev <- 1
-        njl <- G%*%lambda
-        njl <- ifelse(njl>maxg, maxg, njl)
-        njl <- ifelse(njl<(-maxg), -maxg, njl)
-        pi <- exp(njl)/(1+exp(njl))
-        while (abs(ddev)>0.000001 & aux3<100){
-          Aii <- as.vector(pi*(1-pi))
-          Aii <- ifelse(Aii<=0, E^-5, Aii)	
-          zj <- njl+(zk-pi)/Aii
-          if (det(t(G*Aii*w*wt)%*%G)==0){ #multiplicador
-            lambda <- matrix(0, ncol(G), 1)
-          }
-          else{
-            lambda <- solve(t(G*Aii*w*wt)%*%G, tol=E^-60)%*%t(G*Aii*w*wt)%*%zj
-          }
+      ddpar <- par-parold
+      if (model=="zip" | model=="zinb"){
+        if (j==1){
+          alphatemp <- alpha
+          lambdatemp <- lambda[1] 
+        }
+        else{
+          alphatemp <- c(alphatemp, alpha)
+          lambdatemp <- c(lambdatemp, lambda[1])
+        }
+        alphatemp <- round(alphatemp, 7)
+        lambdatemp <- round(lambdatemp, 7)
+        if (model=="zinb"){
+          condition <- (j>300 & length(alphatemp)>length(unique(alphatemp)) & length(lambdatemp)>length(unique(lambdatemp)))
+        }
+        else if (model=="zip"){
+          #print('i', 'j', 'lambdatemp', '(length(lambdatemp))', '(length(unique(lambdatemp)))')
+          #print(i, j, lambdatemp, (length(lambdatemp)), (length(unique(lambdatemp))))
+          condition <- (j>300 & length(lambdatemp)>length(unique(lambdatemp)))
+        }
+        if (condition){
+          #lambda <- matrix(0, ncol(G), 1)
+          lambda <- rep(0, ncol(G))
+          njl <- G%*%lambda
+          #zk <- matrix(0, n, 1)
+          zk <- rep(0, N)
+        }
+        else{
+          aux3 <- 1
+          dev <- 0
+          ddev <- 1
           njl <- G%*%lambda
           njl <- ifelse(njl>maxg, maxg, njl)
           njl <- ifelse(njl<(-maxg), -maxg, njl)
           pi <- exp(njl)/(1+exp(njl))
-          olddev <- dev
-          dev <- sum(zk*njl-log(1+exp(njl)))
-          ddev <- dev-olddev
-          #   print(c("lambda", "aux3", "dev", "olddev", "ddev"))
-          #   print(c(lambda, aux3, dev, olddev, ddev))
-          aux3 <- aux3+1
+          while (abs(ddev)>0.000001 & aux3<100){
+            Aii <- as.vector(pi*(1-pi))
+            Aii <- ifelse(Aii<=0, E^-5, Aii)	
+            zj <- njl+(zk-pi)/Aii
+            if (det(t(G*Aii*w*wt)%*%G)==0){ #multiplicador
+              lambda <- matrix(0, ncol(G), 1)
+            }
+            else{
+              lambda <- solve(t(G*Aii*w*wt)%*%G, tol=E^-60)%*%t(G*Aii*w*wt)%*%zj
+            }
+            njl <- G%*%lambda
+            njl <- ifelse(njl>maxg, maxg, njl)
+            njl <- ifelse(njl<(-maxg), -maxg, njl)
+            pi <- exp(njl)/(1+exp(njl))
+            olddev <- dev
+            dev <- sum(zk*njl-log(1+exp(njl)))
+            ddev <- dev-olddev
+            #   print(c("lambda", "aux3", "dev", "olddev", "ddev"))
+            #   print(c(lambda, aux3, dev, olddev, ddev))
+            aux3 <- aux3+1
+          }
         }
       }
+      njl <- G%*%lambda
+      njl <- ifelse(njl>maxg, maxg, njl)
+      njl <- ifelse(njl<(-maxg), -maxg, njl)
+      zk <- 1/(1+exp(-njl)*(par/(par+uj))^par)
+      zk <- ifelse(y>0, 0, zk)
+      if (any(lambda)==0){
+        #zk <- matrix(0, n, 1)
+        zk <- rep(0, N)
+      }
+      if (model!="zip" & model!="zinb"){
+        zk <- 0
+      }
+      oldllike <- llike
+      llike <- sum(zk*(njl)-log(1+exp(njl))+(1-zk)*(log(gamma1)))
+      dllike <- llike-oldllike
+      #   print(c("i", "j", "b", "alpha", "lambda", "llike", "dllike"))
+      #   print(c(i, j, b, alpha, lambda, llike, dllike))
+      j <- j+1
     }
-    njl <- G%*%lambda
-    njl <- ifelse(njl>maxg, maxg, njl)
-    njl <- ifelse(njl<(-maxg), -maxg, njl)
-    zk <- 1/(1+exp(-njl)*(par/(par+uj))^par)
-    zk <- ifelse(y>0, 0, zk)
-    if (any(lambda)==0){
-      #zk <- matrix(0, n, 1)
-      zk <- rep(0, N)
+    # /**** COMPUTING VARIANCE OF BETA AND LAMBDA ******/
+    if(det(t(x)%*%(w*Ai*x*wt))==0){
+      C <- matrix(0, ncol(x),nrow(x)) 
+    } else{
+      C <- solve(t(x)%*%(w*Ai*x*wt), tol=E^-60)%*%t(x)%*%(w*Ai*wt)
     }
-    if (model!="zip" & model!="zinb"){
-      zk <- 0
+    Ci <- matrix(0, ncol(G), 1)
+    if(model == "zip" || model == "zinb"){
+      if(det(t(G)%*%(w*Aii*G*wt))==0){
+        Ci <- matrix(0, ncol(G), nrow(G))
+      }
+      else{
+        Ci <- solve(t(G)%*%(w*Aii*G*wt), tol=E^-60)%*%t(G)%*%(w*Aii*wt)
+      }
+      if(any(lambda) == 0){
+        Ci <- matrix(0, ncol(G), N)
+      }
     }
-    oldllike <- llike
-    llike <- sum(zk*(njl)-log(1+exp(njl))+(1-zk)*(log(gamma1)))
-    dllike <- llike-oldllike
-    #   print(c("i", "j", "b", "alpha", "lambda", "llike", "dllike"))
-    #   print(c(i, j, b, alpha, lambda, llike, dllike))
-    j <- j+1
-  }
-  # /**** COMPUTING VARIANCE OF BETA AND LAMBDA ******/
-  if(det(t(x)%*%(w*Ai*x*wt))==0){
-    C <- matrix(0, ncol(x),nrow(x)) 
-  } else{
-    C <- solve(t(x)%*%(w*Ai*x*wt))%*%t(x)%*%(w*Ai*wt)
-  }
-  Ci <- matrix(0, ncol(G), 1)
-  if(model == "zip" || model == "zinb"){
-    if(det(t(G)%*%(w*Aii*G*wt))==0){
-      Ci <- matrix(0, ncol(G), nrow(G))
+    g1x <- par/(par+uj)
+    g2x <- uj/(par+uj)
+    hgx <- exp(njl)+g1x^par
+    hgx <- ifelse(hgx > E^10, E^10, hgx)
+    daa <- w*wt*(zk*((g1x^par*(log(g1x)+g2x))^2*(1 - 1/hgx)/hgx + g1x^par * (g2x^2/par) / hgx) + 
+                   (1-zk) * (trigamma(par+y) - trigamma(par) - 2 / (uj+par) + 1 / par + (y+par) / (uj+par))^2)
+    dab <- w*wt*(zk*(g1x^(2*par + 1)*uj*(log(g1x) + g2x) / hgx^2 - g1x^par * (-g2x^2+par*g2x*(log(g1x) + g2x)) / hgx) + 
+                   (1-zk) * (g2x*(y-uj) / (uj+par)))
+    dal <- -w*wt*zk*(exp(njl)*g1x^par*(log(g1x)+g2x) / hgx^2)
+    daa <- daa*par^4
+    dab <- dab*par^2
+    if (any(lambda) == 0) {
+      Iy <- matrix(0, nrow(y), 1)
+      exphx <- 1 + exp(njl)
+      exphx <- ifelse(exphx>E^90, E^90, exphx) 
+      dll <- w*wt*(Iy*(exp(njl)*g1x^par/hgx^2) - exp(njl)/exphx)^2
+      dbb <- sqrt(w)*wt*(Iy*(-(par*g1x^par*g2x/hgx)^2+par^2*g1x^par*g2x^2*(1 - 1/uj)/hgx) - 
+                           (1 - Iy)*(par*g2x*(1 + (y-uj)/(par+uj))))
+      dlb <- w*wt*Iy*(par*exp(njl)*g1x^par*g2x/hgx^2)
+      dll <- ifelse(is.na(dll), E^100, dll)
+      daa <- ifelse(is.na(daa), E^100, daa)
+      dab <- ifelse(is.na(dab), E^100, dab)
+      dal <- ifelse(is.na(dal), E^100, dal)
+      dbb <- ifelse(is.na(dbb), E^100, dbb)
+      dlb <- ifelse(is.na(dlb), E^100, dlb)
+      I1 <- matrix(1, nrow(y), 1)
     }
-    else{
-      Ci <- solve(t(G)%*%(w*Aii*G*wt))%*%t(G)%*%(w*Aii*wt)
-    }
-    if(any(lambda) == 0){
-      Ci <- matrix(0, ncol(G), N)
-    }
-  }
-  g1x <- par/(par+uj)
-  g2x <- uj/(par+uj)
-  hgx <- exp(njl)+g1x^par
-  hgx <- ifelse(hgx > E^10, E^10, hgx)
-  daa <- w*wt*(zk*((g1x^par*(log(g1x)+g2x))^2*(1 - 1/hgx)/hgx + g1x^par * (g2x^2/par) / hgx) + 
-                 (1-zk) * (trigamma(par+y) - trigamma(par) - 2 / (uj+par) + 1 / par + (y+par) / (uj+par))^2)
-  dab <- w*wt*(zk*(g1x^(2*par + 1)*uj*(log(g1x) + g2x) / hgx^2 - g1x^par * (-g2x^2+par*g2x*(log(g1x) + g2x)) / hgx) + 
-                 (1-zk) * (g2x*(y-uj) / (uj+par)))
-  dal <- -w*wt*zk*(exp(njl)*g1x^par*(log(g1x)+g2x) / hgx^2)
-  daa <- daa*par^4
-  dab <- dab*par^2
-  if (any(lambda) == 0) {
-    Iy <- matrix(0, nrow(y), 1)
-    exphx <- 1 + exp(njl)
-    exphx <- ifelse(exphx>E^90, E^90, exphx) 
-    dll <- w*wt*(Iy*(exp(njl)*g1x^par/hgx^2) - exp(njl)/exphx)^2
-    dbb <- sqrt(w)*wt*(Iy*(-(par*g1x^par*g2x/hgx)^2+par^2*g1x^par*g2x^2*(1 - 1/uj)/hgx) - 
-                         (1 - Iy)*(par*g2x*(1 + (y-uj)/(par+uj))))
-    dlb <- w*wt*Iy*(par*exp(njl)*g1x^par*g2x/hgx^2)
-    dll <- ifelse(is.na(dll), E^100, dll)
-    daa <- ifelse(is.na(daa), E^100, daa)
-    dab <- ifelse(is.na(dab), E^100, dab)
-    dal <- ifelse(is.na(dal), E^100, dal)
-    dbb <- ifelse(is.na(dbb), E^100, dbb)
-    dlb <- ifelse(is.na(dlb), E^100, dlb)
-    I1 <- matrix(1, nrow(y), 1)
-  }
-  if(any(b) == 0 & any(lambda) == 0){
-    II <- matrix(0, ncol(x)+ncol(G)+1, ncol(x)+ncol(G)+1)
-  } else if(any(lambda) == 0){
-    dbb <- w*wt*(Iy*(-(par*g1x^par*g2x/hgx)^2 + par^2*g1x^par*g2x^2*(1 - 1/uj)/hgx)-(1 - Iy)*(par*g2x*(1 + (y-uj) / (par+uj))))
-    if(det(t(x%*%dbb%*%dbb/Ai) %*% x) == 0){
-      II <- rbind(
-        cbind(-(t(I1*daa))%*%I1, -(t(I1*dab))%*%x, -(t(I1*dal))%*%G),
-        cbind(-t(x)%*%(dab*I1), -(t(x%*%dbb)%*%x), -t(x*dlb)%*%G),
-        cbind(-t(G)%*%(dal*I1), -t(G)%*%(x*dlb), -(t(G*dll)%*%G))
-      )   
-    }
-    else{
+    if(any(b) == 0 & any(lambda) == 0){
+      II <- matrix(0, ncol(x)+ncol(G)+1, ncol(x)+ncol(G)+1)
+    } else if(any(lambda) == 0){
+      dbb <- w*wt*(Iy*(-(par*g1x^par*g2x/hgx)^2 + par^2*g1x^par*g2x^2*(1 - 1/uj)/hgx)-(1 - Iy)*(par*g2x*(1 + (y-uj) / (par+uj))))
+      if(det(t(x%*%dbb%*%dbb/Ai) %*% x) == 0){
+        II <- rbind(
+          cbind(-(t(I1*daa))%*%I1, -(t(I1*dab))%*%x, -(t(I1*dal))%*%G),
+          cbind(-t(x)%*%(dab*I1), -(t(x%*%dbb)%*%x), -t(x*dlb)%*%G),
+          cbind(-t(G)%*%(dal*I1), -t(G)%*%(x*dlb), -(t(G*dll)%*%G))
+        )   
+      }
+      else{
+        II <- rbind(
+          cbind(-t(I1*daa)%*%I1, -t(I1*dab)%*%x, -t(I1*dal)%*%G),
+          cbind(-t(x)%*%(dab*I1), -(t(x*dbb)%*%x)%*%solve(t(x*dbb*dbb/Ai)%*%x)%*%t(x*dbb)%*%x, -(t(x*dlb)%*%G)),
+          cbind(-t(G)%*%(dal*I1), -t(G)%*%(x*dlb), -t(G*dll)%*%G)      
+        )   
+      }
+    } else{
       II <- rbind(
         cbind(-t(I1*daa)%*%I1, -t(I1*dab)%*%x, -t(I1*dal)%*%G),
-        cbind(-t(x)%*%(dab*I1), -(t(x*dbb)%*%x)%*%solve(t(x*dbb*dbb/Ai)%*%x)%*%t(x*dbb)%*%x, -(t(x*dlb)%*%G)),
-        cbind(-t(G)%*%(dal*I1), -t(G)%*%(x*dlb), -t(G*dll)%*%G)      
-      )   
+        cbind(-t(x)%*%(dab*I1), -(t(x*dbb)%*%x), -t(x*dlb)%*%G),
+        cbind(-t(G)%*%(dal*I1), -t(G)%*%(x*dlb), -t(G*dll)%*%G)
+      )     
     }
-  } else{
-    II <- rbind(
-      cbind(-t(I1*daa)%*%I1, -t(I1*dab)%*%x, -t(I1*dal)%*%G),
-      cbind(-t(x)%*%(dab*I1), -(t(x*dbb)%*%x), -t(x*dlb)%*%G),
-      cbind(-t(G)%*%(dal*I1), -t(G)%*%(x*dlb), -t(G*dll)%*%G)
-    )     
-  }
-  if (all(lambda) > 0 & alpha == E^-6) {
-    II <- II[2:nrow(II), 2:nrow(II)]
-  } else if (any(lambda) == 0 & alpha > E^-6) {
-    II <- II[1:(ncol(x)+1), 1:(ncol(x)+1)]
-  } else if (any(lambda) == 0 & alpha == E^-6) {
-    II <- II[2:(ncol(x)+1), 2:(ncol(x)+1)]
-  }
-  if (det(II) == 0) {
     if (all(lambda) > 0 & alpha == E^-6) {
-      II <- II[1:ncol(x), 1:ncol(x)]
-      if (det(II) == 0) {
-        varabetalambda <- rbind(matrix(0, nrow(II), 1), matrix(0, ncol(G), 1))
+      II <- II[2:nrow(II), 2:nrow(II)]
+    } else if (any(lambda) == 0 & alpha > E^-6) {
+      II <- II[1:(ncol(x)+1), 1:(ncol(x)+1)]
+    } else if (any(lambda) == 0 & alpha == E^-6) {
+      II <- II[2:(ncol(x)+1), 2:(ncol(x)+1)]
+    }
+    if (det(II) == 0) {
+      if (all(lambda) > 0 & alpha == E^-6) {
+        II <- II[1:ncol(x), 1:ncol(x)]
+        if (det(II) == 0) {
+          varabetalambda <- rbind(matrix(0, nrow(II), 1), matrix(0, ncol(G), 1))
+        } 
+        else {
+          varabetalambda <- rbind(diag(solve(II, tol=E^-60)), matrix(0, ncol(G), 1))
+        }
+      } 
+      else if (any(lambda) == 0 & alpha == E^-6) {
+        II <- II[1:ncol(x), 1:ncol(x)]
+        if (det(II) == 0) {
+          varabetalambda <- rbind(matrix(0, nrow(II), 1), matrix(0, ncol(G), 1))
+        } 
+        else {
+          varabetalambda <- rbind(diag(solve(II,tol=E^-60)), matrix(0, ncol(G), 1))
+        }
       } 
       else {
-        varabetalambda <- rbind(diag(solve(II, tol=E^-60)), matrix(0, ncol(G), 1))
-      }
-    } 
-    else if (any(lambda) == 0 & alpha == E^-6) {
-      II <- II[1:ncol(x), 1:ncol(x)]
-      if (det(II) == 0) {
-        varabetalambda <- rbind(matrix(0, nrow(II), 1), matrix(0, ncol(G), 1))
-      } 
-      else {
-        varabetalambda <- rbind(diag(solve(II,tol=E^-60)), matrix(0, ncol(G), 1))
+        II <- II[1:(ncol(x)+1), 1:(ncol(x)+1)]
+        if (det(II) == 0) {
+          varabetalambda <- rbind(matrix(0, nrow(II), 1), matrix(0, ncol(G), 1))
+        } 
+        else {
+          varabetalambda <- rbind(diag(solve(II, tol=E^-60)), matrix(0, ncol(G), 1))
+        }
       }
     } 
     else {
-      II <- II[1:(ncol(x)+1), 1:(ncol(x)+1)]
-      if (det(II) == 0) {
-        varabetalambda <- rbind(matrix(0, nrow(II), 1), matrix(0, ncol(G), 1))
-      } 
-      else {
-        varabetalambda <- rbind(diag(solve(II, tol=E^-60)), matrix(0, ncol(G), 1))
-      }
+      varabetalambda <- diag(1/solve(II, tol=E^-60))
     }
-  } 
-  else {
-    varabetalambda <- diag(1/solve(II, tol=E^-60))
-  }
-  if (all(lambda) > 0 & alpha > E^-6){
-    varb <- varabetalambda[2:(ncol(x)+1)]
-    varl <- varabetalambda[(ncol(x)+2):length(varabetalambda)]
-    alphai[i, 1] <- i
-    alphai[i, 2] <- alpha
-    alphai[i, 3] <- sqrt(abs(varabetalambda[1]))
-  } 
-  else if (all(lambda) > 0 & alpha == E^-6) {
-    varb <- varabetalambda[1:ncol(x)]
-    varl <- varabetalambda[(ncol(x)+1):length(varabetalambda)]
-    alphai[i, 1] <- i
-    alphai[i, 2] <- alpha
-    alphai[i, 3] <- sqrt(1/abs(-(t(I1*daa))%*%I1))
-  } else if (any(lambda) == 0 & alpha > E^-6) {
-    varb <- varabetalambda[2:(ncol(x)+1)]
-    varl <- matrix(0, ncol(G), 1)
-    alphai[i, 1] <- i
-    alphai[i, 2] <- alpha
-    alphai[i, 3] <- sqrt(abs(varabetalambda[1]))
-  } else if (any(lambda) == 0 & alpha == E^-6) {
-    varb <- varabetalambda[1:ncol(x)]
-    varl <- matrix(0, ncol(G), 1)
-    alphai[i, 1] <- i
-    alphai[i, 2] <- alpha
-    alphai[i, 3] <- sqrt(1/abs(-(t(I1*daa))%*%I1))
-  }
-  
-  # /*******************************/
-  m1 <- (i-1)*ncol(x)+1
-  m2 <- m1+(ncol(x)-1)
-  bi[m1:m2, 1] <- i
-  bi[m1:m2, 2] <- b
-  bi[m1:m2, 3] <- COORD[i, 1]
-  bi[m1:m2, 4] <- COORD[i, 2]
-  varbi[m1:m2, 1] <- varb
-  
-  if (model == "zip" || model == "zinb") {
-    m1 <- (i-1)*ncol(G)+1
-    m2 <- m1 + (ncol(G)-1)
-    li[m1:m2, 1] <- i
-    li[m1:m2, 2] <- lambda
-    li[m1:m2, 3] <- COORD[i, 1]
-    li[m1:m2, 4] <- COORD[i, 2]
-    varli[m1:m2, 1] <- varl
-  }
-  if (is.null(grid)) {
-    r <- x[i, ]%*%C 
-    S[i] <- r[i]
-    S2[i] <- r%*%t(r)
-    yhat[i] <- uj[i]
-    pihat[i] <- njl[i]
-  }
-  if (model == "zip" | model == "zinb") {
-    ri <- G[i, ]%*%Ci
-    Si[i] <- ri[i]
-    yhat2[i] <- uj[i]
-    yhat[i] <- (uj*(1-exp(njl)/(1+exp(njl))))[i]
-  }
-  # /** creating non-stationarity matrix **/
-  if (method != "adaptive_bsq"){
-    CCC <- cbind(x, w, wt)
-    m1 <- (i-1)*ncol(x)+1
-    m2 <- m1 + (ncol(x)-1)
+    if (all(lambda) > 0 & alpha > E^-6){
+      varb <- varabetalambda[2:(ncol(x)+1)]
+      varl <- varabetalambda[(ncol(x)+2):length(varabetalambda)]
+      alphai[i, 1] <- i
+      alphai[i, 2] <- alpha
+      alphai[i, 3] <- sqrt(abs(varabetalambda[1]))
+    } 
+    else if (all(lambda) > 0 & alpha == E^-6) {
+      varb <- varabetalambda[1:ncol(x)]
+      varl <- varabetalambda[(ncol(x)+1):length(varabetalambda)]
+      alphai[i, 1] <- i
+      alphai[i, 2] <- alpha
+      alphai[i, 3] <- sqrt(1/abs(-(t(I1*daa))%*%I1))
+    } else if (any(lambda) == 0 & alpha > E^-6) {
+      varb <- varabetalambda[2:(ncol(x)+1)]
+      varl <- matrix(0, ncol(G), 1)
+      alphai[i, 1] <- i
+      alphai[i, 2] <- alpha
+      alphai[i, 3] <- sqrt(abs(varabetalambda[1]))
+    } else if (any(lambda) == 0 & alpha == E^-6) {
+      varb <- varabetalambda[1:ncol(x)]
+      varl <- matrix(0, ncol(G), 1)
+      alphai[i, 1] <- i
+      alphai[i, 2] <- alpha
+      alphai[i, 3] <- sqrt(1/abs(-(t(I1*daa))%*%I1))
+    }
     
-    if(det(t(CCC[, 1:ncol(x)])%*%(CCC[, ncol(CCC)-1]*CCC[, 1:ncol(x)]*CCC[, ncol(CCC)])) == 0){
-      BB[m1:m2, ] <- matrix(0, ncol(x), nrow(x))
-    } else {
-      BB[m1:m2, ] <- solve(t(CCC[, 1:ncol(x)])%*%(CCC[, ncol(CCC)-1]*CCC[, 1:ncol(x)]*CCC[, ncol(CCC)]))%*%t(CCC[, 1:ncol(x)])*(CCC[, ncol(CCC)-1]*CCC[, ncol(CCC)])
-    }
-    if (model == "zip" || model == "zinb"){
-      CCCl <- cbind(G, w, wt)
+    # /*******************************/
+    m1 <- (i-1)*ncol(x)+1
+    m2 <- m1+(ncol(x)-1)
+    bi[m1:m2, 1] <- i
+    bi[m1:m2, 2] <- b
+    bi[m1:m2, 3] <- COORD[i, 1]
+    bi[m1:m2, 4] <- COORD[i, 2]
+    varbi[m1:m2, 1] <- varb
+    
+    if (model == "zip" || model == "zinb") {
       m1 <- (i-1)*ncol(G)+1
-      m2 <- m1+(ncol(G)-1)
+      m2 <- m1 + (ncol(G)-1)
+      li[m1:m2, 1] <- i
+      li[m1:m2, 2] <- lambda
+      li[m1:m2, 3] <- COORD[i, 1]
+      li[m1:m2, 4] <- COORD[i, 2]
+      varli[m1:m2, 1] <- varl
+    }
+    if (is.null(grid)) {
+      r <- x[i, ]%*%C 
+      S[i] <- r[i]
+      S2[i] <- r%*%t(r)
+      yhat[i] <- uj[i]
+      pihat[i] <- njl[i]
+    }
+    if (model == "zip" | model == "zinb") {
+      ri <- G[i, ]%*%Ci
+      Si[i] <- ri[i]
+      yhat2[i] <- uj[i]
+      yhat[i] <- (uj*(1-exp(njl)/(1+exp(njl))))[i]
+    }
+    # /** creating non-stationarity matrix **/
+    if (method != "adaptive_bsq"){
+      CCC <- cbind(x, w, wt)
+      m1 <- (i-1)*ncol(x)+1
+      m2 <- m1 + (ncol(x)-1)
       
-      if (det(t(CCCl[, 1:ncol(G)])%*%(CCCl[, ncol(CCCl)-1]*CCCl[, 1:ncol(G)]*CCCl[, ncol(CCCl)])) == 0) {
-        BBl[m1:m2, ] <- matrix(0, ncol(G), nrow(G))
+      if(det(t(CCC[, 1:ncol(x)])%*%(CCC[, ncol(CCC)-1]*CCC[, 1:ncol(x)]*CCC[, ncol(CCC)])) == 0){
+        BB[m1:m2, ] <- matrix(0, ncol(x), nrow(x))
       } else {
-        BBl[m1:m2, ] <- solve(t(CCCl[, 1:ncol(G)])%*%(CCCl[, ncol(CCCl)-1] * CCCl[, 1:ncol(G)]*CCCl[, ncol(CCCl)]))%*%t(CCCl[, 1:ncol(G)])*(CCCl[, ncol(CCCl)-1]*CCCl[, ncol(CCCl)])
+        BB[m1:m2, ] <- solve(t(CCC[, 1:ncol(x)])%*%(CCC[, ncol(CCC)-1]*CCC[, 1:ncol(x)]*CCC[, ncol(CCC)]))%*%t(CCC[, 1:ncol(x)])*(CCC[, ncol(CCC)-1]*CCC[, ncol(CCC)])
+      }
+      if (model == "zip" || model == "zinb"){
+        CCCl <- cbind(G, w, wt)
+        m1 <- (i-1)*ncol(G)+1
+        m2 <- m1+(ncol(G)-1)
+        
+        if (det(t(CCCl[, 1:ncol(G)])%*%(CCCl[, ncol(CCCl)-1]*CCCl[, 1:ncol(G)]*CCCl[, ncol(CCCl)])) == 0) {
+          BBl[m1:m2, ] <- matrix(0, ncol(G), nrow(G))
+        } else {
+          BBl[m1:m2, ] <- solve(t(CCCl[, 1:ncol(G)])%*%(CCCl[, ncol(CCCl)-1] * CCCl[, 1:ncol(G)]*CCCl[, ncol(CCCl)]))%*%t(CCCl[, 1:ncol(G)])*(CCCl[, ncol(CCCl)-1]*CCCl[, ncol(CCCl)])
+        }
       }
     }
-  }
-  # /*************************************/
-  # substituicao: _w_ <- w_
-  w_ <- w
-  w_ <- w_[order(w_)]
-  sumwi[i] <- sum(w_[1:min(length(w_), length(w_)*0.1)])
-  
-  if (i == 1){
-    W_f <- cbind(w, 1:length(w))
-  } else {
-    W_f <- rbind(W_f, cbind(w, 1:length(w)))
-    # W_f <- as.data.frame(W_f)
-    # View(W_f)
-    # verificar se essas demais linhas fazem sentido 
+    # /*************************************/
+    # substituicao: _w_ <- w_
+    w_ <- w
+    w_ <- w_[order(w_)]
+    sumwi[i] <- sum(w_[1:min(length(w_), length(w_)*0.1)])
+    
+    if (i==1){
+      W_f <- cbind(w, 1:length(w))
+    }
+    else{
+      W_f <- rbind(W_f, cbind(w, 1:length(w)))
+      # W_f <- as.data.frame(W_f)
+      # View(W_f)
+      # verificar se essas demais linhas fazem sentido 
+    }
   }
   if (is.null(grid)) {
     v1 <- sum(S) + sum(Si)
@@ -1540,6 +1541,9 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
 library(readr)
 korea_base_artigo <- read_csv("C:/Users/jehhv/OneDrive/Documentos/UnB/2024/TCC2/korea_base_artigo.csv")
 korea_base_artigo <- read_csv("D:/Users/jessica.abreu/Documents/UnB/tcc/korea_base_artigo.csv")
+
+#path Ju
+korea_base_artigo <- read_csv("C:/Users/Juliana Rosa/OneDrive/Documents/TCC2/GWZINBR-main/korea_base_artigo.csv")
 
 startTime <- Sys.time()
 gwzinbr(data = korea_base_artigo, 
