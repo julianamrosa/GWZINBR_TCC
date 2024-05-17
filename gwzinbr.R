@@ -447,7 +447,6 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
   par <- parg
   par2 <- par
   lambda <- lambdag
-  print("chegou aqui") #chegou
   njl <- ifelse(njl > maxg, maxg, njl)
   njl <- ifelse(njl < (-maxg), -maxg, njl) 
   #retirada parte comentada do codigo (linhas 1535 a 1604 do SAS)
@@ -458,18 +457,12 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
     lambda0 <- (ncol(pos0)-sum((parg/(uj+parg))^parg))/N
     if (lambda0 > 0){
       lambda0 <- log(lambda0/(1-lambda0))
-      lambda <- cbind(lambda0, rep(0, ncol(G)-1))
-      print("Dimensão G:")
-      print(dim(G))
-      print("Dimensão lambda:")
-      print(dim(lambda))
+      lambda <- matrix(c(lambda0, rep(0, ncol(G)-1)), ncol=1)
       njl <- G%*%lambda
-      print("chegou aqui2")
     }
     zk <- 1/(1+exp(-njl)*(par/(par+uj))^par)
     zk <- ifelse(y>0, 0, zk)
   }
-  print("chegou aqui 3")
   dllike <- 1
   llike <- 0
   j <- 1
@@ -504,9 +497,13 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
         }
       }
       while (abs(dpar)>0.000001 & aux2<200){
+        print("par")
+        print(dim(par))
+        print("uj")
+        print(dim(uj))
         par <- ifelse(par < E^-10, E^-10, par)
         gf <- sum(w*wt*(1-zk)*(digamma(par+y)-digamma(par)+log(par)+1-log(par+uj) - (par+y)/(par+uj)))
-        hess <- sum(w*wt*(1-zk)*(trigamma(par+y)-trigamma(par)+1/par - 2/(par + uj) + (y + par)/(par+uj))^2)
+        hess <- sum(w*wt*(1-zk)*(trigamma(par+y)-trigamma(par)+1/par - 2/(par+uj) + (y + par)/(par+uj))^2)
         hess <- ifelse(hess == 0, E^-23, hess)
         par0 <- par
         par <- par0 - solve(hess)%*%gf
@@ -651,7 +648,9 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
     njl <- G%*%lambda
     njl <- ifelse(njl>maxg, maxg, njl)
     njl <- ifelse(njl<(-maxg), -maxg, njl)
+    print("chegou aqui 1")
     zk <- 1/(1+exp(-njl)*(par/(par+uj))^par)
+    print("chegou aqui 2")
     zk <- ifelse(y>0, 0, zk)
     if (any(lambda)==0){
       #zk <- matrix(0, n, 1)
@@ -702,7 +701,7 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
     exphx <- ifelse(exphx>E^90, E^90, exphx) 
     dll <- w*wt*(Iy*(exp(njl)*g1x^par/hgx^2) - exp(njl)/exphx)^2
     dbb <- sqrt(w)*wt*(Iy*(-(par*g1x^par*g2x/hgx)^2+par^2*g1x^par*g2x^2*(1 - 1/uj)/hgx) - 
-                         (1 - Iy)*(par*g2x*(1 + (y-uj)/(par + uj))))
+                         (1 - Iy)*(par*g2x*(1 + (y-uj)/(par+uj))))
     dlb <- w*wt*Iy*(par*exp(njl)*g1x^par*g2x/hgx^2)
     dll <- ifelse(is.na(dll), E^100, dll)
     daa <- ifelse(is.na(daa), E^100, daa)
