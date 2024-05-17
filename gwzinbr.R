@@ -484,7 +484,7 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
         dpar <- 0
         alpha <- 1/par
         b <- bg
-        uj <- exp(X%*%b+Offset)
+        uj <- exp(x%*%b+Offset)
         lambda <- lambdag
         njl <- G%*%lambda
         njl <- ifelse(njl>maxg, maxg, njl)
@@ -497,16 +497,12 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
         }
       }
       while (abs(dpar)>0.000001 & aux2<200){
-        print("par")
-        print(dim(par))
-        print("uj")
-        print(dim(uj))
         par <- ifelse(par < E^-10, E^-10, par)
         gf <- sum(w*wt*(1-zk)*(digamma(par+y)-digamma(par)+log(par)+1-log(par+uj) - (par+y)/(par+uj)))
         hess <- sum(w*wt*(1-zk)*(trigamma(par+y)-trigamma(par)+1/par - 2/(par+uj) + (y + par)/(par+uj))^2)
         hess <- ifelse(hess == 0, E^-23, hess)
         par0 <- par
-        par <- par0 - solve(hess)%*%gf
+        par <- as.vector(par0 - solve(hess)%*%gf)
         dpar <- par - par0
         
         if (par >= E^6){
@@ -514,7 +510,7 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
           dpar <- 0
           alpha <- 1/par
           b <- bg
-          uj <- exp(X%*%b+Offset)
+          uj <- exp(x%*%b+Offset)
           lambda <- lambdag
           njl <- G%*%lambda
           njl <- ifelse(njl>maxg, maxg, njl)
@@ -532,7 +528,7 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
       if (par <= E^-5){
         par <- E^6
         b <- bg
-        uj <- exp(X%*%b+Offset)
+        uj <- exp(x%*%b+Offset)
         lambda <- lambdag
         njl <- G %*% lambda
         njl <- ifelse(njl>maxg, maxg, njl)
@@ -548,13 +544,13 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
     }
     dev <- 0
     ddev <- 1
-    nj <- X%*%b+Offset
+    nj <- x%*%b+Offset
     nj <- ifelse(nj>700,700,nj)
     nj <- ifelse(nj<(-700), -700, nj)
     uj <- exp(nj)
     while (abs(ddev)>0.000001 & aux1<100){
       uj <- ifelse(uj>E^100, E^100, uj)
-      Ai <- (1-zk)*((uj/(1+alpha*uj) + (y-uj) * (alpha*uj/(1+2*alpha*uj+alpha^2*uj^2))))
+      Ai <- as.vector((1-zk)*((uj/(1+alpha*uj) + (y-uj) * (alpha*uj/(1+2*alpha*uj+alpha^2*uj^2)))))
       Ai <- ifelse(Ai <=0, E^-5, Ai)
       uj <- ifelse(uj < E^-150, E^-150, uj)
       denz <- (((uj/(1+alpha*uj)+(y-uj)*(alpha*uj/(1+2*alpha*uj+alpha^2*uj^2))))*(1+alpha*uj))
@@ -566,7 +562,7 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
       else {
         b <- solve(t(x) %*% (w*Ai*x*wt)) %*% t(x) %*% (w*Ai*wt*zj)
       }
-      nj <- X%*%b+Offset
+      nj <- x%*%b+Offset
       nj <- ifelse(nj>700,700,nj)
       nj <- ifelse(nj<(-700), -700, nj)
       uj <- exp(nj)
@@ -623,14 +619,14 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
         njl <- ifelse(njl<(-maxg), -maxg, njl)
         pi <- exp(njl)/(1+exp(njl))
         while (abs(ddev)>0.000001 & aux3<100){
-          Aii <- pi*(1-pi)
+          Aii <- as.vector(pi*(1-pi))
           Aii <- ifelse(Aii<=0, E^-5, Aii)	
           zj <- njl+(zk-pi)/Aii
           if (det(t(G*Aii*w*wt)%*%G)==0){ #multiplicador
             lambda <- matrix(0, ncol(G), 1)
           }
           else{
-            lambda <- solve(t(G*Aii*w*wt)%*%G)%*%t(G*Aii*w*wt)%*%zj
+            lambda <- solve(t(G*Aii*w*wt)%*%G, tol=E^-60)%*%t(G*Aii*w*wt)%*%zj
           }
           njl <- G%*%lambda
           njl <- ifelse(njl>maxg, maxg, njl)
@@ -648,9 +644,7 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
     njl <- G%*%lambda
     njl <- ifelse(njl>maxg, maxg, njl)
     njl <- ifelse(njl<(-maxg), -maxg, njl)
-    print("chegou aqui 1")
     zk <- 1/(1+exp(-njl)*(par/(par+uj))^par)
-    print("chegou aqui 2")
     zk <- ifelse(y>0, 0, zk)
     if (any(lambda)==0){
       #zk <- matrix(0, n, 1)
@@ -678,7 +672,7 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
       Ci <- matrix(0, ncol(G), nrow(G))
     }
     else{
-      Ci <- solve(t(G)%*%(w*Aii*G*wt)%*%t(G)%*%(w*Aii*wt))
+      Ci <- solve(t(G)%*%(w*Aii*G*wt))%*%t(G)%*%(w*Aii*wt)
     }
     if(any(lambda) == 0){
       Ci <- matrix(0, ncol(G), N)
@@ -747,53 +741,55 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
     if (all(lambda) > 0 & alpha == E^-6) {
       II <- II[1:ncol(x), 1:ncol(x)]
       if (det(II) == 0) {
-        varabetalambda <- cbind(matrix(0, nrow(II), 1), matrix(0, ncol(G), 1))
+        varabetalambda <- rbind(matrix(0, nrow(II), 1), matrix(0, ncol(G), 1))
       } 
       else {
-        varabetalambda <- cbind(diag(solve(II)), matrix(0, ncol(G), 1))
+        varabetalambda <- rbind(diag(solve(II, tol=E^-60)), matrix(0, ncol(G), 1))
       }
     } 
     else if (any(lambda) == 0 & alpha == E^-6) {
       II <- II[1:ncol(x), 1:ncol(x)]
       if (det(II) == 0) {
-        varabetalambda <- cbind(matrix(0, nrow(II), 1), matrix(0, ncol(G), 1))
+        varabetalambda <- rbind(matrix(0, nrow(II), 1), matrix(0, ncol(G), 1))
       } 
       else {
-        varabetalambda <- cbind(diag(solve(II)), matrix(0, ncol(G), 1))
+        varabetalambda <- rbind(diag(solve(II,tol=E^-60)), matrix(0, ncol(G), 1))
       }
     } 
     else {
       II <- II[1:(ncol(x)+1), 1:(ncol(x)+1)]
       if (det(II) == 0) {
-        varabetalambda <- cbind(matrix(0, nrow(II), 1), matrix(0, ncol(G), 1))
+        varabetalambda <- rbind(matrix(0, nrow(II), 1), matrix(0, ncol(G), 1))
       } 
       else {
-        varabetalambda <- cbind(diag(solve(II)), matrix(0, ncol(G), 1))
+        varabetalambda <- rbind(diag(solve(II, tol=E^-60)), matrix(0, ncol(G), 1))
       }
     }
-  } else {
-    varabetalambda <- diag(1/solve(II))
+  } 
+  else {
+    varabetalambda <- diag(1/solve(II, tol=E^-60))
   }
   if (all(lambda) > 0 & alpha > E^-6){
-    varb <- varabetalambda[2:(ncol(x)+1), ]
-    varl <- varabetalambda[(ncol(x)+2):nrow(varabetalambda), ]
+    varb <- varabetalambda[2:(ncol(x)+1)]
+    varl <- varabetalambda[(ncol(x)+2):length(varabetalambda)]
     alphai[i, 1] <- i
     alphai[i, 2] <- alpha
     alphai[i, 3] <- sqrt(abs(varabetalambda[1]))
-  } else if (all(lambda) > 0 & alpha == E^-6) {
-    varb <- varabetalambda[1:ncol(x), ]
-    varl <- varabetalambda[(ncol(x)+1):nrow(varabetalambda), ]
+  } 
+  else if (all(lambda) > 0 & alpha == E^-6) {
+    varb <- varabetalambda[1:ncol(x)]
+    varl <- varabetalambda[(ncol(x)+1):length(varabetalambda)]
     alphai[i, 1] <- i
     alphai[i, 2] <- alpha
     alphai[i, 3] <- sqrt(1/abs(-(t(I1*daa))%*%I1))
   } else if (any(lambda) == 0 & alpha > E^-6) {
-    varb <- varabetalambda[2:(ncol(x)+1), ]
+    varb <- varabetalambda[2:(ncol(x)+1)]
     varl <- matrix(0, ncol(G), 1)
     alphai[i, 1] <- i
     alphai[i, 2] <- alpha
     alphai[i, 3] <- sqrt(abs(varabetalambda[1]))
   } else if (any(lambda) == 0 & alpha == E^-6) {
-    varb <- varabetalambda[1:ncol(x), ]
+    varb <- varabetalambda[1:ncol(x)]
     varl <- matrix(0, ncol(G), 1)
     alphai[i, 1] <- i
     alphai[i, 2] <- alpha
@@ -857,13 +853,13 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
   # /*************************************/
   # substituicao: _w_ <- w_
   w_ <- w
-  w_ <- sort(w_, 1)
-  sumwi[i] <- sum(w_[1:min(nrow(w_), nrow(w_)*0.1), ])
+  w_ <- w_[order(w_)]
+  sumwi[i] <- sum(w_[1:min(length(w_), length(w_)*0.1)])
   
   if (i == 1){
-    W_f <- cbind(w, 1:nrow(w))
+    W_f <- cbind(w, 1:length(w))
   } else {
-    W_f <- rbind(W_f, cbind(W, 1:nrow(w)))
+    W_f <- rbind(W_f, cbind(w, 1:length(w)))
     # W_f <- as.data.frame(W_f)
     # View(W_f)
     # verificar se essas demais linhas fazem sentido 
@@ -1556,8 +1552,5 @@ gwzinbr(data = korea_base_artigo,
 endTime <- Sys.time()
 endTime-startTime
 
-# Obs: dbb é uma matriz de dimensoes 244 x 1 
-# x é uma matriz 244 x 8
-# Nao ta executando x%*%dbb: non conformable arguments
-
 # alterar para vetor: dbb dlb e todos os outros
+# linha 744  varabetalambda: trocar matrizes por rep(), se necessario
