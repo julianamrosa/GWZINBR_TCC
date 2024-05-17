@@ -1,6 +1,0 @@
-Teste 3
-
-erro no solve(hess) --> linha 510
-erro em w e par (causa erro em hess) --> w deve ser a origem
-atualização em w no loop jj está com erro --> isso ocorre por problema no h
-h é o argumento passado para cv() --> o erro é no h1 -> o erro vem do bx1 -> upper -> bx -> max(dist(COORD))
