@@ -587,7 +587,7 @@ Golden <- function(data, formula, xvarinf, weight,
           nj <- ifelse(nj<(-700), -700, nj)
           #if (i==152 & contador4==1 & contador5==1){print(sum(nj))} ok
           uj <- exp(nj)
-          if (i==152 & contador4==1 & contador5==1){print(as.vector(nj))}
+          #if (i==152 & contador4==1 & contador5==1){print(as.vector(nj))}
           olddev <- dev
           uj <- ifelse(uj>E^10, E^10, uj)
           uj <- ifelse(uj==0, E^-10, uj)
@@ -879,10 +879,10 @@ Golden <- function(data, formula, xvarinf, weight,
       h_values <- rbind(h_values, c(h0, h1, h2, h3))
     }
     ################################
-    print("chama cv")
+    #print("chama cv")
     res1 <- cv(h1)
     CV1 <- res1[1]
-    print("chama cv")
+    #print("chama cv")
     res2 <- cv(h2)
     CV2 <- res2[1]
     if (GMY==1){
@@ -898,7 +898,7 @@ Golden <- function(data, formula, xvarinf, weight,
         h1 <- h3-r*(h3-h0)
         h2 <- h0+r*(h3-h0)
         CV1 <- CV2
-        print("chama cv")
+        #print("chama cv")
         res2 <- cv(h2)
         CV2 <- res2[1]
       }
@@ -907,7 +907,7 @@ Golden <- function(data, formula, xvarinf, weight,
         h1 <- h3-r*(h3-h0)
         h2 <- h0+r*(h3-h0)
         CV2 <- CV1
-        print("chama cv")
+        #print("chama cv")
         res1 <- cv(h1)
         CV1 <- res1[1]
       }

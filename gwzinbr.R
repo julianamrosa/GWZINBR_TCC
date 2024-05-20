@@ -1545,6 +1545,9 @@ korea_base_artigo <- read_csv("D:/Users/jessica.abreu/Documents/UnB/tcc/korea_ba
 #path Ju
 korea_base_artigo <- read_csv("C:/Users/Juliana Rosa/OneDrive/Documents/TCC2/GWZINBR-main/korea_base_artigo.csv")
 
+#obs.: mudar caso de teste
+#obs2.: tirar NULL dos defaults
+
 startTime <- Sys.time()
 gwzinbr(data = korea_base_artigo, 
         formula = n_covid1~Morbidity+high_sch_p+Healthcare_access+
