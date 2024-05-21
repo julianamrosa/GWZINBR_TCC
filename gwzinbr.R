@@ -59,6 +59,7 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
   cont <- 1
   cont3 <- 0
   while (abs(ddpar)>0.000001 & cont<100){
+    #print("while 1")
     dpar <- 1
     parold <- parg
     cont1 <- 1
@@ -71,6 +72,7 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
         parg <<- 1/(sum((y-uj)^2/uj)/(N-nvar))
       }  
       while (abs(dpar)>0.0001 & cont1<200){
+        #print("while 2")
         if (parg<0){
           parg <<- 0.00001
         }
@@ -109,6 +111,7 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
     ddev <- 1
     cont2 <- 0
     while (abs(ddev)>0.000001 & cont2<200){
+      #print("while 3")
       Ai <- (uj/(1+alphag*uj))+(y-uj)*(alphag*uj/(1+2*alphag*uj+alphag^2*uj*uj))
       Ai <- ifelse(Ai<=0,E^-5,Ai)
       zj <- nj+(y-uj)/(Ai*(1+alphag*uj))-Offset
@@ -179,9 +182,11 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
   llikeg <- 0
   j <- 0
   while (abs(dllike)>0.00001 & j<600){
+    #print("while 4")
     ddpar <- 1
     cont <- 1
     while (abs(ddpar)>0.000001 & cont<100){
+      #print("while 5")
       dpar <- 1
       parold <- parg
       aux1 <- 1
@@ -196,6 +201,7 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
       }
       else{
         while (abs(dpar)>0.0001 & aux2<200){
+          #print("while 6")
           if (parg<0){
             #parg <<- 0.00001
             parg <- 0.00001
@@ -237,6 +243,7 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
       nj <- ifelse(nj<(-700), -700, nj)
       uj <- exp(nj)
       while (abs(ddev)>0.000001 & aux1<100){
+        #print("while 7")
         uj <- ifelse(uj>E^100, E^100, uj)
         Ai <- as.vector((1-zkg)*((uj/(1+alphag*uj)+(y-uj)*(alphag*uj/(1+2*alphag*uj+alphag^2*uj^2)))))
         Ai <- ifelse(Ai<=0, E^-5, Ai)
@@ -276,6 +283,7 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
       njl <- ifelse(njl < (-maxg),-maxg, njl)
       pig <- exp(njl)/(1+exp(njl))
       while (abs(ddev)>0.000001 & aux3<100){ 
+        #print("while 8")
         Ai <- as.vector(pig*(1-pig))
         Ai <- ifelse(Ai<=0, E^-5, Ai)
         zj <- njl+(zkg-pig)*1/Ai
@@ -368,7 +376,7 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
   li <- matrix(0, ncol(G)*mm, 4)
   alphai <- matrix(0, mm, 3)
   BB <- matrix(0, ncol(x)*N, N)
-  BB1 <- matrix(0, ncol(G)*N, N)
+  BBl <- matrix(0, ncol(G)*N, N)
   sumwi <- matrix(0, mm, 1)
   varbi <- matrix(0, ncol(x)*mm, 1)
   varli <- matrix(0, ncol(G)* mm, 1)
@@ -385,6 +393,8 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
   #substituicao: _dist_ por dist_
   sequ <- 1:N
   for (i in 1:mm){
+    print("i:")
+    print(i)
     for (j in 1:N){
       seqi <- rep(i, N)
         dx <- sp::spDistsN1(COORD, COORD[i,])
@@ -397,10 +407,10 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
     w <- rep(0, u)
     for(jj in 1:u){
       if(method=="fixed_g"){
-        w[jj] <- exp(-0.5*(dist[jj, 3]/h)^2)
+        w[jj] <- exp(-0.5*(distan[jj, 3]/h)^2)
       }
       else if(method=="fixed_bsq"){
-        w[jj] <- (1 -(dist[jj, 3]/h)^2)^2
+        w[jj] <- (1 -(distan[jj, 3]/h)^2)^2
       }
     }
     if(method=="adaptive_bsq"){
@@ -466,6 +476,11 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
     llike <- 0
     j <- 1
     while (abs(dllike) > 0.00001 & j <= 600) { #fecha na linha 2049 do SAS? Confirmar com professor
+      print("dllike:")
+      print(dllike)
+      print("j:")
+      print(j)
+      #print("while 9")
       ddpar <- 1
       dpar <- 1
       parold <- par
@@ -496,6 +511,7 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
           }
         }
         while (abs(dpar)>0.000001 & aux2<200){
+          #print("while 10")
           par <- ifelse(par < E^-10, E^-10, par)
           gf <- sum(w*wt*(1-zk)*(digamma(par+y)-digamma(par)+log(par)+1-log(par+uj) - (par+y)/(par+uj)))
           hess <- sum(w*wt*(1-zk)*(trigamma(par+y)-trigamma(par)+1/par - 2/(par+uj) + (y + par)/(par+uj))^2)
@@ -548,6 +564,7 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
       nj <- ifelse(nj<(-700), -700, nj)
       uj <- exp(nj)
       while (abs(ddev)>0.000001 & aux1<100){
+        #print("while 11")
         uj <- ifelse(uj>E^100, E^100, uj)
         Ai <- as.vector((1-zk)*((uj/(1+alpha*uj) + (y-uj) * (alpha*uj/(1+2*alpha*uj+alpha^2*uj^2)))))
         Ai <- ifelse(Ai <=0, E^-5, Ai)
@@ -618,6 +635,7 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
           njl <- ifelse(njl<(-maxg), -maxg, njl)
           pi <- exp(njl)/(1+exp(njl))
           while (abs(ddev)>0.000001 & aux3<100){
+            #print("while 12")
             Aii <- as.vector(pi*(1-pi))
             Aii <- ifelse(Aii<=0, E^-5, Aii)	
             zj <- njl+(zk-pi)/Aii
@@ -869,7 +887,7 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
     v1 <- sum(S) + sum(Si)
     v11 <- sum(S) + sum(Si)
     v2 <- sum(S2)
-    nparmodel <- n-v11
+    nparmodel <- N-v11
     if (v11 < v2) {
       v1 <- v11
     }
@@ -878,8 +896,8 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
     ym <- t(y*wt)%*%y
     rsqr2 <- ym-sum((y*wt)^2)/sum(wt)
     rsqr <- 1-rsqr1/rsqr2
-    rsqradj <- 1-((n-1)/(n-v1))*(1-rsqr)
-    sigma2 <- n*rsqr1/((n-v1)*sum(wt))
+    rsqradj <- 1-((N-1)/(N-v1))*(1-rsqr)
+    sigma2 <- N*rsqr1/((N-v1)*sum(wt))
     root_mse <- sqrt(sigma2)
     print(c('Sigma2e', sigma2))
     print(c('Root MSE', root_mse))
@@ -891,7 +909,7 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
     influence <- S
     resstd <- res/(sqrt(sigma2)*sqrt(abs(1-influence)))
     CooksD <- resstd^2*influence/(v1*(1-influence))
-    df <- n-(nvar+ncol(G))
+    df <- N-(nvar+ncol(G))
     stdbi <- sqrt(abs(varbi))
     tstat <- bi[, 2]/stdbi
     probt <- 2*(1-pt(abs(tstat), df))
@@ -945,12 +963,12 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
       dev <- 2*(llnull1-ll)
       pctll <- 1-(llnull1-ll)/(llnull1-llnull2)
       AIC <- 2*v1-2*ll
-      AICc <- AIC+2*(v1*(v1+1)/(n-v1-1))
+      AICc <- AIC+2*(v1*(v1+1)/(N-v1-1))
       adjpctll <- 1-(llnull1-ll+v1+0.5)/(llnull1-llnull2)
       
       if(model == "zinb"){
         AIC <- 2*(v1+v1/(ncol(x)+ncol(G)))-2*ll
-        AICc <- AIC + 2*((v1+v1/(ncol(x)+ncol(G)))*((v1+v1/(ncol(x)+ncol(G)))+1)/ (n-(v1+v1/(ncol(x)+ncol(G))) - 1))
+        AICc <- AIC + 2*((v1+v1/(ncol(x)+ncol(G)))*((v1+v1/(ncol(x)+ncol(G)))+1)/ (N-(v1+v1/(ncol(x)+ncol(G))) - 1))
         adjpctll <- 1 - (llnull1-ll+(v1+v1/(ncol(x) + ncol(G))) + 0.5) / (llnull1 - llnull2)
       }
       print(paste("Deviance:", dev))
@@ -986,13 +1004,13 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
       
       dev <- 2*(llnull1-ll)
       AIC <- -2*ll+2*v1
-      AICc <- AIC+2*(v1*(v1+1)/(n-v1-1))
+      AICc <- AIC+2*(v1*(v1+1)/(N-v1-1))
       pctll <- 1-(llnull1-ll)/(llnull1-llnull2)
       adjpctll <- 1-(llnull1-ll+v1+0.5)/(llnull1-llnull2)
       
       if(model == "negbin"){
         AIC <- 2*(v1+v1/ncol(x))-2*ll
-        AICc <- AIC+2*(v1+v1/ncol(x))*(v1+v1/ncol(x)+1)/(n-(v1+v1/ncol(x))-1)
+        AICc <- AIC+2*(v1+v1/ncol(x))*(v1+v1/ncol(x)+1)/(N-(v1+v1/ncol(x))-1)
         adjpctll <- 1-(llnull1-ll+v1+v1/ncol(x)+0.5)/(llnull1-llnull2)
       }
       print(paste("Deviance:", dev))
@@ -1006,7 +1024,7 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
     beta_ <- matrix(bi[, 1:2], nrow = N, byrow=TRUE) #shape: cria matriz a partir de outra matriz. Conferir se resultado eh o mesmo no SAS
     beta2_ <- beta_
     if(model == "negbin" || model == "zinb"){
-      alpha_= matrix(alphai[, 1:2], n);
+      alpha_= matrix(alphai[, 1:2], N);
       beta2_= cbind(beta_, alpha_)
     }
     i <- seq(2, ncol(beta_), 2)  
@@ -1128,7 +1146,7 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
       Vk <- ifelse(abs(Vk)<=E^-8, 0, Vk)
       Fk <- (Vk/df1k)/sigma2
       ndf <- df1k^2/df2k
-      ddf <- n-v1
+      ddf <- N-v1
       ddf <- rep(ddf, ncol(x))
       probf <- 1-pf(Fk, ndf, ddf)
       print("Non-Stationarity Test (Leung et al., 2000)")
@@ -1552,10 +1570,9 @@ startTime <- Sys.time()
 gwzinbr(data = korea_base_artigo, 
         formula = n_covid1~Morbidity+high_sch_p+Healthcare_access+
           diff_sd+Crowding+Migration+Health_behavior,
-        xvarinf = c("Morbidity", "high_sch_p", "Healthcare_access", "diff_sd",
-                    "Crowding", "Migration", "Health_behavior"),
-        lat = "x", long = "y", offset = "ln_total", method = "adaptive_bsq",
-        model = "zinb", distancekm = TRUE, h=82)
+        xvarinf = "Healthcare_access",
+        lat = "x", long = "y", offset = "ln_total", method = "fixed_g",
+        model = "zinb", distancekm = TRUE, h=226.73)
 endTime <- Sys.time()
 endTime-startTime
 
