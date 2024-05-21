@@ -591,7 +591,7 @@
 						*if i=128 & contador5=1 & contador4=1 then print (sum(uj));
 						*if i=128 & contador4=1 then print (sum(uj));
 						olddev=dev;
-						if i=152 & contador4=1 & contador5=1 then print nj;
+						*if i=152 & contador4=1 & contador5=1 then print nj;
 						uj=choose(uj>1E10, 1E10, uj);
 						uj=choose(uj=0, 1E-10, uj);
 						*if i=152 & contador4=1 & contador5=1 then print (sum(uj));
@@ -2069,7 +2069,7 @@ nrow(lambdatemp)>ncol(unique(lambdatemp))then
 						W_f=W||(1:nrow(w))`;
 					else
 						W_f=W_f//(W||(1:nrow(w))`);
-				end;
+				end; *fecha for i?;
 				create w_f from W_f;
 				append from W_f;
 				close w_f;

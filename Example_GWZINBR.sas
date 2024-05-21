@@ -132,6 +132,20 @@ Healthcare_access diff_sd crowding Migration Health_behavior,LONG=x,LAT=y,OUTPUT
 OFFSET=ln_total,MODEL=POISSON,METHOD=fixed_g,BANDWIDTH=aic, GLOBALMIN = NO,DISTANCEKM=YES);
 *13 segs;
 
+*Alan;
 %GWZINBR(DATA=Korea_base,YVAR=n_covid1,XVAR=Morbidity high_sch_p Healthcare_access diff_sd
 crowding Migration Health_behavior,XVARINF=Morbidity high_sch_p Healthcare_access diff_sd
 crowding Migration Health_behavior,LAT=y,LONG=x,OFFSET=ln_total,METHOD=ADAPTIVE_BSQ,MODEL=ZINB,DISTANCEKM=YES, h=82);
+*5 mins;
+
+*meu;
+%GWZINBR(DATA=Korea_base,YVAR=n_covid1,XVAR=Morbidity high_sch_p Healthcare_access diff_sd
+crowding Migration Health_behavior,XVARINF=Healthcare_access,LAT=y,LONG=x,OFFSET=ln_total,METHOD=ADAPTIVE_BSQ,
+MODEL=ZINB,DISTANCEKM=YES, h=82);
+*14 segs;
+
+*Teste 1 do relatório;
+%GWZINBR(DATA=Korea_base,YVAR=n_covid1,XVAR=Morbidity high_sch_p
+Healthcare_access diff_sd crowding Migration Health_behavior, XVARINF=Healthcare_access,LONG=x,LAT=y,
+OFFSET=ln_total,MODEL=ZINB,METHOD=fixed_g,DISTANCEKM=YES, H=226.7255);
+*40 segs;
