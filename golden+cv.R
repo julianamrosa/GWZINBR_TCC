@@ -396,7 +396,7 @@ Golden <- function(data, formula, xvarinf, weight,
     #   # create &output from hv[colname='h'];
     # }
     for (i in 1:N){
-      for (j in 1:N){
+      #for (j in 1:N){
         #seqi <- matrix(i, N, 1)
         seqi <- rep(i, N)
         dx <- sp::spDistsN1(COORD,COORD[i,])
@@ -404,7 +404,7 @@ Golden <- function(data, formula, xvarinf, weight,
         if (distancekm){
           distan[,3] <- distan[,3]*111
         }
-      }
+      #}
       u <- nrow(distan)
       #w <- matrix(0, u, 1)
       w <- rep(0, u)

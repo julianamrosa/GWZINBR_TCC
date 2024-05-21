@@ -393,19 +393,18 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
   #substituicao: _dist_ por dist_
   sequ <- 1:N
   for (i in 1:mm){
-    print("i:")
-    print(i)
-    for (j in 1:N){
+    #for (j in 1:N){
       seqi <- rep(i, N)
-        dx <- sp::spDistsN1(COORD, COORD[i,])
-        distan <- cbind(seqi, sequ, dx)
-        if (distancekm){
-          distan[,3] <- distan[,3]*111
-        }  
-     }
+      dx <- sp::spDistsN1(COORD, COORD[i,])
+      distan <- cbind(seqi, sequ, dx)
+      if (distancekm){
+        distan[,3] <- distan[,3]*111
+      }
+    #}
     u <- nrow(distan)
     w <- rep(0, u)
-    for(jj in 1:u){
+    #verificar se u, mm e N são a mesma coisa
+    for(jj in 1:u){ #passar esse loop para dentro das condicionais
       if(method=="fixed_g"){
         w[jj] <- exp(-0.5*(distan[jj, 3]/h)^2)
       }
@@ -418,7 +417,7 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
       distan <- cbind(distan, 1:nrow(distan))
       w <- matrix(0,N,2)
       hn <- distan[h,3]
-      for (jj in 1:N) {
+      for (jj in 1:N){
         if(distan[jj, 4] <= h){
           w[jj, 1] <- (1 -(distan[jj, 3]/hn)^2)^2
         } 
@@ -475,7 +474,7 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
     dllike <- 1
     llike <- 0
     j <- 1
-    while (abs(dllike) > 0.00001 & j <= 600) { #fecha na linha 2049 do SAS? Confirmar com professor
+    while (abs(dllike) > 0.00001 & j <= 600){ #fecha na linha 2049 do SAS? Confirmar com professor
       print("dllike:")
       print(dllike)
       print("j:")
@@ -1562,6 +1561,7 @@ korea_base_artigo <- read_csv("D:/Users/jessica.abreu/Documents/UnB/tcc/korea_ba
 
 #path Ju
 korea_base_artigo <- read_csv("C:/Users/Juliana Rosa/OneDrive/Documents/TCC2/GWZINBR-main/korea_base_artigo.csv")
+korea_base_artigo <- read_csv("C:/Juliana/TCC/GWZINBR-main/korea_base_artigo.csv")
 
 #obs.: mudar caso de teste
 #obs2.: tirar NULL dos defaults
