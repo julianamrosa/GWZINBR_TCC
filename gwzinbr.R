@@ -674,8 +674,12 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
     # /**** COMPUTING VARIANCE OF BETA AND LAMBDA ******/
     if(det(t(x)%*%(w*Ai*x*wt))==0){
       C <- matrix(0, ncol(x),nrow(x)) 
-    } else{
-      C <- solve(t(x)%*%(w*Ai*x*wt), tol=E^-60)%*%t(x)%*%(w*Ai*wt)
+    }
+    else{
+      #C <- solve(t(x)%*%(w*Ai*x*wt), tol=E^-60)%*%t(x)%*%(w*Ai*wt)
+      # if (i==1){print(dim(t(x)))}
+      # if (i==1){print(dim(t(w*Ai*wt)))}
+      C <- solve(t(x)%*%(w*Ai*x*wt), tol=E^-60)%*%t(x)*as.vector(w*Ai*wt)
     }
     Ci <- matrix(0, ncol(G), 1)
     if(model == "zip" || model == "zinb"){
@@ -825,16 +829,19 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
       li[m1:m2, 4] <- COORD[i, 2]
       varli[m1:m2, 1] <- varl
     }
+    if (i==1){print(sum(C))}
     if (is.null(grid)) {
-      r <- x[i, ]%*%C 
+      r <- x[i, ]%*%C
       S[i] <- r[i]
+      #if(i==1){print(r)}
       S2[i] <- r%*%t(r)
       yhat[i] <- uj[i]
       pihat[i] <- njl[i]
     }
     if (model == "zip" | model == "zinb") {
       ri <- G[i, ]%*%Ci
-      Si[i] <- ri[i]
+      #if(i==1){print(ri)}
+      #Si[i] <- ri[i]
       yhat2[i] <- uj[i]
       yhat[i] <- (uj*(1-exp(njl)/(1+exp(njl))))[i]
     }
@@ -877,12 +884,15 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
       # verificar se essas demais linhas fazem sentido 
     }
   }
-  if (is.null(grid)) {
-    v1 <- sum(S) + sum(Si)
-    v11 <- sum(S) + sum(Si)
+  if (is.null(grid)){
+    v1 <- sum(S)+sum(Si)
+    v11 <- sum(S)+sum(Si)
     v2 <- sum(S2)
+    # print(v1)
+    # print(v11)
+    # print(v2)
     nparmodel <- N-v11
-    if (v11 < v2) {
+    if (v11 < v2){
       v1 <- v11
     }
     res <- y-yhat
