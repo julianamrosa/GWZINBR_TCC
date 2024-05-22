@@ -45,11 +45,11 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
   Iy <- 1-Iy
   Iy2 <- Iy
   pos0 <<-  which(y==0)
-  pos0 <<- t(as.matrix(pos0))
+  #pos0 <<- t(as.matrix(pos0))
   pos02 <<- which(y==0)
-  pos02 <<- t(as.matrix(pos02))
+  #pos02 <<- t(as.matrix(pos02))
   pos1 <<- which(y>0)
-  pos1 <<- t(as.matrix(pos1))
+  #pos1 <<- t(as.matrix(pos1))
   
   # /**** global estimates ****/ 
   uj <- (y+mean(y))/2 
@@ -148,18 +148,18 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
       #lambdag <<- matrix(0, ncol(G),1) 
       lambdag <<- rep(0, ncol(G))
       cat("NOTE: Expected number of zeros (", round(sum((parg/(uj+parg))^parg), 2), 
-          ") >= number of zeros (", ncol(pos0), "). No Need of Zero Model.\n")
+          ") >= number of zeros (", length(pos0), "). No Need of Zero Model.\n")
     }
     else{
       cat("NOTE: Expected number of zeros (", round(sum((parg/(uj+parg))^parg), 2), 
-          ") < number of zeros (", ncol(pos0), "). Zero Model Used.\n")
+          ") < number of zeros (", length(pos0), "). Zero Model Used.\n")
       lambda0 <<- log(lambda0/(1-lambda0))
       lambdag <<- rbind(lambda0, rep(0, ncol(G)-1))
     }
     pargg <<- parg
     ujg <<- uj
-    if (is.null(nrow(pos0)) | any(lambdag)==0){ 
-      if (is.null(nrow(pos0))) {
+    if (length(pos0)==0 | any(lambdag)==0){ 
+      if (length(pos0)==0) {
         pos0 <<- pos1
         if (model=="zinb" | model=="zip"){
           model <- "negbin"
@@ -462,7 +462,7 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
       zk <- 0
     }
     else{
-      lambda0 <- (ncol(pos0)-sum((parg/(uj+parg))^parg))/N
+      lambda0 <- (length(pos0)-sum((parg/(uj+parg))^parg))/N
       if (lambda0 > 0){
         lambda0 <- log(lambda0/(1-lambda0))
         lambda <- matrix(c(lambda0, rep(0, ncol(G)-1)), ncol=1)
@@ -474,11 +474,7 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
     dllike <- 1
     llike <- 0
     j <- 1
-    while (abs(dllike) > 0.00001 & j <= 600){ #fecha na linha 2049 do SAS? Confirmar com professor
-      print("dllike:")
-      print(dllike)
-      print("j:")
-      print(j)
+    while (abs(dllike) > 0.00001 & j <= 600){
       #print("while 9")
       ddpar <- 1
       dpar <- 1
@@ -513,12 +509,11 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
           #print("while 10")
           par <- ifelse(par < E^-10, E^-10, par)
           gf <- sum(w*wt*(1-zk)*(digamma(par+y)-digamma(par)+log(par)+1-log(par+uj) - (par+y)/(par+uj)))
-          hess <- sum(w*wt*(1-zk)*(trigamma(par+y)-trigamma(par)+1/par - 2/(par+uj) + (y + par)/(par+uj))^2)
+          hess <- sum(w*wt*(1-zk)*(trigamma(par+y)-trigamma(par)+1/par-2/(par+uj)+(y+par)/(par+uj)^2))
           hess <- ifelse(hess == 0, E^-23, hess)
           par0 <- par
           par <- as.vector(par0 - solve(hess)%*%gf)
           dpar <- par - par0
-          
           if (par >= E^6){
             par <- E^6
             dpar <- 0
@@ -582,13 +577,13 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
         nj <- ifelse(nj<(-700), -700, nj)
         uj <- exp(nj)
         olddev <- dev
-        uj <- ifelse(uj > E^10, E^10, uj) 
-        uj <- ifelse(uj == 0, E^10, uj) 
-        if (par == E^6) {
+        uj <- ifelse(uj > E^10, E^10, uj)
+        uj <- ifelse(uj == 0, E^10, uj)
+        if (par == E^6){
           # gamma1=/*(gamma(par+y)/(gamma(y+1)#gamma(par)))#*/(uj/(uj+par))##y#exp(-uj);
           gamma1 <- (uj/(uj+par))^y*exp(-uj)
         } 
-        else {
+        else{
           # gamma1=/*(gamma(par+y)/(gamma(y+1)#gamma(par)))#*/(uj/(uj+par))##y#(par/(uj+par))##par;
           gamma1 <- (uj/(uj+par))^y*(par/(uj+par))^par
         }
@@ -636,7 +631,7 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
           while (abs(ddev)>0.000001 & aux3<100){
             #print("while 12")
             Aii <- as.vector(pi*(1-pi))
-            Aii <- ifelse(Aii<=0, E^-5, Aii)	
+            Aii <- ifelse(Aii<=0, E^-5, Aii)
             zj <- njl+(zk-pi)/Aii
             if (det(t(G*Aii*w*wt)%*%G)==0){ #multiplicador
               lambda <- matrix(0, ncol(G), 1)
@@ -690,7 +685,7 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
       else{
         Ci <- solve(t(G)%*%(w*Aii*G*wt), tol=E^-60)%*%t(G)%*%(w*Aii*wt)
       }
-      if(any(lambda) == 0){
+      if(any(lambda)==0){
         Ci <- matrix(0, ncol(G), N)
       }
     }
@@ -705,7 +700,7 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
     dal <- -w*wt*zk*(exp(njl)*g1x^par*(log(g1x)+g2x) / hgx^2)
     daa <- daa*par^4
     dab <- dab*par^2
-    if (any(lambda) == 0) {
+    if (any(lambda)==0) {
       Iy <- matrix(0, nrow(y), 1)
       exphx <- 1 + exp(njl)
       exphx <- ifelse(exphx>E^90, E^90, exphx) 
@@ -721,11 +716,11 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
       dlb <- ifelse(is.na(dlb), E^100, dlb)
       I1 <- matrix(1, nrow(y), 1)
     }
-    if(any(b) == 0 & any(lambda) == 0){
+    if(any(b)==0 & any(lambda)==0){
       II <- matrix(0, ncol(x)+ncol(G)+1, ncol(x)+ncol(G)+1)
-    } else if(any(lambda) == 0){
+    } else if(any(lambda)==0){
       dbb <- w*wt*(Iy*(-(par*g1x^par*g2x/hgx)^2 + par^2*g1x^par*g2x^2*(1 - 1/uj)/hgx)-(1 - Iy)*(par*g2x*(1 + (y-uj) / (par+uj))))
-      if(det(t(x%*%dbb%*%dbb/Ai) %*% x) == 0){
+      if(det(t(x%*%dbb%*%dbb/Ai) %*% x)==0){
         II <- rbind(
           cbind(-(t(I1*daa))%*%I1, -(t(I1*dab))%*%x, -(t(I1*dal))%*%G),
           cbind(-t(x)%*%(dab*I1), -(t(x%*%dbb)%*%x), -t(x*dlb)%*%G),
@@ -748,7 +743,7 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
     }
     if (all(lambda) > 0 & alpha == E^-6) {
       II <- II[2:nrow(II), 2:nrow(II)]
-    } else if (any(lambda) == 0 & alpha > E^-6) {
+    } else if (any(lambda)==0 & alpha > E^-6) {
       II <- II[1:(ncol(x)+1), 1:(ncol(x)+1)]
     } else if (any(lambda) == 0 & alpha == E^-6) {
       II <- II[2:(ncol(x)+1), 2:(ncol(x)+1)]
@@ -978,13 +973,14 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
       print(paste("AICc:", AICc))
     }
     if(model == "poisson" || model == "negbin"){
-      if (ncol(pos02) == 0){ #acredito que podemos substituir ncol por length, mas prefiro manter assim por enquanto
+      if (length(pos02)==0){
         pos0 <- pos1
         pos0x <- rep(1, length(pos1))
         pos0xl <- rep(1, length(pos1))
       } else {
         pos0x <- (par_[pos0]/(par_[pos0] + yhat[pos0]))^par_[pos0]
         pos0xl <- (par_[pos0]/(par_[pos0] + y[pos0, ]))^par_[pos0]
+        pos0x <- ifelse(pos0x==0, E^-10, pos0x)
       }
       ll <- sum(-log(0+exp(pihat[pos0])) + log(0*exp(pihat[pos0]) + pos0x)) + sum(-log(0+exp(pihat[pos1])) +
                                                                                     lgamma(par_[pos1] + y[pos1, ]) - lgamma(y[pos1, ] + 1) - lgamma(par_[pos1]) + y[pos1]*log(yhat[pos1]/(par_[pos1] + yhat[pos1])) +
@@ -1316,7 +1312,7 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
   }
   if (model=="poisson" | model=="negbin"){
     yhatg <- exp(x%*%bg+Offset)
-    if (ncol(pos02)==0){
+    if (length(pos02)==0){
       pos0 <- pos1
       pos0x <- 1
       pos0xl <- 1
@@ -1551,30 +1547,3 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
     }
   }
 } # fecha gwzinbr
-
-# -------------------------- TESTE
-
-# Com h=82 (ou seja, sem rodar a golden)
-library(readr)
-korea_base_artigo <- read_csv("C:/Users/jehhv/OneDrive/Documentos/UnB/2024/TCC2/korea_base_artigo.csv")
-korea_base_artigo <- read_csv("D:/Users/jessica.abreu/Documents/UnB/tcc/korea_base_artigo.csv")
-
-#path Ju
-korea_base_artigo <- read_csv("C:/Users/Juliana Rosa/OneDrive/Documents/TCC2/GWZINBR-main/korea_base_artigo.csv")
-korea_base_artigo <- read_csv("C:/Juliana/TCC/GWZINBR-main/korea_base_artigo.csv")
-
-#obs.: mudar caso de teste
-#obs2.: tirar NULL dos defaults
-
-startTime <- Sys.time()
-gwzinbr(data = korea_base_artigo, 
-        formula = n_covid1~Morbidity+high_sch_p+Healthcare_access+
-          diff_sd+Crowding+Migration+Health_behavior,
-        xvarinf = "Healthcare_access",
-        lat = "x", long = "y", offset = "ln_total", method = "fixed_g",
-        model = "zinb", distancekm = TRUE, h=226.73)
-endTime <- Sys.time()
-endTime-startTime
-
-# alterar para vetor: dbb dlb e todos os outros
-# linha 744  varabetalambda: trocar matrizes por rep(), se necessario
