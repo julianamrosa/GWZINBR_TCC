@@ -17,6 +17,7 @@ gwzinbr(data = korea_base_artigo,
         xvarinf = "Healthcare_access",
         lat = "x", long = "y", offset = "ln_total", method = "fixed_g",
         model = "zinb", distancekm = TRUE, h=226.73)
+
 endTime <- Sys.time()
 endTime-startTime
 #entre 2 e 5 minutos

@@ -696,32 +696,34 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
     g2x <- uj/(par+uj)
     hgx <- exp(njl)+g1x^par
     hgx <- ifelse(hgx > E^10, E^10, hgx)
-    daa <- w*wt*(zk*((g1x^par*(log(g1x)+g2x))^2*(1 - 1/hgx)/hgx + g1x^par * (g2x^2/par) / hgx) + 
-                   (1-zk) * (trigamma(par+y) - trigamma(par) - 2 / (uj+par) + 1 / par + (y+par) / (uj+par))^2)
-    dab <- w*wt*(zk*(g1x^(2*par + 1)*uj*(log(g1x) + g2x) / hgx^2 - g1x^par * (-g2x^2+par*g2x*(log(g1x) + g2x)) / hgx) + 
-                   (1-zk) * (g2x*(y-uj) / (uj+par)))
-    dal <- -w*wt*zk*(exp(njl)*g1x^par*(log(g1x)+g2x) / hgx^2)
+    daa <- as.vector(w*wt*(zk*((g1x^par*(log(g1x)+g2x))^2*(1-1/hgx)/hgx+g1x^par*(g2x^2/par)/hgx)+
+                   (1-zk)*(trigamma(par+y)-trigamma(par)-2/(uj+par)+1/par+(y+par)/(uj+par)^2)))
+    dab <- as.vector(w*wt*(zk*(g1x^(2*par + 1)*uj*(log(g1x) + g2x) / hgx^2 - g1x^par * (-g2x^2+par*g2x*(log(g1x) + g2x)) / hgx) + 
+                   (1-zk) * (g2x*(y-uj) / (uj+par))))
+    dal <- as.vector(-w*wt*zk*(exp(njl)*g1x^par*(log(g1x)+g2x) / hgx^2))
     daa <- daa*par^4
     dab <- dab*par^2
     if (any(lambda)==0) {
-      Iy <- matrix(0, nrow(y), 1)
-      exphx <- 1 + exp(njl)
-      exphx <- ifelse(exphx>E^90, E^90, exphx) 
-      dll <- w*wt*(Iy*(exp(njl)*g1x^par/hgx^2) - exp(njl)/exphx)^2
-      dbb <- sqrt(w)*wt*(Iy*(-(par*g1x^par*g2x/hgx)^2+par^2*g1x^par*g2x^2*(1 - 1/uj)/hgx) - 
-                           (1 - Iy)*(par*g2x*(1 + (y-uj)/(par+uj))))
-      dlb <- w*wt*Iy*(par*exp(njl)*g1x^par*g2x/hgx^2)
-      dll <- ifelse(is.na(dll), E^100, dll)
-      daa <- ifelse(is.na(daa), E^100, daa)
-      dab <- ifelse(is.na(dab), E^100, dab)
-      dal <- ifelse(is.na(dal), E^100, dal)
-      dbb <- ifelse(is.na(dbb), E^100, dbb)
-      dlb <- ifelse(is.na(dlb), E^100, dlb)
-      I1 <- matrix(1, nrow(y), 1)
+      Iy <- matrix(0, length(y), 1)
     }
+    exphx <- 1 + exp(njl)
+    exphx <- ifelse(exphx>E^90, E^90, exphx) 
+    #dll <- as.vector(w*wt*(Iy*(exp(njl)*g1x^par/hgx^2)-exp(njl)/exphx)^2)
+    dll <- as.vector(w*wt*(Iy*(exp(njl)*g1x^par/hgx^2)-exp(njl)/(exphx)^2))
+    dbb <- as.vector(sqrt(w)*wt*(Iy*(-(par*g1x^par*g2x/hgx)^2+par^2*g1x^par*g2x^2*(1 - 1/uj)/hgx) - 
+                         (1 - Iy)*(par*g2x*(1 + (y-uj)/(par+uj)))))
+    dlb <- as.vector(w*wt*Iy*(par*exp(njl)*g1x^par*g2x/hgx^2))
+    dll <- ifelse(is.na(dll), E^100, dll)
+    daa <- ifelse(is.na(daa), E^100, daa)
+    dab <- ifelse(is.na(dab), E^100, dab)
+    dal <- ifelse(is.na(dal), E^100, dal)
+    dbb <- ifelse(is.na(dbb), E^100, dbb)
+    dlb <- ifelse(is.na(dlb), E^100, dlb)
+    I1 <- matrix(1, length(y), 1)
     if(any(b)==0 & any(lambda)==0){
       II <- matrix(0, ncol(x)+ncol(G)+1, ncol(x)+ncol(G)+1)
-    } else if(any(lambda)==0){
+    }
+    else if(any(lambda)==0){
       dbb <- w*wt*(Iy*(-(par*g1x^par*g2x/hgx)^2 + par^2*g1x^par*g2x^2*(1 - 1/uj)/hgx)-(1 - Iy)*(par*g2x*(1 + (y-uj) / (par+uj))))
       if(det(t(x%*%dbb%*%dbb/Ai) %*% x)==0){
         II <- rbind(
@@ -737,20 +739,25 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
           cbind(-t(G)%*%(dal*I1), -t(G)%*%(x*dlb), -t(G*dll)%*%G)      
         )   
       }
-    } else{
+    }
+    else{
       II <- rbind(
         cbind(-t(I1*daa)%*%I1, -t(I1*dab)%*%x, -t(I1*dal)%*%G),
         cbind(-t(x)%*%(dab*I1), -(t(x*dbb)%*%x), -t(x*dlb)%*%G),
         cbind(-t(G)%*%(dal*I1), -t(G)%*%(x*dlb), -t(G*dll)%*%G)
       )     
     }
-    if (all(lambda) > 0 & alpha == E^-6) {
+    #if (i==1){print(II)}
+    if (all(lambda) > 0 & alpha == E^-6){
       II <- II[2:nrow(II), 2:nrow(II)]
-    } else if (any(lambda)==0 & alpha > E^-6) {
+    }
+    else if (any(lambda)==0 & alpha > E^-6){
       II <- II[1:(ncol(x)+1), 1:(ncol(x)+1)]
-    } else if (any(lambda) == 0 & alpha == E^-6) {
+    }
+    else if (any(lambda) == 0 & alpha == E^-6){
       II <- II[2:(ncol(x)+1), 2:(ncol(x)+1)]
     }
+    #if (i==1){print(II)}
     if (det(II) == 0) {
       if (all(lambda) > 0 & alpha == E^-6) {
         II <- II[1:ncol(x), 1:ncol(x)]
@@ -779,9 +786,9 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
           varabetalambda <- rbind(diag(solve(II, tol=E^-60)), matrix(0, ncol(G), 1))
         }
       }
-    } 
-    else {
-      varabetalambda <- diag(1/solve(II, tol=E^-60))
+    }
+    else{
+      varabetalambda <- diag(solve(II, tol=E^-60))
     }
     if (all(lambda) > 0 & alpha > E^-6){
       varb <- varabetalambda[2:(ncol(x)+1)]
@@ -796,20 +803,22 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
       alphai[i, 1] <- i
       alphai[i, 2] <- alpha
       alphai[i, 3] <- sqrt(1/abs(-(t(I1*daa))%*%I1))
-    } else if (any(lambda) == 0 & alpha > E^-6) {
+    }
+    else if (any(lambda) == 0 & alpha > E^-6) {
       varb <- varabetalambda[2:(ncol(x)+1)]
       varl <- matrix(0, ncol(G), 1)
       alphai[i, 1] <- i
       alphai[i, 2] <- alpha
       alphai[i, 3] <- sqrt(abs(varabetalambda[1]))
-    } else if (any(lambda) == 0 & alpha == E^-6) {
+    }
+    else if (any(lambda) == 0 & alpha == E^-6) {
       varb <- varabetalambda[1:ncol(x)]
       varl <- matrix(0, ncol(G), 1)
       alphai[i, 1] <- i
       alphai[i, 2] <- alpha
       alphai[i, 3] <- sqrt(1/abs(-(t(I1*daa))%*%I1))
     }
-    
+    if (i==1){print(varb)}
     # /*******************************/
     m1 <- (i-1)*ncol(x)+1
     m2 <- m1+(ncol(x)-1)
@@ -1017,20 +1026,21 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
       print(paste("AICc:", AICc))
     }
     # substituicoes: _beta_ por beta_ ; _beta2_ por beta2_
-    beta_ <- matrix(bi[, 1:2], nrow = N) #buscar solução
-    #parei aqui!!!
-    #print(bi)
+    # beta_ <- bi[bi[, 1]==1, 2]
+    # for (i in 2:N){
+    #   beta_ <- rbind(beta_, bi[bi[, 1]==i, 2])
+    # }
+    beta_ <- matrix(bi[, 2], nrow = N, byrow=T)
     beta2_ <- beta_
     if(model == "negbin" || model == "zinb"){
       alpha_= matrix(alphai[, 1:2], N)
-      beta2_= cbind(beta_, alpha_)
+      #beta2_= cbind(beta_, alpha_)
+      beta2_= cbind(beta_, alpha_[, 2])
     }
-    print(sum(beta_))
-    print(beta_)
-    i <- seq(2, ncol(beta_), 2)
-    beta_ <- beta_[, i]
-    i <- seq(2, ncol(beta2_), 2)
-    beta2_ <- beta2_[, i]
+    #i <- seq(2, ncol(beta_), 2)
+    #beta_ <- beta_[, i]
+    #i <- seq(2, ncol(beta2_), 2)
+    #beta2_ <- beta2_[, i]
     qntl <- apply(beta2_, 2, quantile, c(0.25, 0.5, 0.75))
     IQR <- qntl[3, ]-qntl[1, ]
     qntl <- rbind(qntl, IQR)
@@ -1048,6 +1058,9 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
     print(qntl)
     print("Descriptive Statistics")
     print(descriptb)
+    # print("STDBI")
+    # print(dim(stdbi))
+    # print(as.vector(stdbi))
     stdbeta_ <- matrix(stdbi, N, byrow=TRUE)
     stdbeta2_ <- stdbeta_
     if (model=="negbin" | model=="zinb"){
