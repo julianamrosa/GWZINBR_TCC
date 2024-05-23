@@ -362,14 +362,14 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
   print(c("bandwidth", h))
   long <- unlist(data[, long])
   lat <- unlist(data[, lat])
-  COORD <- matrix(c(long, lat), ncol=2)
+  COORD <- matrix(c(lat, long), ncol=2)
   if (is.null(grid)){
-    POINTS <- matrix(c(long, lat), ncol=2)
+    POINTS <- matrix(c(lat, long), ncol=2)
   }
   else{
     long2 <- unlist(grid[, long])
     lat2 <- unlist(grid[, lat])
-    POINTS <- matrix(c(long2, lat2), ncol=2)
+    POINTS <- matrix(c(lat2, long2), ncol=2)
   }
   mm <- nrow(COORD) #substituicao: 'm' por 'mm', pois m representa nosso modelo no R
   bi <- matrix(0, ncol(x)*mm, 4)
@@ -672,22 +672,21 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
       j <- j+1
     }
     # /**** COMPUTING VARIANCE OF BETA AND LAMBDA ******/
-    if(det(t(x)%*%(w*Ai*x*wt))==0){
+    if (det(t(x)%*%(w*Ai*x*wt))==0){
       C <- matrix(0, ncol(x),nrow(x)) 
     }
     else{
       #C <- solve(t(x)%*%(w*Ai*x*wt), tol=E^-60)%*%t(x)%*%(w*Ai*wt)
-      # if (i==1){print(dim(t(x)))}
-      # if (i==1){print(dim(t(w*Ai*wt)))}
-      C <- solve(t(x)%*%(w*Ai*x*wt), tol=E^-60)%*%t(x)*as.vector(w*Ai*wt)
+      C <- t(t(solve(t(x)%*%(w*Ai*x*wt), tol=E^-60)%*%t(x))*(w*Ai*wt))
     }
     Ci <- matrix(0, ncol(G), 1)
-    if(model == "zip" || model == "zinb"){
-      if(det(t(G)%*%(w*Aii*G*wt))==0){
+    if (model == "zip" || model == "zinb"){
+      if (det(t(G)%*%(w*Aii*G*wt))==0){
         Ci <- matrix(0, ncol(G), nrow(G))
       }
       else{
-        Ci <- solve(t(G)%*%(w*Aii*G*wt), tol=E^-60)%*%t(G)%*%(w*Aii*wt)
+        #Ci <- solve(t(G)%*%(w*Aii*G*wt), tol=E^-60)%*%t(G)%*%(w*Aii*wt)
+        Ci <- t(t(solve(t(G)%*%(w*Aii*G*wt), tol=E^-60)%*%t(G))*(w*Aii*wt))
       }
       if(any(lambda)==0){
         Ci <- matrix(0, ncol(G), N)
@@ -829,7 +828,7 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
       li[m1:m2, 4] <- COORD[i, 2]
       varli[m1:m2, 1] <- varl
     }
-    if (i==1){print(sum(C))}
+    #if (i==1){print(sum(C))}
     if (is.null(grid)) {
       r <- x[i, ]%*%C
       S[i] <- r[i]
@@ -841,7 +840,7 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
     if (model == "zip" | model == "zinb") {
       ri <- G[i, ]%*%Ci
       #if(i==1){print(ri)}
-      #Si[i] <- ri[i]
+      Si[i] <- ri[i]
       yhat2[i] <- uj[i]
       yhat[i] <- (uj*(1-exp(njl)/(1+exp(njl))))[i]
     }
@@ -888,9 +887,6 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
     v1 <- sum(S)+sum(Si)
     v11 <- sum(S)+sum(Si)
     v2 <- sum(S2)
-    # print(v1)
-    # print(v11)
-    # print(v2)
     nparmodel <- N-v11
     if (v11 < v2){
       v1 <- v11
@@ -908,9 +904,7 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
     print(c('#GWR parameters', v1))
     print(c('#GWR parameters (model)', nparmodel))
     print(c('#GWR parameters (variance)', v2))
-    #sera que todos esses prints fazem sentido? 
-    
-    influence <- S
+    influence <- as.vector(S)
     resstd <- res/(sqrt(sigma2)*sqrt(abs(1-influence)))
     CooksD <- resstd^2*influence/(v1*(1-influence))
     df <- N-(nvar+ncol(G))
@@ -918,14 +912,13 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
     tstat <- bi[, 2]/stdbi
     probt <- 2*(1-pt(abs(tstat), df))
     malpha <- 0.05*(nvar/v1)
-    #substituicai: _malpha_ <- malpha 
-    
-    if (model == "zip" || model == "zinb") {
+    #substituicao: _malpha_ <- malpha
+    if (model == "zip" || model == "zinb"){
       stdli <- sqrt(abs(varli))
       tstati <- li[, 2]
       
       for (j in 1:nrow(stdli)) {
-        if (stdli[j] == 0) {
+        if (stdli[j] == 0){
           tstati[j] <- 0
         } else {
           tstati[j] <- li[j, 2]/stdli[j]
@@ -1006,13 +999,11 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
       llnull2 <- sum(-log(1+0) + log(pos1xx)) +
         sum(-log(1+0) + lgamma(par_[pos1]+y[pos1]) - lgamma(y[pos1]+1) - lgamma(par_[pos1]) +
               y[pos1]*log(mean(y)/(par_[pos1]+ mean(y))) + par_[pos1]*log(par_[pos1]/(par_[pos1]+ mean(y))))
-      
       dev <- 2*(llnull1-ll)
       AIC <- -2*ll+2*v1
       AICc <- AIC+2*(v1*(v1+1)/(N-v1-1))
       pctll <- 1-(llnull1-ll)/(llnull1-llnull2)
       adjpctll <- 1-(llnull1-ll+v1+0.5)/(llnull1-llnull2)
-      
       if(model == "negbin"){
         AIC <- 2*(v1+v1/ncol(x))-2*ll
         AICc <- AIC+2*(v1+v1/ncol(x))*(v1+v1/ncol(x)+1)/(N-(v1+v1/ncol(x))-1)
@@ -1026,15 +1017,19 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
       print(paste("AICc:", AICc))
     }
     # substituicoes: _beta_ por beta_ ; _beta2_ por beta2_
-    beta_ <- matrix(bi[, 1:2], nrow = N, byrow=TRUE) #shape: cria matriz a partir de outra matriz. Conferir se resultado eh o mesmo no SAS
+    beta_ <- matrix(bi[, 1:2], nrow = N) #buscar solução
+    #parei aqui!!!
+    #print(bi)
     beta2_ <- beta_
     if(model == "negbin" || model == "zinb"){
-      alpha_= matrix(alphai[, 1:2], N);
+      alpha_= matrix(alphai[, 1:2], N)
       beta2_= cbind(beta_, alpha_)
     }
-    i <- seq(2, ncol(beta_), 2)  
-    beta_ <- beta_[, i]         
-    i <- seq(2, ncol(beta2_), 2) 
+    print(sum(beta_))
+    print(beta_)
+    i <- seq(2, ncol(beta_), 2)
+    beta_ <- beta_[, i]
+    i <- seq(2, ncol(beta2_), 2)
     beta2_ <- beta2_[, i]
     qntl <- apply(beta2_, 2, quantile, c(0.25, 0.5, 0.75))
     IQR <- qntl[3, ]-qntl[1, ]
@@ -1072,7 +1067,7 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
       colnames(qntls) <- c('Intercept', XVAR)
       colnames(descripts) <- c('Intercept', XVAR)
     }
-    print(c("alpha-level=0.05", malpha_))
+    print(c("alpha-level=0.05", malpha))
     print(c("t-Critical", t_critical))
     print(c("degrees of freedom:", df))
     print("Quantiles of GWR Standard Errors")
@@ -1119,7 +1114,7 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
         colnames(descriptls) <- c(xvarinf)
       }
       ##de novo esses prints?##
-      print(c("alpha-level=0.05", malpha_))
+      print(c("alpha-level=0.05", malpha))
       print(c("t-Critical", t_critical))
       print(c("degrees of freedom:", df))
       #####
