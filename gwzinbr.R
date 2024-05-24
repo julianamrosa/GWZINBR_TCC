@@ -1152,7 +1152,9 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
           m2 <- m1+(ncol(x)-1)
           BBk[i, ] <- t(ek)%*%BB[m1:m2, ]
         }
-        Vk[k] <- t(y)%*%(1/N)%*%t(BBk)%*%(diag(N)-(1/N)%*%matrix(1, N, N))%*%BBk%*%y
+        print("BBk:")
+        print(BBk)
+        Vk[k] <- t(y)*(1/N)*t(BBk)%*%(diag(N)-(1/N)%*%matrix(1, N, N))%*%BBk%*%y
         df1k[k] <- sum(diag((1/N)%*%t(BBk)%*%(diag(N)-(1/N)%*%matrix(1, N, N))%*%BBk))
         df2k[k] <- sum(diag(((1/N)%*%t(BBk)%*%(diag(N)-(1/N)%*%matrix(1, N, N))%*%BBk)^2))
       }
@@ -1183,7 +1185,7 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
             m2 <- m1+(ncol(G)-1)
             BBkl[i, ] <- t(ekl)%*%BBl[m1:m2, ]
           }
-          Vkl[k] <- t(y)%*%(1/N)%*%t(BBkl)%*%(diag(N)-(1/N)%*%matrix(1, N, N))%*%BBkl%*%y
+          Vkl[k] <- t(y)*(1/N)%*%t(BBkl)%*%(diag(N)-(1/N)%*%matrix(1, N, N))%*%BBkl%*%y
           df1kl[k] <- sum(diag((1/N)*t(BBkl)%*%(diag(N)-(1/N)%*%matrix(1, N, N))%*%BBkl))
           df2kl[k] <- sum(diag(((1/N)%*%t(BBkl)%*%(diag(N)-(1/N)%*%matrix(1, N, N))%*%BBkl)^2))
         }
