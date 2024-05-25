@@ -818,7 +818,7 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
       alphai[i, 2] <- alpha
       alphai[i, 3] <- sqrt(1/abs(-(t(I1*daa))%*%I1))
     }
-    if (i==1){print(varb)}
+    #if (i==1){print(varb)}
     # /*******************************/
     m1 <- (i-1)*ncol(x)+1
     m2 <- m1+(ncol(x)-1)
@@ -831,6 +831,7 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
     if (model == "zip" || model == "zinb") {
       m1 <- (i-1)*ncol(G)+1
       m2 <- m1 + (ncol(G)-1)
+      #if (i==1){print(lambda)}
       li[m1:m2, 1] <- i
       li[m1:m2, 2] <- lambda
       li[m1:m2, 3] <- COORD[i, 1]
@@ -858,10 +859,11 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
       CCC <- cbind(x, w, wt)
       m1 <- (i-1)*ncol(x)+1
       m2 <- m1 + (ncol(x)-1)
-      
       if(det(t(CCC[, 1:ncol(x)])%*%(CCC[, ncol(CCC)-1]*CCC[, 1:ncol(x)]*CCC[, ncol(CCC)])) == 0){
         BB[m1:m2, ] <- matrix(0, ncol(x), nrow(x))
-      } else {
+      }
+      else{
+        #BB[m1:m2, ] <- solve(t(CCC[, 1:ncol(x)])%*%(CCC[, ncol(CCC)-1]*CCC[, 1:ncol(x)]*CCC[, ncol(CCC)]))%*%t(CCC[, 1:ncol(x)])*(CCC[, ncol(CCC)-1]*CCC[, ncol(CCC)])
         BB[m1:m2, ] <- solve(t(CCC[, 1:ncol(x)])%*%(CCC[, ncol(CCC)-1]*CCC[, 1:ncol(x)]*CCC[, ncol(CCC)]))%*%t(CCC[, 1:ncol(x)])*(CCC[, ncol(CCC)-1]*CCC[, ncol(CCC)])
       }
       if (model == "zip" || model == "zinb"){
@@ -1088,12 +1090,14 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
     print("Descriptive Statistics of Standard Errors")
     print(descripts)
     if (model=="zip" | model=="zinb"){
-      lambda_ <- matrix(li[, 1:2], N, byrow=TRUE)
+      #print(li)
+      lambda_ <- matrix(li[, 2], N, byrow=TRUE)
+      print(lambda_)
       lambda2_ <- lambda_
-      i <- seq(2, ncol(lambda_), 2)
-      lambda_ <- lambda_[, i]
-      i <- seq(2, ncol(lambda2_), 2)
-      lambda2_ <- lambda2_[, i]
+      # i <- seq(2, ncol(lambda_), 2)
+      # lambda_ <- lambda_[, i]
+      # i <- seq(2, ncol(lambda2_), 2)
+      # lambda2_ <- lambda2_[, i]
       qntl <- apply(lambda2_, 2, quantile, c(0.25, 0.5, 0.75))
       IQR <- qntl[3, ]-qntl[1, ]
       qntl <- rbind(qntl, IQR)
@@ -1141,20 +1145,28 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
   if (is.null(grid)){
     if(method!="adaptive_bsq"){
       BBk <- matrix(0, N, N)
-      Vk <- matrix(0, ncol(x), 1)
-      df1k <- matrix(0, ncol(x), 1)
-      df2k <- matrix(0, ncol(x), 1)
+      # Vk <- matrix(0, ncol(x), 1)
+      # df1k <- matrix(0, ncol(x), 1)
+      # df2k <- matrix(0, ncol(x), 1)
+      Vk <- rep(0, ncol(x))
+      df1k <- rep(0, ncol(x))
+      df2k <- rep(0, ncol(x))
       for (k in 1:ncol(x)){
-        ek <- matrix(0, ncol(x), 1)
+        #ek <- matrix(0, ncol(x), 1)
+        ek <- rep(0, ncol(x))
         ek[k] <- 1
         for (i in 1:N){
           m1 <- (i-1)*ncol(x)+1
           m2 <- m1+(ncol(x)-1)
+          if (i==1 & k==1){
+            print(dim(BB))
+            print(sum(BB))
+          }
           BBk[i, ] <- t(ek)%*%BB[m1:m2, ]
         }
-        print("BBk:")
-        print(BBk)
-        Vk[k] <- t(y)*(1/N)*t(BBk)%*%(diag(N)-(1/N)%*%matrix(1, N, N))%*%BBk%*%y
+        #if (k==1){print(sum(BBk))}
+        Vk[k] <- (t(y)*(1/N))%*%t(BBk)%*%(diag(N)-(1/N)*matrix(1, N, N))%*%BBk%*%y
+        #if (k==1){print(Vk[k])}
         df1k[k] <- sum(diag((1/N)%*%t(BBk)%*%(diag(N)-(1/N)%*%matrix(1, N, N))%*%BBk))
         df2k[k] <- sum(diag(((1/N)%*%t(BBk)%*%(diag(N)-(1/N)%*%matrix(1, N, N))%*%BBk)^2))
       }
