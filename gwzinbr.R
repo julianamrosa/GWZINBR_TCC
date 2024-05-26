@@ -864,7 +864,11 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
       }
       else{
         #BB[m1:m2, ] <- solve(t(CCC[, 1:ncol(x)])%*%(CCC[, ncol(CCC)-1]*CCC[, 1:ncol(x)]*CCC[, ncol(CCC)]))%*%t(CCC[, 1:ncol(x)])*(CCC[, ncol(CCC)-1]*CCC[, ncol(CCC)])
-        BB[m1:m2, ] <- solve(t(CCC[, 1:ncol(x)])%*%(CCC[, ncol(CCC)-1]*CCC[, 1:ncol(x)]*CCC[, ncol(CCC)]))%*%t(CCC[, 1:ncol(x)])*(CCC[, ncol(CCC)-1]*CCC[, ncol(CCC)])
+        BB[m1:m2, ] <- t(t(solve(t(CCC[, 1:ncol(x)])%*%(CCC[, ncol(CCC)-1]*CCC[, 1:ncol(x)]*CCC[, ncol(CCC)]))%*%t(CCC[, 1:ncol(x)]))*(CCC[, ncol(CCC)-1]*CCC[, ncol(CCC)]))
+        # if (i==1){
+        #   print((CCC[, ncol(CCC)-1]*CCC[, ncol(CCC)]))
+        #   print(solve(t(CCC[, 1:ncol(x)])%*%(CCC[, ncol(CCC)-1]*CCC[, 1:ncol(x)]*CCC[, ncol(CCC)]))%*%t(CCC[, 1:ncol(x)]))
+        # }
       }
       if (model == "zip" || model == "zinb"){
         CCCl <- cbind(G, w, wt)
@@ -1092,7 +1096,7 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
     if (model=="zip" | model=="zinb"){
       #print(li)
       lambda_ <- matrix(li[, 2], N, byrow=TRUE)
-      print(lambda_)
+      #print(lambda_)
       lambda2_ <- lambda_
       # i <- seq(2, ncol(lambda_), 2)
       # lambda_ <- lambda_[, i]
@@ -1158,17 +1162,18 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
         for (i in 1:N){
           m1 <- (i-1)*ncol(x)+1
           m2 <- m1+(ncol(x)-1)
-          if (i==1 & k==1){
-            print(dim(BB))
-            print(sum(BB))
-          }
+          # if (i==1 & k==1){
+          #   print(sum(BB))
+          # }
           BBk[i, ] <- t(ek)%*%BB[m1:m2, ]
         }
-        #if (k==1){print(sum(BBk))}
+        #if (k==1){print(BBk)}
         Vk[k] <- (t(y)*(1/N))%*%t(BBk)%*%(diag(N)-(1/N)*matrix(1, N, N))%*%BBk%*%y
         #if (k==1){print(Vk[k])}
-        df1k[k] <- sum(diag((1/N)%*%t(BBk)%*%(diag(N)-(1/N)%*%matrix(1, N, N))%*%BBk))
-        df2k[k] <- sum(diag(((1/N)%*%t(BBk)%*%(diag(N)-(1/N)%*%matrix(1, N, N))%*%BBk)^2))
+        df1k[k] <- sum(diag((1/N)*t(BBk)%*%(diag(N)-(1/N)*matrix(1, N, N))%*%BBk))
+        #df2k[k] <- sum(diag(((1/N)*t(BBk)%*%(diag(N)-(1/N)*matrix(1, N, N))%*%BBk)^2))
+        df2k[k] <- sum(diag(((1/N)*t(BBk)%*%(diag(N)-(1/N)*matrix(1, N, N))%*%BBk)^2))
+        #if (k==1){print(((1/N)*t(BBk)%*%(diag(N)-(1/N)*matrix(1, N, N))%*%BBk))}
       }
       Vk <- ifelse(abs(Vk)<=E^-8, 0, Vk)
       Fk <- (Vk/df1k)/sigma2
@@ -1177,13 +1182,17 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
       ddf <- rep(ddf, ncol(x))
       probf <- 1-pf(Fk, ndf, ddf)
       print("Non-Stationarity Test (Leung et al., 2000)")
-      rownames(Vk) <- c('Intercept', XVAR)
-      colnames(Vk) <- "V"
-      print(Vk)
-      colnames(Fk) <- "F"
-      print(Fk)
-      print(c(ndf, ddf))
-      print(c("Pr > F", probf))
+      # rownames(Vk) <- c('Intercept', XVAR)
+      # colnames(Vk) <- "V"
+      # print(Vk)
+      # colnames(Fk) <- "F"
+      # print(Fk)
+      # print(c(ndf, ddf))
+      # print(c("Pr > F", probf))
+      non_stat_test <- cbind(Vk, Fk, ndf, ddf, probf)
+      rownames(non_stat_test) <- c('Intercept', XVAR)
+      colnames(non_stat_test) <- c("V", "F", "ndf", "ddf", "Pr > F")
+      print(non_stat_test) #só ndf e probf que não batem
       if (model=="zip" | model=="zinb"){
         BBkl <- matrix(0, N, N)
         Vkl <- matrix(0, ncol(G), 1)
