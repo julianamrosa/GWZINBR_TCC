@@ -19,7 +19,7 @@ gwzinbr(data = korea_base_artigo,
         model = "zinb", distancekm = TRUE, h=226.73)
 endTime <- Sys.time()
 endTime-startTime
-#entre 2 e 5 minutos
+#1.6 mins
 
 # alterar para vetor: dbb dlb e todos os outros
 # linha 744  varabetalambda: trocar matrizes por rep(), se necessario

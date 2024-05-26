@@ -321,7 +321,8 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
   g1x <- parg/(parg+uj)
   g2x <- uj/(parg+uj)
   hgx <- exp(njl)+g1x^parg
-  daa <- zkg*((g1x^parg*(log(g1x)+g2x))^2*(1-1/hgx)/hgx+g1x^parg*(g2x^2/parg)/hgx)+(1-zkg)*(trigamma(parg+y)-trigamma(parg)-2/(uj+parg)+1/parg+(y+parg)/(uj+parg))^2
+  #daa <- zkg*((g1x^parg*(log(g1x)+g2x))^2*(1-1/hgx)/hgx+g1x^parg*(g2x^2/parg)/hgx)+(1-zkg)*(trigamma(parg+y)-trigamma(parg)-2/(uj+parg)+1/parg+(y+parg)/(uj+parg))^2
+  daa <- zkg*((g1x^parg*(log(g1x)+g2x))^2*(1-1/hgx)/hgx+g1x^parg*(g2x^2/parg)/hgx)+(1-zkg)*(trigamma(parg+y)-trigamma(parg)-2/(uj+parg)+1/parg+(y+parg)/(uj+parg)^2)
   dab <- zkg*(g1x^(2*parg+1)*uj*(log(g1x)+g2x)/hgx^2-g1x^parg*(-g2x^2+parg*g2x*(log(g1x)+g2x))/hgx)+(1-zkg)*(g2x*(y-uj)/(uj+parg))
   dal <- -zkg*(exp(njl)*g1x^parg*(log(g1x)+g2x)/hgx^2)
   daa <- daa*parg^4
@@ -340,9 +341,14 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
   # print(dbb)
   # II <- -(t(I1) %*% daa) %*% I1 || -(t(I1) %*% dab) %*% X || -(t(I1) %*% dal) %*% G // (-t(X) %*% (dab * I1) || -t(X) %*% dbb %*% X || -t(X) %*% dlb %*% G) // (-t(G) %*% (dal * I1) || -t(G) %*% (X %*% dlb) || -t(G) %*% t(G) %*% dll %*% G)
   # II=-(I1#daa)`*I1||-(I1#dab)`*X||-(I1#dal)`*G//(-X`*(dab#I1)||-(X#dbb)`*X||-(X#dlb)`*G)//(-G`*(dal#I1)||-G`*(X#dlb)||-(G#dll)`*G);
-  II <- rbind(cbind(-(t(I1 * daa)) %*% I1, -(t(I1 * dab)) %*% x, -(t(I1 * dal)) %*% G), 
-              cbind(-(t(x) %*% (dab * I1)), -t(x*dbb) %*% x, -t(x * dlb) %*% G), 
-              cbind(-(t(G) %*% (dal * I1)), -t(G) %*% (x * dlb), -t(G * dll) %*% G))
+  II <- rbind(cbind(-(t(I1 * daa)) %*% I1, -(t(I1 * dab)) %*% x, -(t(I1 * dal)) %*% G),
+              cbind(-(t(x) %*% (dab * I1)), -t(x*dbb) %*% x, -t(x * dlb) %*% G),
+              cbind(-(t(G) %*% (dal * I1)), -t(G) %*% (x * dlb), -t(G * dll) %*% G)) #resulta em dimensoes corretas, mas valores errados
+  
+  #II <- -t(I1*daa)%*%I1||-t(I1*dab)%*%x||-t(I1*dal)%*%G//(-t(x)%*%(dab*I1)||-t(x*dbb)%*%x||-t(x*dlb)%*%G)//(-t(G)%*%(dal*I1)||-t(G)%*%(x*dlb)||-t(G*dll)%*%G)
+  #II <- rbind(rbind(cbind(cbind(-t(I1*daa)%*%I1, -t(I1*dab)%*%x), -t(I1*dal)%*%G), (-t(x)%*%(dab*I1)||-t(x*dbb)%*%x||-t(x*dlb)%*%G)), (cbind(cbind(-t(G)%*%(dal*I1), -t(G)%*%(x*dlb)), -t(G*dll)%*%G)))
+  #print(-(t(I1 * daa)) %*% I1)
+  #print(daa)
   # conferir se II é matricial
   if (all(lambdag)>0 & alphag==E^-6){
     II <- II[2:nrow(II), 2:nrow(II)]
@@ -354,8 +360,9 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
     II <- II[2:(ncol(x)+1), 2:(ncol(x)+1)]
   }
   varabetalambdag <- diag(solve(II))
+  #print(varabetalambdag)
   stdabetalambdag <- sqrt(abs(varabetalambdag))
-  varcovg <- solve(II)
+  varcovg <- solve(II) #nao deu certo pq II ja nao e mais uma matriz quadrada
   # *print bg lambdag alphag devg llikeg stdabetalambdag;
   
   # /*****************************************/
@@ -865,10 +872,6 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
       else{
         #BB[m1:m2, ] <- solve(t(CCC[, 1:ncol(x)])%*%(CCC[, ncol(CCC)-1]*CCC[, 1:ncol(x)]*CCC[, ncol(CCC)]))%*%t(CCC[, 1:ncol(x)])*(CCC[, ncol(CCC)-1]*CCC[, ncol(CCC)])
         BB[m1:m2, ] <- t(t(solve(t(CCC[, 1:ncol(x)])%*%(CCC[, ncol(CCC)-1]*CCC[, 1:ncol(x)]*CCC[, ncol(CCC)]))%*%t(CCC[, 1:ncol(x)]))*(CCC[, ncol(CCC)-1]*CCC[, ncol(CCC)]))
-        # if (i==1){
-        #   print((CCC[, ncol(CCC)-1]*CCC[, ncol(CCC)]))
-        #   print(solve(t(CCC[, 1:ncol(x)])%*%(CCC[, ncol(CCC)-1]*CCC[, 1:ncol(x)]*CCC[, ncol(CCC)]))%*%t(CCC[, 1:ncol(x)]))
-        # }
       }
       if (model == "zip" || model == "zinb"){
         CCCl <- cbind(G, w, wt)
@@ -878,7 +881,8 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
         if (det(t(CCCl[, 1:ncol(G)])%*%(CCCl[, ncol(CCCl)-1]*CCCl[, 1:ncol(G)]*CCCl[, ncol(CCCl)])) == 0) {
           BBl[m1:m2, ] <- matrix(0, ncol(G), nrow(G))
         } else {
-          BBl[m1:m2, ] <- solve(t(CCCl[, 1:ncol(G)])%*%(CCCl[, ncol(CCCl)-1] * CCCl[, 1:ncol(G)]*CCCl[, ncol(CCCl)]))%*%t(CCCl[, 1:ncol(G)])*(CCCl[, ncol(CCCl)-1]*CCCl[, ncol(CCCl)])
+          #BBl[m1:m2, ] <- solve(t(CCCl[, 1:ncol(G)])%*%(CCCl[, ncol(CCCl)-1] * CCCl[, 1:ncol(G)]*CCCl[, ncol(CCCl)]))%*%t(CCCl[, 1:ncol(G)])*(CCCl[, ncol(CCCl)-1]*CCCl[, ncol(CCCl)])
+          BBl[m1:m2, ] <- t(t(solve(t(CCCl[, 1:ncol(G)])%*%(CCCl[, ncol(CCCl)-1] * CCCl[, 1:ncol(G)]*CCCl[, ncol(CCCl)]))%*%t(CCCl[, 1:ncol(G)]))*(CCCl[, ncol(CCCl)-1]*CCCl[, ncol(CCCl)]))
         }
       }
     }
@@ -898,6 +902,7 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
       # verificar se essas demais linhas fazem sentido 
     }
   }
+  View(W_f)
   if (is.null(grid)){
     v1 <- sum(S)+sum(Si)
     v11 <- sum(S)+sum(Si)
@@ -949,12 +954,12 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
     if (model == "zinb" || model == "zip") {
       if (any(lambda) == 0) {
         ll <- sum(-log(0+exp(pihat[pos0])) + log(0*exp(pihat[pos0]) + (par_[pos0]/(par_[pos0]+yhat2[pos0]))^par_[pos0])) +
-          sum(-log(0+exp(pihat[pos1])) + lgamma(par_[pos1]+y[pos1, ]) - lgamma(y[pos1, ]+1) - lgamma(par_[pos1]) +
+          sum(-log(0+exp(pihat[pos1])) + lgamma(par_[pos1]+y[pos1]) - lgamma(y[pos1]+1) - lgamma(par_[pos1]) +
                 y[pos1]*log(yhat2[pos1]/(par_[pos1]+yhat2[pos1]))+par_[pos1] * log(par_[pos1]/(par_[pos1]+yhat2[pos1])))
         
-        llnull1 <- sum(-log(1+zk[pos0]) + log(zk[pos0]+(par_[pos0]/(par_[pos0] + y[pos0, ]))^par_[pos0])) +
-          sum(-log(1+zk[pos1])+lgamma(par_[pos1] + y[pos1, ])-lgamma(y[pos1, ]+1) - lgamma(par_[pos1]) +
-                y[pos1]*log(y[pos1, ]/(par_[pos1] + y[pos1, ])) + par_[pos1]*log(par_[pos1]/(par_[pos1] + y[pos1, ])))
+        llnull1 <- sum(-log(1+zk[pos0]) + log(zk[pos0]+(par_[pos0]/(par_[pos0] + y[pos0]))^par_[pos0])) +
+          sum(-log(1+zk[pos1])+lgamma(par_[pos1] + y[pos1])-lgamma(y[pos1]+1) - lgamma(par_[pos1]) +
+                y[pos1]*log(y[pos1]/(par_[pos1] + y[pos1])) + par_[pos1]*log(par_[pos1]/(par_[pos1] + y[pos1])))
         
         llnull2 <- sum(-log(1+0) + log(0+(par_/(par_ + mean(y)))^par_)) + #pq log de 1+0? 
           sum(-log(1+0) + lgamma(par_+y) - lgamma(y+1) - lgamma(par_) +
@@ -997,16 +1002,16 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
         pos0xl <- rep(1, length(pos1))
       } else {
         pos0x <- (par_[pos0]/(par_[pos0] + yhat[pos0]))^par_[pos0]
-        pos0xl <- (par_[pos0]/(par_[pos0] + y[pos0, ]))^par_[pos0]
+        pos0xl <- (par_[pos0]/(par_[pos0] + y[pos0]))^par_[pos0]
         pos0x <- ifelse(pos0x==0, E^-10, pos0x)
       }
       ll <- sum(-log(0+exp(pihat[pos0])) + log(0*exp(pihat[pos0]) + pos0x)) + sum(-log(0+exp(pihat[pos1])) +
-                                                                                    lgamma(par_[pos1] + y[pos1, ]) - lgamma(y[pos1, ] + 1) - lgamma(par_[pos1]) + y[pos1]*log(yhat[pos1]/(par_[pos1] + yhat[pos1])) +
+                                                                                    lgamma(par_[pos1] + y[pos1]) - lgamma(y[pos1] + 1) - lgamma(par_[pos1]) + y[pos1]*log(yhat[pos1]/(par_[pos1] + yhat[pos1])) +
                                                                                     par_[pos1]*log(par_[pos1]/(par_[pos1] + yhat[pos1])))
       
       llnull1 <- sum(-log(1+zk) + log(zk+pos0xl)) + sum(-log(1+zk) + 
-                                                          lgamma(par_[pos1]+y[pos1, ]) - lgamma(y[pos1, ]+1) - lgamma(par_[pos1])+y[pos1]*log(y[pos1, ]/(par_[pos1]+y[pos1, ])) +
-                                                          par_[pos1]*log(par_[pos1]/(par_[pos1] + y[pos1, ])))
+                                                          lgamma(par_[pos1]+y[pos1]) - lgamma(y[pos1]+1) - lgamma(par_[pos1])+y[pos1]*log(y[pos1]/(par_[pos1]+y[pos1])) +
+                                                          par_[pos1]*log(par_[pos1]/(par_[pos1] + y[pos1])))
       
       pos1xx <- 0+(par_[pos0]/(par_[pos0] + mean(y)))*par_[pos0]
       pos1xx <- ifelse(pos0x <= 0, E^-100, pos0x)
@@ -1195,9 +1200,12 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
       print(non_stat_test) #só ndf e probf que não batem
       if (model=="zip" | model=="zinb"){
         BBkl <- matrix(0, N, N)
-        Vkl <- matrix(0, ncol(G), 1)
-        df1kl <- matrix(0, ncol(G), 1)
-        df2kl <- matrix(0, ncol(G), 1)
+        # Vkl <- matrix(0, ncol(G), 1)
+        # df1kl <- matrix(0, ncol(G), 1)
+        # df2kl <- matrix(0, ncol(G), 1)
+        Vkl <- rep(0, ncol(G))
+        df1kl <- rep(0, ncol(G))
+        df2kl <- rep(0, ncol(G))
         for (k in 1:ncol(G)){
           ekl <- matrix(0, ncol(G), 1)
           ekl[k] <- 1
@@ -1206,9 +1214,9 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
             m2 <- m1+(ncol(G)-1)
             BBkl[i, ] <- t(ekl)%*%BBl[m1:m2, ]
           }
-          Vkl[k] <- t(y)*(1/N)%*%t(BBkl)%*%(diag(N)-(1/N)%*%matrix(1, N, N))%*%BBkl%*%y
-          df1kl[k] <- sum(diag((1/N)*t(BBkl)%*%(diag(N)-(1/N)%*%matrix(1, N, N))%*%BBkl))
-          df2kl[k] <- sum(diag(((1/N)%*%t(BBkl)%*%(diag(N)-(1/N)%*%matrix(1, N, N))%*%BBkl)^2))
+          Vkl[k] <- (t(y)*(1/N))%*%t(BBkl)%*%(diag(N)-(1/N)*matrix(1, N, N))%*%BBkl%*%y
+          df1kl[k] <- sum(diag((1/N)*t(BBkl)%*%(diag(N)-(1/N)*matrix(1, N, N))%*%BBkl))
+          df2kl[k] <- sum(diag(((1/N)*t(BBkl)%*%(diag(N)-(1/N)*matrix(1, N, N))%*%BBkl)^2))
         }
         Vkl <- ifelse(abs(Vkl)<=E^-8, 0, Vkl)
         Fkl <- (Vkl/df1kl)/sigma2
@@ -1217,18 +1225,27 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
         ddfl <- rep(ddfl, ncol(G))
         probfl <- 1-pf(Fkl, ndfl, ddfl)
         print("Non-Stationarity Test (Leung et al., 2000) - Zero Inflation")
+        # if (int_inf){
+        #   rownames(Vkl) <- c('Intercept', xvarinf)
+        # }
+        # else{
+        #   rownames(Vkl) <- xvarinf
+        # }
+        # colnames(Vkl) <- "V"
+        # colnames(Fkl) <- "F"
+        # print(Vkl)
+        # print(Fkl)
+        # print(c(ndfl, ddfl))
+        # print(c("Pr > F", probfl))
+        non_stat_test_zi <- cbind(Vkl, Fkl, ndfl, ddfl, probfl)
         if (int_inf){
-          rownames(Vkl) <- c('Intercept', xvarinf)
+          rownames(non_stat_test_zi) <- c('Intercept', xvarinf)
         }
         else{
-          rownames(Vkl) <- xvarinf
+          rownames(non_stat_test_zi) <- xvarinf
         }
-        colnames(Vkl) <- "V"
-        colnames(Fkl) <- "F"
-        print(Vkl)
-        print(Fkl)
-        print(c(ndfl, ddfl))
-        print(c("Pr > F", probfl))
+        colnames(non_stat_test_zi) <- c("V", "F", "ndfl", "ddfl", "Pr > F")
+        print(non_stat_test_zi) #só ndfl e probfl que não batem
       }
     }
   }
@@ -1238,24 +1255,27 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
   }
   if (model=="zinb"){
     b2 <- rbind(bg, alphag)
+    #print(stdabetalambdag) #vetor de tamanho 11
     if (alphag==E^-6){
-      stdg <- rbind(stdabetalambdag[1:ncol(x)], (sqrt(1/abs(hessg))/(parg^2)))
+      stdg <- c(stdabetalambdag[1:ncol(x)], (sqrt(1/abs(hessg))/(parg^2)))
     }
     else{
-      stdg <- rbind(stdabetalambdag[2:ncol(x)+1], stdabetalambdag[1])
+      stdg <- c(stdabetalambdag[2:(ncol(x)+1)], stdabetalambdag[1])
     }
+    #print(b2) -> matriz coluna de tamanho 9
+    #print(stdg)
     tg <- b2/stdg
-    dfg <- nrow(y)-ncol(x)
+    dfg <- length(y)-ncol(x)
     probtg <- 2*(1-pt(abs(tg), dfg))
     lambdag <- lambdag
     if (alphag==E^-6){
-      stdlambdag <- stdabetalambdag[ncol(x)+1:nrow(stdabetalambdag)]
+      stdlambdag <- stdabetalambdag[(ncol(x)+1):length(stdabetalambdag)]
     }
     else{
-      stdlambdag <- stdabetalambdag[ncol(x)+2:nrow(stdabetalambdag)]
+      stdlambdag <- stdabetalambdag[(ncol(x)+2):length(stdabetalambdag)]
     }
     tlambdag <- lambdag/stdlambdag
-    dflg <- nrow(y)-ncol(G)
+    dflg <- length(y)-ncol(G)
     probtlambdag <- 2*(1-pt(abs(tlambdag), dflg))
     p <- ncol(x)+1+ncol(G)
   }
@@ -1266,7 +1286,7 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
     dfg <- nrow(y)-ncol(x)
     probtg <- 2*(1-pt(abs(tg), dfg))
     lambdag <- lambdag
-    stdlambdag <- stdabetalambdag[ncol(x)+1:nrow(stdabetalambdag)]
+    stdlambdag <- stdabetalambdag[(ncol(x)+1):nrow(stdabetalambdag)]
     tlambdag <- lambdag/stdlambdag
     dflg <- nrow(y)-ncol(G)
     probtlambdag <- 2*(1-pt(abs(tlambdag), dflg))
@@ -1281,7 +1301,7 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
       stdg <- rbind(stdabetalambdag[2:nrow(stdabetalambdag)], stdabetalambdag[1])
     }
     tg <- b2/stdg
-    dfg <- nrow(y)-ncol(x)
+    dfg <- length(y)-ncol(x)
     probtg <- 2*(1-pt(abs(tg), dfg))
     p <- ncol(x)+1
   }
@@ -1289,29 +1309,35 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
     b2 <- bg
     stdg <- stdabetalambdag
     tg <- b2/stdg
-    dfg <- nrow(y)-ncol(x)
+    dfg <- length(y)-ncol(x)
     probtg <- 2*(1-pt(abs(tg), dfg))
     p <- ncol(x)
   }
-  bg_stdg <- cbind(b2, stdg)
+  #bg_stdg <- cbind(b2, stdg)
+  global_ests <- cbind(b2, stdg, tg, probtg)
   print("Global Parameter Estimates")
   if (model=="negbin" | model=="zinb"){
-    rownames(bg_stdg) <- c('Intercept', XVAR, 'alpha')
+    #rownames(bg_stdg) <- c('Intercept', XVAR, 'alpha')
+    rownames(global_ests) <- c('Intercept', XVAR, 'alpha')
   }
   else{
-    rownames(bg_stdg) <- c('Intercept', XVAR)
+    #rownames(bg_stdg) <- c('Intercept', XVAR)
+    rownames(global_ests) <- c('Intercept', XVAR)
   }
-  colnames(bg_stdg) <- c("Par. Est.", "Std Error")
-  print(c("t Value", bg_stdg))
-  print(c("Pr > |t|", probtg))
+  # colnames(bg_stdg) <- c("Par. Est.", "Std Error")
+  # print(c("params e std errors", bg_stdg))
+  # print(c("t Value", tg))
+  # print(c("Pr > |t|", probtg))
+  colnames(global_ests) <- c("Par. Est.", "Std Error", "t Value", "Pr > |t|")
+  print(global_ests)
   print("NOTE: The denominator degrees of freedom for the t tests is")
   print(dfg)
   if (model=="zip" | model=="zinb"){
     print("Analysis Of Maximum Likelihood Zero Inflation Parameter Estimate")
     if (!is.null(xvarinf)){
-      varnamezip1 <- t(varnamezip)
+      varnamezip1 <- xvarinf
       if (int_inf){
-        varnamezip1 <- rbind("Intercept", t(varnamezip))
+        varnamezip1 <- c("Intercept", xvarinf)
       }
     }
     else{
@@ -1328,28 +1354,28 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
     print(dflg)
     ll <- sum(-log(1+exp(G[pos0, ]%*%lambdag))+
                 log(exp(G[pos0, ]%*%lambdag)+
-                      (parg/(parg+exp(x[pos0, ]%*%bg+Offset[pos0, ])))^parg))+
+                      (parg/(parg+exp(x[pos0, ]%*%bg+Offset[pos0])))^parg))+
       sum(-log(1+exp(G[pos1, ]%*%lambdag))+
-            lgamma(parg+y[pos1, ])-lgamma(y[pos1, ]+1)-
-            lgamma(parg)+y[pos1]*log(exp(x[pos1, ]%*%bg+Offset[pos1, ])/(parg+exp(x[pos1, ]%*%bg+Offset[pos1, ])))+
-            parg*log(parg/(parg+exp(x[pos1, ]%*%bg+Offset[pos1, ]))))
+            lgamma(parg+y[pos1])-lgamma(y[pos1]+1)-
+            lgamma(parg)+y[pos1]*log(exp(x[pos1, ]%*%bg+Offset[pos1])/(parg+exp(x[pos1, ]%*%bg+Offset[pos1])))+
+            parg*log(parg/(parg+exp(x[pos1, ]%*%bg+Offset[pos1]))))
     AIC <- 2*p-2*ll
     AICc <- AIC+2*(p*(p+1)/(N-p-1))
-    llnull1 <- sum(-log(1+zkg[pos0, ])+log(zkg[pos0, ]+
-                                             (parg/(parg+y[pos0, ]))^parg))+
-      sum(-log(1+zkg[pos1, ])+lgamma(parg+y[pos1, ])-
-            lgamma(y[pos1, ]+1)-lgamma(parg)+
-            y[pos1]*log(y[pos1, ]/(parg+y[pos1, ]))+
-            parg*log(parg/(parg+y[pos1, ])))
+    llnull1 <- sum(-log(1+zkg[pos0])+log(zkg[pos0]+
+                                             (parg/(parg+y[pos0]))^parg))+
+      sum(-log(1+zkg[pos1])+lgamma(parg+y[pos1])-
+            lgamma(y[pos1]+1)-lgamma(parg)+
+            y[pos1]*log(y[pos1]/(parg+y[pos1]))+
+            parg*log(parg/(parg+y[pos1])))
     llnull2 <- sum(-log(1+0)+log(0+(parg/(parg+mean(y)))^parg))+
       sum(-log(1+0)+lgamma(parg+y)-lgamma(y+1)-lgamma(parg)+
             y*log(mean(y)/(parg+mean(y)))+parg*log(parg/(parg+mean(y))))
     devg <- 2*(llnull1-ll)
     pctll <- 1-(llnull1-ll)/(llnull1-llnull2)
     adjpctll <- 1-(llnull1-ll+p+0.5)/(llnull1-llnull2)
-    print('Deviance', devg)
-    print('Full Log Likelihood', ll)
-    print(pctll, adjpctll, AIC, AICc)
+    print(c('Deviance', devg))
+    print(c('Full Log Likelihood', ll))
+    print(c(pctll, adjpctll, AIC, AICc))
   }
   if (model=="poisson" | model=="negbin"){
     yhatg <- exp(x%*%bg+Offset)
@@ -1359,22 +1385,22 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
       pos0xl <- 1
     }
     else{
-      pos0x <- (parg/(parg+exp(x[pos0, ]%*%bg+Offset[pos0, ])))^parg
-      pos0xl <- (parg/(parg+y[pos0, ]))^parg
+      pos0x <- (parg/(parg+exp(x[pos0, ]%*%bg+Offset[pos0])))^parg
+      pos0xl <- (parg/(parg+y[pos0]))^parg
     }
     ll <- sum(-log(0+exp(G[pos0, ]%*%lambdag))+
                 log(0*exp(G[pos0, ]%*%lambdag)+pos0x))+
       sum(-log(0+exp(G[pos1, ]%*%lambdag))+
-            lgamma(parg+y[pos1, ])-lgamma(y[pos1, ]+1)-
+            lgamma(parg+y[pos1])-lgamma(y[pos1]+1)-
             lgamma(parg)+y[pos1]*log(exp(x[pos1, ]%*%bg+
-                                           Offset[pos1, ])/(parg+exp(x[pos1, ]%*%bg+
-                                                                       Offset[pos1, ])))+
-            parg*log(parg/(parg+exp(x[pos1, ]%*%bg+Offset[pos1, ]))))
+                                           Offset[pos1])/(parg+exp(x[pos1, ]%*%bg+
+                                                                       Offset[pos1])))+
+            parg*log(parg/(parg+exp(x[pos1, ]%*%bg+Offset[pos1]))))
     llnull1 <- sum(-log(1+zkg)+log(zkg+pos0xl))+
-      sum(-log(1+zkg)+lgamma(parg+y[pos1, ])-
-            lgamma(y[pos1, ]+1)-lgamma(parg)+
-            y[pos1]*log(y[pos1, ]/(parg+y[pos1, ]))+
-            parg*log(parg/(parg+y[pos1, ])))
+      sum(-log(1+zkg)+lgamma(parg+y[pos1])-
+            lgamma(y[pos1]+1)-lgamma(parg)+
+            y[pos1]*log(y[pos1]/(parg+y[pos1]))+
+            parg*log(parg/(parg+y[pos1])))
     devg <- 2*(llnull1-ll)
     AIC <- -2*ll+2*nvar
     AICc <- -2*ll+2*nvar*(N/(N-nvar-1))
@@ -1401,26 +1427,37 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
   ##################
   if (is.null(grid)){
     pihat <- exp(pihat)/(1+exp(pihat))
-    res_ <- cbind(wt, y, yhat, res, resstd, influence, cooksD, sumwi, pihat)
-    print(c("wt", "y", "yhat", "res", "resstd", "influence", "cooksD", "sumwi", "pihat"))
-    print(res_)
-    beta_ <- bi
-    colnames(beta_) <- c("id", "B", "x", "y")
-    print(beta_)
+    res_ <- cbind(wt, y, yhat, res, resstd, influence, CooksD, sumwi, pihat) #sumwi não bate e nome da coluna errado
+    #print(c("wt", "y", "yhat", "res", "resstd", "influence", "cooksD", "sumwi", "pihat"))
+    View(res_)
+    beta_out <- bi
+    colnames(beta_out) <- c("id", "B", "x", "y")
+    View(beta_out)
     bistdt <- cbind(bi, stdbi, tstat, probt)
     parameters_ <- bistdt
     colnames(parameters_) <- c("id", "B", "x", "y", "stdbi", "tstat", "probt")
-    tstat_ <- beta_
+    View(parameters_)
+    #tstat_ <- beta_
+    tstat_ <- matrix(0, N, ncol(x))
+    #print(stdbeta_)
+    # print(dim(beta_))
+    #beta_ <<- beta_
     for (j in 1:nrow(stdbeta_)){
       for (k in 1:ncol(stdbeta_)){
         if (stdbeta_[j, k]==0){
           tstat_[j, k] <- 0
         }
         else{
-          tstat_[j, k] <- beta_[j, k]/stdbeta_[j, k]
+          # if (j==1 & k==5){
+          #   print(beta_[j, k])
+          # }
+          #print(c(j, k))
+          #tstat_[j, k] <- ((beta_out[(beta_out[, 1])==j, ])[k, 2])/stdbeta_[j, k]
+          tstat_[j, k] <- (beta_[j, k])/stdbeta_[j, k]
         }
       }
     }
+    #print(tstat_)
     tstat_ <- ifelse(is.na(tstat_), 0, tstat_)
     probt_ <- 2*(1-pt(abs(tstat_), df))
     sig_ <- matrix("not significant at 90%", N, ncol(x))
@@ -1443,12 +1480,14 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
         }
       }
     }
+    #print(dim(beta_))
+    #print(dim(probt_))
     bistdt_ <- cbind(COORD, beta_, stdbeta_, tstat_, probt_)
     colname1 <- c("Intercept", XVAR)
-    label_ <- rbind(rep("std_", ncol(x)), rep("tstat_", ncol(x)), rep("probt_", ncol(x)))
-    colname <- cbind(c("x", "y"), colname1, c(label_, rep(colname1, 3)))
-    colname <- sub("_ ", "_", colname)
-    colname <- sub("_ ", "_", colname)
+    label_ <- c(rep("std_", ncol(x)), rep("tstat_", ncol(x)), rep("probt_", ncol(x)))
+    colname <- c(c("x", "y"), colname1, paste0(label_, rep(colname1, 3)))
+    # colname <- sub("_ ", "_", colname)
+    # colname <- sub("_ ", "_", colname)
     if (model=="zip" | model=="zinb"){
       tstatl_ <- lambda_
       for (j in 1:nrow(stdlambda_)){
@@ -1488,23 +1527,28 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
         colname2 <- c("Intercept", xvarinf)
       }
       label3_ <- rep("Inf_", ncol(G))
-      colname3 <- c(label3_, colname2)
-      label2_ <- rbind(rep("Inf_std_", ncol(G)), rep("Inf_tstat_", ncol(G)), rep("Inf_probt_", ncol(G)))
-      colname <- cbind(c("x", "y"), colname1, c(label_, rep(colname1, 3)), colname3, c(label2_, rep(colname2, 3)))
-      sub("_ ", "_", colname)
-      sub("_ ", "_", colname)
+      colname3 <- paste0(label3_, colname2)
+      #label2_ <- rbind(rep("Inf_std_", ncol(G)), rep("Inf_tstat_", ncol(G)), rep("Inf_probt_", ncol(G)))
+      label2_ <- c(rep("Inf_std_", ncol(G)), rep("Inf_tstat_", ncol(G)), rep("Inf_probt_", ncol(G)))
+      colname <- c(c("x", "y"), colname1, paste0(label_, rep(colname1, 3)), colname3, paste0(label2_, rep(colname2, 3)))
+      # sub("_ ", "_", colname)
+      # sub("_ ", "_", colname)
       labell_ <- rep("sig_Inf_", ncol(G))
-      colnamel <- c(labell_, rep(colname2, 1))
+      colnamel <- paste0(labell_, colname2)
       sig_inf_parameters2 <- sigl_
+      #print(dim(sig_inf_parameters2))
       colnames(sig_inf_parameters2) <- colnamel
     }
+    View(sig_inf_parameters2)
     parameters2_ <- bistdt_
     colnames(parameters2_) <- colname
+    #View(parameters2_)
     label_ <- rep("sig_", ncol(x))
-    colname_ <- c(label_, rep(colname1, 1))
+    colname_ <- paste0(label_, colname1)
     sig_parameters2 <- sig_
-    colnames(sig_parameters2) <- colname
-    if (model=="negbin" | model=="zip"){
+    colnames(sig_parameters2) <- colname_
+    View(sig_parameters2)
+    if (model=="negbin" | model=="zinb"){
       atstat <- alphai[, 2]
       for(j in 1:nrow(alphai)){
         if (alphai[j, 3]==0){
@@ -1536,11 +1580,13 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
       colnames(alpha_) <- c("id", "alpha", "std", "tstat", "probt")
       sig_alpha_ <- siga_
       colnames(sig_alpha_) <- "sig_alpha"
+      View(sig_alpha_)
     }
   }
   else{
-    beta_ <- bi
-    colnames(beta_) <- c("id", "B", "x", "y")
+    beta_out <- bi
+    colnames(beta_out) <- c("id", "B", "x", "y")
+    View(beta_out)
     stdbi <- sqrt(abs(varbi))
     tstat <- bi[, 2]/stdbi
     for (i in 1:nrow(tstat)){
@@ -1551,6 +1597,7 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
     bistdt <- cbind(bi, stdbi, tstat)
     parameters_ <- bistdt
     colnames(parameters_) <- c("id", "B", "x", "y", "stdbi", "tstat")
+    View(parameters_)
     if (model=="negbin" | model=="zinb"){
       atstat <- alphai[, 2]
       for(j in 1:nrow(alphai)){
@@ -1565,26 +1612,30 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
       alphai <- cbind(POINTS, alphai, atstat, aprobtstat)
       alpha_ <- alphai
       colnames(alpha_) <- c("x", "y", "id", "alpha", "std", "tstat", "probt")
+      #View(alpha_)
     }
     beta_ <- matrix(bi[, 2], mm, byrow=TRUE)
     stdbeta_ <- matrix(stdbi, mm, byrow=TRUE)
     tstat_ <- beta_/stdbeta_
     bistdt_ <- cbind(POINTS, beta_, stdbeta_, tstat_)
     colname1 <- c("Intercept", XVAR)
-    label_ <- rbind(rep("std_", nvar), rep("tstat_", nvar))
-    colname <- cbind(c("x", "y"), colname1, c(label_, rep(colname1, 2)))
-    colname <- sub("_ ", "_", colname)
-    colname <- sub("_ ", "_", colname)
+    label_ <- c(rep("std_", nvar), rep("tstat_", nvar))
+    colname <- c(c("x", "y"), colname1, paste0(label_, rep(colname1, 2)))
+    # colname <- sub("_ ", "_", colname)
+    # colname <- sub("_ ", "_", colname)
     parameters_grid_ <- bistdt_
     colnames(parameters_grid_) <- colname
+    View(parameters_grid_)
   }
   if (is.null(grid)){
-    parameters2 <- cbind(parameters2_, sig_parameters2_)
+    parameters2 <- cbind(parameters2_, sig_parameters2)
     if (model=="zip" | model=="zinb"){
-      parameters2 <- cbind(parameters2, sig_inf_parameters2_)
+      parameters2 <- cbind(parameters2, sig_inf_parameters2)
     }
     if (model=="negbin" | model=="zinb"){
       alpha_ <- cbind(alpha_, sig_alpha_)
     }
+    View(parameters2)
+    View(alpha_)
   }
 } # fecha gwzinbr
