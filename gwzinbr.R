@@ -1,4 +1,4 @@
-gwzinbr <- function(data, formula, xvarinf, weight=NULL,
+gwzinbr <- function(data, formula, xvarinf=NULL, weight=NULL,
                     lat, long, grid=NULL, method, model = "zinb",
                     offset=NULL, distancekm=FALSE, force=TRUE, int_inf=TRUE,
                     maxg=100, h=NULL){
@@ -24,10 +24,13 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
   else{
     #G <<- unlist(data[, xvarinf])
     G <<- as.matrix(data[, xvarinf])
+    if (int_inf){ #o que e int_inf? 
+      G <<- cbind(rep(1, N), G)
+    }
   }
-  if (int_inf){ #o que e int_inf? 
-    G <<- cbind(rep(1, N), G)
-  }
+  # if (int_inf){ #o que e int_inf? 
+  #   G <<- cbind(rep(1, N), G)
+  # }
   # x <<- cbind(rep(1, N), x)
   yhat <<- rep(0, N)
   yhat2 <<- rep(0, N)
@@ -731,11 +734,11 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
       II <- matrix(0, ncol(x)+ncol(G)+1, ncol(x)+ncol(G)+1)
     }
     else if(any(lambda)==0){
-      dbb <- w*wt*(Iy*(-(par*g1x^par*g2x/hgx)^2 + par^2*g1x^par*g2x^2*(1 - 1/uj)/hgx)-(1 - Iy)*(par*g2x*(1 + (y-uj) / (par+uj))))
-      if(det(t(x%*%dbb%*%dbb/Ai) %*% x)==0){
+      dbb <- as.vector(w*wt*(Iy*(-(par*g1x^par*g2x/hgx)^2 + par^2*g1x^par*g2x^2*(1 - 1/uj)/hgx)-(1 - Iy)*(par*g2x*(1 + (y-uj) / (par+uj)))))
+      if(det(t(x*dbb*dbb/Ai) %*% x)==0){
         II <- rbind(
           cbind(-(t(I1*daa))%*%I1, -(t(I1*dab))%*%x, -(t(I1*dal))%*%G),
-          cbind(-t(x)%*%(dab*I1), -(t(x%*%dbb)%*%x), -t(x*dlb)%*%G),
+          cbind(-t(x)%*%(dab*I1), -(t(x*dbb)%*%x), -t(x*dlb)%*%G),
           cbind(-t(G)%*%(dal*I1), -t(G)%*%(x*dlb), -(t(G*dll)%*%G))
         )   
       }
@@ -1283,23 +1286,25 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
     b2 <- bg
     stdg <- stdabetalambdag[1:ncol(x)]
     tg <- b2/stdg
-    dfg <- nrow(y)-ncol(x)
+    dfg <- length(y)-ncol(x)
     probtg <- 2*(1-pt(abs(tg), dfg))
     lambdag <- lambdag
-    stdlambdag <- stdabetalambdag[(ncol(x)+1):nrow(stdabetalambdag)]
+    stdlambdag <- stdabetalambdag[(ncol(x)+1):length(stdabetalambdag)]
     tlambdag <- lambdag/stdlambdag
-    dflg <- nrow(y)-ncol(G)
+    dflg <- length(y)-ncol(G)
     probtlambdag <- 2*(1-pt(abs(tlambdag), dflg))
     p <- ncol(x)+ncol(G)
   }
   if (model=="negbin"){
     b2 <- rbind(bg, alphag)
     if(alphag==E^-6){
-      stdg <- rbind(stdabetalambdag[1:nrow(stdabetalambdag)], (sqrt(1/abs(hessg))/(parg^2)))
+      stdg <- c(stdabetalambdag[1:length(stdabetalambdag)], (sqrt(1/abs(hessg))/(parg^2)))
     }
     else{
-      stdg <- rbind(stdabetalambdag[2:nrow(stdabetalambdag)], stdabetalambdag[1])
+      stdg <- c(stdabetalambdag[2:length(stdabetalambdag)], stdabetalambdag[1])
     }
+    # print(b2)
+    # print(stdg)
     tg <- b2/stdg
     dfg <- length(y)-ncol(x)
     probtg <- 2*(1-pt(abs(tg), dfg))
@@ -1314,6 +1319,7 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
     p <- ncol(x)
   }
   #bg_stdg <- cbind(b2, stdg)
+  #print(probtg)
   global_ests <- cbind(b2, stdg, tg, probtg)
   print("Global Parameter Estimates")
   if (model=="negbin" | model=="zinb"){
@@ -1328,6 +1334,7 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
   # print(c("params e std errors", bg_stdg))
   # print(c("t Value", tg))
   # print(c("Pr > |t|", probtg))
+  #print(global_ests)
   colnames(global_ests) <- c("Par. Est.", "Std Error", "t Value", "Pr > |t|")
   print(global_ests)
   print("NOTE: The denominator degrees of freedom for the t tests is")
@@ -1538,8 +1545,8 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
       sig_inf_parameters2 <- sigl_
       #print(dim(sig_inf_parameters2))
       colnames(sig_inf_parameters2) <- colnamel
+      View(sig_inf_parameters2)
     }
-    View(sig_inf_parameters2)
     parameters2_ <- bistdt_
     colnames(parameters2_) <- colname
     #View(parameters2_)
@@ -1634,8 +1641,8 @@ gwzinbr <- function(data, formula, xvarinf, weight=NULL,
     }
     if (model=="negbin" | model=="zinb"){
       alpha_ <- cbind(alpha_, sig_alpha_)
+      View(alpha_)
     }
     View(parameters2)
-    View(alpha_)
   }
 } # fecha gwzinbr

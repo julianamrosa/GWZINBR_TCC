@@ -21,6 +21,41 @@ endTime <- Sys.time()
 endTime-startTime
 #1.6 mins
 
-# alterar para vetor: dbb dlb e todos os outros
-# linha 744  varabetalambda: trocar matrizes por rep(), se necessario
-#tirar NULL dos defaults
+#Teste 2 do relatório
+startTime <- Sys.time()
+gwzinbr(data = korea_base_artigo, 
+        formula = n_covid1~Morbidity+high_sch_p+Healthcare_access+
+          diff_sd+Crowding+Migration+Health_behavior,
+        xvarinf = "Healthcare_access",
+        lat = "x", long = "y", offset = "ln_total", method = "fixed_g",
+        model = "zip", distancekm = TRUE, h=733.70)
+endTime <- Sys.time()
+endTime-startTime
+#6 segs
+
+#Teste 3 do relatório
+startTime <- Sys.time()
+gwzinbr(data = korea_base_artigo, 
+        formula = n_covid1~Morbidity+high_sch_p+Healthcare_access+
+          diff_sd+Crowding+Migration+Health_behavior,
+        lat = "x", long = "y", offset = "ln_total", method = "fixed_g",
+        model = "negbin", distancekm = TRUE, h=189.74)
+endTime <- Sys.time()
+endTime-startTime
+#5 segs - comparar resultados
+
+#Teste 4 do relatório
+startTime <- Sys.time()
+gwzinbr(data = korea_base_artigo, 
+        formula = n_covid1~Morbidity+high_sch_p+Healthcare_access+
+          diff_sd+Crowding+Migration+Health_behavior,
+        lat = "x", long = "y", offset = "ln_total", method = "fixed_g",
+        model = "poisson", distancekm = TRUE, h=733.70)
+endTime <- Sys.time()
+endTime-startTime
+#erro no SAS
+
+#rodar poisson e comparar
+#arrumar ndf, probf, ndfl, probfl, sumwi
+#arrumar saídas
+#fazer alterações do pibic
