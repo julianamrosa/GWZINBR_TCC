@@ -893,8 +893,8 @@ gwzinbr <- function(data, formula, xvarinf=NULL, weight=NULL,
     # substituicao: _w_ <- w_
     w_ <- w
     w_ <- w_[order(w_)]
-    sumwi[i] <- sum(w_[1:min(length(w_), length(w_)*0.1)])
-    
+    #sumwi[i] <- sum(w_[1:min(length(w_), length(w_)*0.1)])
+    sumwi[i] <- sum(w_[1:length(w_)])
     if (i==1){
       W_f <- cbind(w, 1:length(w))
     }
@@ -1175,14 +1175,14 @@ gwzinbr <- function(data, formula, xvarinf=NULL, weight=NULL,
           # }
           BBk[i, ] <- t(ek)%*%BB[m1:m2, ]
         }
-        #if (k==1){print(BBk)}
         Vk[k] <- (t(y)*(1/N))%*%t(BBk)%*%(diag(N)-(1/N)*matrix(1, N, N))%*%BBk%*%y
-        #if (k==1){print(Vk[k])}
         df1k[k] <- sum(diag((1/N)*t(BBk)%*%(diag(N)-(1/N)*matrix(1, N, N))%*%BBk))
         #df2k[k] <- sum(diag(((1/N)*t(BBk)%*%(diag(N)-(1/N)*matrix(1, N, N))%*%BBk)^2))
-        df2k[k] <- sum(diag(((1/N)*t(BBk)%*%(diag(N)-(1/N)*matrix(1, N, N))%*%BBk)^2))
-        #if (k==1){print(((1/N)*t(BBk)%*%(diag(N)-(1/N)*matrix(1, N, N))%*%BBk))}
+        df2k[k] <- sum(diag(((1/N)*t(BBk)%*%(diag(N)-(1/N)*matrix(1, N, N))%*%BBk)%*%((1/N)*t(BBk)%*%(diag(N)-(1/N)*matrix(1, N, N))%*%BBk)))
       }
+      # print("df2k")
+      # print(sum(df2k))
+      # print(df2k)
       Vk <- ifelse(abs(Vk)<=E^-8, 0, Vk)
       Fk <- (Vk/df1k)/sigma2
       ndf <- df1k^2/df2k
@@ -1200,7 +1200,7 @@ gwzinbr <- function(data, formula, xvarinf=NULL, weight=NULL,
       non_stat_test <- cbind(Vk, Fk, ndf, ddf, probf)
       rownames(non_stat_test) <- c('Intercept', XVAR)
       colnames(non_stat_test) <- c("V", "F", "ndf", "ddf", "Pr > F")
-      print(non_stat_test) #só ndf e probf que não batem
+      print(non_stat_test)
       if (model=="zip" | model=="zinb"){
         BBkl <- matrix(0, N, N)
         # Vkl <- matrix(0, ncol(G), 1)
@@ -1219,7 +1219,8 @@ gwzinbr <- function(data, formula, xvarinf=NULL, weight=NULL,
           }
           Vkl[k] <- (t(y)*(1/N))%*%t(BBkl)%*%(diag(N)-(1/N)*matrix(1, N, N))%*%BBkl%*%y
           df1kl[k] <- sum(diag((1/N)*t(BBkl)%*%(diag(N)-(1/N)*matrix(1, N, N))%*%BBkl))
-          df2kl[k] <- sum(diag(((1/N)*t(BBkl)%*%(diag(N)-(1/N)*matrix(1, N, N))%*%BBkl)^2))
+          #df2kl[k] <- sum(diag(((1/N)*t(BBkl)%*%(diag(N)-(1/N)*matrix(1, N, N))%*%BBkl)^2))
+          df2kl[k] <- sum(diag(((1/N)*t(BBkl)%*%(diag(N)-(1/N)*matrix(1, N, N))%*%BBkl)%*%((1/N)*t(BBkl)%*%(diag(N)-(1/N)*matrix(1, N, N))%*%BBkl)))
         }
         Vkl <- ifelse(abs(Vkl)<=E^-8, 0, Vkl)
         Fkl <- (Vkl/df1kl)/sigma2
@@ -1434,7 +1435,8 @@ gwzinbr <- function(data, formula, xvarinf=NULL, weight=NULL,
   ##################
   if (is.null(grid)){
     pihat <- exp(pihat)/(1+exp(pihat))
-    res_ <- cbind(wt, y, yhat, res, resstd, influence, CooksD, sumwi, pihat) #sumwi não bate e nome da coluna errado
+    res_ <- cbind(wt, y, yhat, res, resstd, influence, CooksD, sumwi, pihat) #nome da coluna sumwi errado
+    colnames(res_) <- c("wt", "y", "yhat", "res", "resstd", "influence", "cooksD", "sumwi", "pihat")
     #print(c("wt", "y", "yhat", "res", "resstd", "influence", "cooksD", "sumwi", "pihat"))
     View(res_)
     beta_out <- bi

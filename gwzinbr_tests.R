@@ -42,7 +42,7 @@ gwzinbr(data = korea_base_artigo,
         model = "negbin", distancekm = TRUE, h=189.74)
 endTime <- Sys.time()
 endTime-startTime
-#5 segs - comparar resultados
+#5 segs
 
 #Teste 4 do relatório
 startTime <- Sys.time()
@@ -53,9 +53,12 @@ gwzinbr(data = korea_base_artigo,
         model = "poisson", distancekm = TRUE, h=733.70)
 endTime <- Sys.time()
 endTime-startTime
-#erro no SAS
+#5 segs
 
-#rodar poisson e comparar
-#arrumar ndf, probf, ndfl, probfl, sumwi
 #arrumar saídas
 #fazer alterações do pibic
+#decidir teste do relatório
+#rodar e comparar certinho
+#subir para o CRAN
+#relatório!!!
+
