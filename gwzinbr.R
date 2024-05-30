@@ -1,6 +1,6 @@
 gwzinbr <- function(data, formula, xvarinf=NULL, weight=NULL,
                     lat, long, grid=NULL, method, model = "zinb",
-                    offset=NULL, distancekm=FALSE, force=TRUE, int_inf=TRUE,
+                    offset=NULL, distancekm=FALSE, force=FALSE, int_inf=TRUE,
                     maxg=100, h=NULL){
   output <- list()
   E <- 10
@@ -12,52 +12,52 @@ gwzinbr <- function(data, formula, xvarinf=NULL, weight=NULL,
   mf <- eval(mf)
   mt <- attr(mf, "terms")
   XVAR <- attr(mt, "term.labels")
-  y <<- model.extract(mf, "response")
-  N <<- length(y) 
-  x <<- model.matrix(mt, mf)
+  y <- model.extract(mf, "response")
+  N <- length(y) 
+  x <- model.matrix(mt, mf)
   if (is.null(xvarinf)){
-    G <<- matrix(1, N, 1) #certo
-    # G <<- rep(1, N) #matriz coluna
-    lambdag <<- matrix(0, ncol(G), 1) #ncol(G) em vez de length(G)
-    # lambdag <<- rep(0, length(G))
+    G <- matrix(1, N, 1) #certo
+    # G <- rep(1, N) #matriz coluna
+    lambdag <- matrix(0, ncol(G), 1) #ncol(G) em vez de length(G)
+    # lambdag <- rep(0, length(G))
   }
   else{
-    #G <<- unlist(data[, xvarinf])
-    G <<- as.matrix(data[, xvarinf])
+    #G <- unlist(data[, xvarinf])
+    G <- as.matrix(data[, xvarinf])
     if (int_inf){ #o que e int_inf? 
-      G <<- cbind(rep(1, N), G)
+      G <- cbind(rep(1, N), G)
     }
   }
   # if (int_inf){ #o que e int_inf? 
-  #   G <<- cbind(rep(1, N), G)
+  #   G <- cbind(rep(1, N), G)
   # }
-  # x <<- cbind(rep(1, N), x)
-  yhat <<- rep(0, N)
-  yhat2 <<- rep(0, N)
-  pihat <<- rep(0, N)
-  nvar <<- ncol(x)
-  wt <<- rep(1, N)
+  # x <- cbind(rep(1, N), x)
+  yhat <- rep(0, N)
+  yhat2 <- rep(0, N)
+  pihat <- rep(0, N)
+  nvar <- ncol(x)
+  wt <- rep(1, N)
   if (!is.null(weight)){
-    wt <<- unlist(data[, weight])
+    wt <- unlist(data[, weight])
   }
-  Offset <<- rep(0, N)
+  Offset <- rep(0, N)
   if (!is.null(offset)){
-    Offset <<- unlist(data[, offset])
+    Offset <- unlist(data[, offset])
   }
   Iy <- ifelse(y>0, 1, y)
   Iy <- 1-Iy
   Iy2 <- Iy
-  pos0 <<-  which(y==0)
-  #pos0 <<- t(as.matrix(pos0))
-  pos02 <<- which(y==0)
-  #pos02 <<- t(as.matrix(pos02))
-  pos1 <<- which(y>0)
-  #pos1 <<- t(as.matrix(pos1))
+  pos0 <-  which(y==0)
+  #pos0 <- t(as.matrix(pos0))
+  pos02 <- which(y==0)
+  #pos02 <- t(as.matrix(pos02))
+  pos1 <- which(y>0)
+  #pos1 <- t(as.matrix(pos1))
   
   # /**** global estimates ****/ 
   uj <- (y+mean(y))/2 
   nj <- log(uj)
-  parg <<- sum((y-uj)^2/uj)/(N-nvar)
+  parg <- sum((y-uj)^2/uj)/(N-nvar)
   ddpar <- 1
   cont <- 1
   cont3 <- 0
@@ -66,35 +66,35 @@ gwzinbr <- function(data, formula, xvarinf=NULL, weight=NULL,
     parold <- parg
     cont1 <- 1
     if (model == "zip" | model == "poisson"){
-      parg <<- 1/E^(-6)
+      parg <- 1/E^(-6)
       alphag <- 1/parg
     }  
     if (model == "zinb" | model == "negbin"){
       if (cont>1){ 
-        parg <<- 1/(sum((y-uj)^2/uj)/(N-nvar))
+        parg <- 1/(sum((y-uj)^2/uj)/(N-nvar))
       }  
       while (abs(dpar)>0.0001 & cont1<200){
         if (parg<0){
-          parg <<- 0.00001
+          parg <- 0.00001
         }
-        parg <<- ifelse(parg<E^-10, E^-10, parg)
+        parg <- ifelse(parg<E^-10, E^-10, parg)
         gf <- sum(digamma(parg+y)-digamma(parg)+log(parg)+1-log(parg+uj)-(parg+y)/(parg+uj))
         hessg <- sum(trigamma(parg+y)-trigamma(parg)+1/parg-2/(parg+uj)+(y+parg)/(parg+uj)^2)
         hessg <- ifelse(hessg==0, E^-23, hessg)
         par0 <- parg
-        #parg <<- par0-solve(hess)%*%gf
-        parg <<- par0-as.vector(solve(hessg))*gf
+        #parg <- par0-solve(hess)%*%gf
+        parg <- par0-as.vector(solve(hessg))*gf
         if (parg>E^5){
           dpar <- 0.0001
           cont3 <- cont3+1
           if (cont3==1){
-            parg <<- 2
+            parg <- 2
           } 
           else if (cont3==2) {
-            parg <<- E^5
+            parg <- E^5
           }
           else if (cont3==3){
-            parg <<- 0.0001  
+            parg <- 0.0001  
           } 
         }
         else{
@@ -102,11 +102,11 @@ gwzinbr <- function(data, formula, xvarinf=NULL, weight=NULL,
           cont1 <- cont1+1
         }
         if (parg>E^6){
-          parg <<- E^6
+          parg <- E^6
           dpar <- 0
         }
       }
-      alphag <<- 1/parg
+      alphag <- 1/parg
     }
     devg <- 0
     ddev <- 1
@@ -116,11 +116,11 @@ gwzinbr <- function(data, formula, xvarinf=NULL, weight=NULL,
       Ai <- ifelse(Ai<=0,E^-5,Ai)
       zj <- nj+(y-uj)/(Ai*(1+alphag*uj))-Offset
       if (det(t(x)%*%(Ai*x))==0) {
-        # bg <<- matrix(0, ncol(x),1)
-        bg <<- rep(0,ncol(x))
+        # bg <- matrix(0, ncol(x),1)
+        bg <- rep(0,ncol(x))
       } 
       else{
-        bg <<- solve(t(x)%*%(Ai*x))%*%t(x)%*%(Ai*zj)
+        bg <- solve(t(x)%*%(Ai*x))%*%t(x)%*%(Ai*zj)
       }
       nj <- as.vector(x%*%bg+Offset)
       nj <- ifelse(nj>700,700,nj)
@@ -145,8 +145,8 @@ gwzinbr <- function(data, formula, xvarinf=NULL, weight=NULL,
   if (!is.null(xvarinf)){
     lambda0 <- (length(pos0)-sum((parg/(uj+parg))^parg))/N
     if (lambda0 <= 0) {
-      #lambdag <<- matrix(0, ncol(G),1) 
-      lambdag <<- rep(0, ncol(G))
+      #lambdag <- matrix(0, ncol(G),1) 
+      lambdag <- rep(0, ncol(G))
       # cat("NOTE: Expected number of zeros (", round(sum((parg/(uj+parg))^parg), 2), 
       #     ") >= number of zeros (", length(pos0), "). No Need of Zero Model.\n")
       message("NOTE: Expected number of zeros (", round(sum((parg/(uj+parg))^parg), 2), 
@@ -157,14 +157,14 @@ gwzinbr <- function(data, formula, xvarinf=NULL, weight=NULL,
       #     ") < number of zeros (", length(pos0), "). Zero Model Used.\n")
       message("NOTE: Expected number of zeros (", round(sum((parg/(uj+parg))^parg), 2), 
           ") < number of zeros (", length(pos0), "). Zero Model Used.")
-      lambda0 <<- log(lambda0/(1-lambda0))
-      lambdag <<- rbind(lambda0, rep(0, ncol(G)-1))
+      lambda0 <- log(lambda0/(1-lambda0))
+      lambdag <- rbind(lambda0, rep(0, ncol(G)-1))
     }
-    pargg <<- parg
-    ujg <<- uj
+    pargg <- parg
+    ujg <- uj
     if (length(pos0)==0 | any(lambdag)==0){ 
-      if (length(pos0)==0) {
-        pos0 <<- pos1
+      if (length(pos0)==0){
+        pos0 <- pos1
         if (model=="zinb" | model=="zip"){
           model <- "negbin"
         }
@@ -198,13 +198,13 @@ gwzinbr <- function(data, formula, xvarinf=NULL, weight=NULL,
       int <- 1
       if (model=="zip" | model=="poisson"){
         alphag <- E^-6
-        #parg <<- 1/alphag
+        #parg <- 1/alphag
         parg <- 1/alphag
       }
       else{
         while (abs(dpar)>0.0001 & aux2<200){
           if (parg<0){
-            #parg <<- 0.00001
+            #parg <- 0.00001
             parg <- 0.00001
           }
           parg <- ifelse(parg<E^-10, E^-10, parg)
@@ -250,12 +250,12 @@ gwzinbr <- function(data, formula, xvarinf=NULL, weight=NULL,
         uj <- ifelse(uj<E^-150, E^-150, uj)
         zj <- (nj+(y-uj)/(((uj/(1+alphag*uj)+(y-uj)*(alphag*uj/(1+2*alphag*uj+alphag^2*uj^2))))*(1+alphag*uj)))-Offset
         if (det(t(x)%*%(Ai*x))==0){
-          #bg <<- matrix(0, nvar, 1)
-          #bg <<- rep(0, nvar)
+          #bg <- matrix(0, nvar, 1)
+          #bg <- rep(0, nvar)
           bg <- rep(0, nvar)
         }
         else{
-          #bg <<- solve(t(x)%*%(Ai*x))%*%t(x)%*%(Ai*zj)
+          #bg <- solve(t(x)%*%(Ai*x))%*%t(x)%*%(Ai*zj)
           bg <- solve(t(x)%*%(Ai*x))%*%t(x)%*%(Ai*zj)
         }
         nj <- x%*%bg+Offset
@@ -290,7 +290,7 @@ gwzinbr <- function(data, formula, xvarinf=NULL, weight=NULL,
           lambdag <- matrix(0, ncol(G), 1)
         }  
         else {
-          #lambdag <<- solve(t(G*Ai)%*%G)%*%t(G*Ai)%*%zj
+          #lambdag <- solve(t(G*Ai)%*%G)%*%t(G*Ai)%*%zj
           lambdag <- solve(t(G)%*%(Ai*G))%*%t(G)%*%(Ai*zj)
         }
         njl <- G%*%lambdag
@@ -1486,7 +1486,7 @@ gwzinbr <- function(data, formula, xvarinf=NULL, weight=NULL,
     #View(parameters_)
     #tstat_ <- beta_
     tstat_ <- matrix(0, N, ncol(x))
-    #beta_ <<- beta_
+    #beta_ <- beta_
     for (j in 1:nrow(stdbeta_)){
       for (k in 1:ncol(stdbeta_)){
         if (stdbeta_[j, k]==0){

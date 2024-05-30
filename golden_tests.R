@@ -1,7 +1,7 @@
 library(readr)
 #korea_base_artigo <- read_csv("UnB/2024/TCC2/korea_base_artigo.csv")
-#korea_base_artigo <- read_csv("C:/Users/Juliana Rosa/OneDrive/Documents/TCC2/GWZINBR-main/korea_base_artigo.csv")
-korea_base_artigo <- read_csv("C:/Juliana/TCC/GWZINBR-main/korea_base_artigo.csv")
+korea_base_artigo <- read_csv("C:/Users/Juliana Rosa/OneDrive/Documents/TCC2/GWZINBR-main/korea_base_artigo.csv")
+#korea_base_artigo <- read_csv("C:/Juliana/TCC/GWZINBR-main/korea_base_artigo.csv")
 
 if(!require(sp)){
   install.packages("sp")
@@ -54,7 +54,7 @@ endTime-startTime
 
 ## ZIP ##
 
-# Teste 9: adaptive_bsq - cv #
+# Teste 5: adaptive_bsq - cv #
 
 startTime <- Sys.time()
 Golden(data = korea_base_artigo,formula = n_covid1~Morbidity+high_sch_p+Healthcare_access+
@@ -64,7 +64,7 @@ endTime <- Sys.time()
 endTime-startTime
 #1.4 mins OK
 
-# Teste 10: adaptive_bsq - aic #
+# Teste 6: adaptive_bsq - aic #
 
 startTime <- Sys.time()
 Golden(data = korea_base_artigo,formula = n_covid1~Morbidity+high_sch_p+Healthcare_access+
@@ -74,7 +74,7 @@ endTime <- Sys.time()
 endTime-startTime
 #9.4 mins --> cvs um pouco diferentes
 
-# Teste 11: fixed_g - cv #
+# Teste 7: fixed_g - cv #
 
 startTime <- Sys.time()
 Golden(data = korea_base_artigo,formula = n_covid1~Morbidity+high_sch_p+Healthcare_access+
@@ -84,7 +84,7 @@ endTime <- Sys.time()
 endTime-startTime
 #1.1 min OK
 
-# Teste 12: fixed_g - aic #
+# Teste 8: fixed_g - aic #
 
 startTime <- Sys.time()
 Golden(data = korea_base_artigo,formula = n_covid1~Morbidity+high_sch_p+Healthcare_access+
@@ -96,7 +96,7 @@ endTime-startTime
 
 ## NEGBIN ##
 
-# Teste 17: adaptive_bsq - cv #
+# Teste 9: adaptive_bsq - cv #
 
 startTime <- Sys.time()
 Golden(data = korea_base_artigo,formula = n_covid1~Morbidity+high_sch_p+Healthcare_access+
@@ -106,7 +106,7 @@ endTime <- Sys.time()
 endTime-startTime
 #57 segs OK
 
-# Teste 18: adaptive_bsq - aic #
+# Teste 10: adaptive_bsq - aic #
 
 startTime <- Sys.time()
 Golden(data = korea_base_artigo,formula = n_covid1~Morbidity+high_sch_p+Healthcare_access+
@@ -116,7 +116,7 @@ endTime <- Sys.time()
 endTime-startTime
 #59 segs OK
 
-# Teste 19: fixed_g - cv #
+# Teste 11: fixed_g - cv #
 
 startTime <- Sys.time()
 Golden(data = korea_base_artigo,formula = n_covid1~Morbidity+high_sch_p+Healthcare_access+
@@ -126,7 +126,7 @@ endTime <- Sys.time()
 endTime-startTime
 #1.2 mins OK
 
-# Teste 20: fixed_g - aic #
+# Teste 12: fixed_g - aic #
 
 startTime <- Sys.time()
 Golden(data = korea_base_artigo,formula = n_covid1~Morbidity+high_sch_p+Healthcare_access+
@@ -138,7 +138,7 @@ endTime-startTime
 
 ## POISSON ##
 
-# Teste 25: adaptive_bsq - cv #
+# Teste 13: adaptive_bsq - cv #
 
 startTime <- Sys.time()
 Golden(data = korea_base_artigo,formula = n_covid1~Morbidity+high_sch_p+Healthcare_access+
@@ -148,7 +148,7 @@ endTime <- Sys.time()
 endTime-startTime
 #36 segs --> cvs diferentes OK
 
-# Teste 26: adaptive_bsq - aic #
+# Teste 14: adaptive_bsq - aic #
 
 startTime <- Sys.time()
 Golden(data = korea_base_artigo,formula = n_covid1~Morbidity+high_sch_p+Healthcare_access+
@@ -156,9 +156,9 @@ Golden(data = korea_base_artigo,formula = n_covid1~Morbidity+high_sch_p+Healthca
        model = "poisson", method = "adaptive_bsq", bandwidth = "aic", globalmin = FALSE, distancekm = TRUE, force=TRUE)
 endTime <- Sys.time()
 endTime-startTime
-# 28 segs --> errado
+# 9 segs --> errado
 
-# Teste 27: fixed_g - cv #
+# Teste 15: fixed_g - cv #
 
 startTime <- Sys.time()
 Golden(data = korea_base_artigo,formula = n_covid1~Morbidity+high_sch_p+Healthcare_access+
@@ -168,7 +168,7 @@ endTime <- Sys.time()
 endTime-startTime
 #20 segs OK
 
-# Teste 28: fixed_g - aic #
+# Teste 16: fixed_g - aic #
 
 startTime <- Sys.time()
 Golden(data = korea_base_artigo,formula = n_covid1~Morbidity+high_sch_p+Healthcare_access+

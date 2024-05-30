@@ -586,13 +586,11 @@ Golden <- function(data, formula, xvarinf, weight,
           nj <- ifelse(nj>700, 700, nj)
           nj <- ifelse(nj<(-700), -700, nj)
           #if (i==152 & contador4==1 & contador5==1){print(sum(nj))} ok
+          #paramos aqui!!! investigar nj na iteração 152
           uj <- exp(nj)
-          #if (i==152 & contador4==1 & contador5==1){print(as.vector(nj))}
           olddev <- dev
           uj <- ifelse(uj>E^10, E^10, uj)
           uj <- ifelse(uj==0, E^-10, uj)
-          #if (i==152 & contador4==1 & contador5==1){print(sum(uj))}
-          #errado
           if (par==E^6){
             #gamma1=/*(gamma(par+y)/(gamma(y+1)#gamma(par)))#*/(uj/(uj+par))##y#exp(-uj)
             #if (i==128 & contador4==1 & contador5==6){print(as.vector((uj/(uj+par))))}
@@ -725,7 +723,6 @@ Golden <- function(data, formula, xvarinf, weight,
         #if (i==128){print(c("loop externo", contador4))}
       }
       #if (i==152){print(uj[i])}
-      #errado
       yhat[i] <- uj[i]
       pihat[i] <- njl[i]
       #alphai[i] <<-  alpha
@@ -811,6 +808,7 @@ Golden <- function(data, formula, xvarinf, weight,
           pos0xl <- (par_[pos0]/(par_[pos0]+y[pos0]))^par_[pos0] #flag -> y vetor
           pos0x <- ifelse(pos0x==0, E^-10, pos0x)
         }
+        #de todos os elementos de ll, o problema está em yhat
         ll <- sum(-log(0+exp(pihat[pos0]))+log(0*exp(pihat[pos0])+pos0x))+
           sum(-log(0+exp(pihat[pos1]))+lgamma(par_[pos1]+y[pos1])-lgamma(y[pos1]+1)-lgamma(par_[pos1])+
                 y[pos1]*log(yhat[pos1]/(par_[pos1]+yhat[pos1]))+
@@ -820,7 +818,10 @@ Golden <- function(data, formula, xvarinf, weight,
                                                          y[pos1]*log(y[pos1]/(par_[pos1]+y[pos1]))+par_[pos1]*log(par_[pos1]/(par_[pos1]+y[pos1]))) #flag -> y vetor
         dev <- 2*(llnull1-ll)
         npar <- sum(S)
+        #print(ll) #errado
         AIC <- 2*npar-2*ll
+        # print(AIC) #errado
+        # print(npar) #ok
         AICc <- AIC+2*(npar*(npar+1)/(N-npar-1))
         if (model == "negbin"){
           AIC <- 2*(npar+npar/ncol(x))-2*ll
@@ -831,9 +832,8 @@ Golden <- function(data, formula, xvarinf, weight,
     if (bandwidth == "aic"){
       CV <- AICc
     }
-    #print(CV)
-    #errado
     res <- cbind(CV, npar)
+    #print(CV) #errado
     return (res)
   }
   
@@ -879,10 +879,10 @@ Golden <- function(data, formula, xvarinf, weight,
       h_values <- rbind(h_values, c(h0, h1, h2, h3))
     }
     ################################
-    #print("chama cv")
+    print("chama cv")
     res1 <- cv(h1)
     CV1 <- res1[1]
-    #print("chama cv")
+    print("chama cv")
     res2 <- cv(h2)
     CV2 <- res2[1]
     if (GMY==1){
@@ -898,7 +898,7 @@ Golden <- function(data, formula, xvarinf, weight,
         h1 <- h3-r*(h3-h0)
         h2 <- h0+r*(h3-h0)
         CV1 <- CV2
-        #print("chama cv")
+        print("chama cv")
         res2 <- cv(h2)
         CV2 <- res2[1]
       }
@@ -907,7 +907,7 @@ Golden <- function(data, formula, xvarinf, weight,
         h1 <- h3-r*(h3-h0)
         h2 <- h0+r*(h3-h0)
         CV2 <- CV1
-        #print("chama cv")
+        print("chama cv")
         res1 <- cv(h1)
         CV1 <- res1[1]
       }

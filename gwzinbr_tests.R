@@ -9,6 +9,8 @@ korea_base_artigo <- read_csv("D:/Users/jessica.abreu/Documents/UnB/tcc/korea_ba
 korea_base_artigo <- read_csv("C:/Users/Juliana Rosa/OneDrive/Documents/TCC2/GWZINBR-main/korea_base_artigo.csv")
 korea_base_artigo <- read_csv("C:/Juliana/TCC/GWZINBR-main/korea_base_artigo.csv")
 
+## FIXED ##
+
 #Teste 1 do relatório
 startTime <- Sys.time()
 gwzinbr(data = korea_base_artigo, 
@@ -16,7 +18,7 @@ gwzinbr(data = korea_base_artigo,
           diff_sd+Crowding+Migration+Health_behavior,
         xvarinf = "Healthcare_access",
         lat = "x", long = "y", offset = "ln_total", method = "fixed_g",
-        model = "zinb", distancekm = TRUE, h=226.73)
+        model = "zinb", distancekm = TRUE, h=226.73, force=TRUE)
 endTime <- Sys.time()
 endTime-startTime
 #1.6 mins
@@ -28,7 +30,7 @@ gwzinbr(data = korea_base_artigo,
           diff_sd+Crowding+Migration+Health_behavior,
         xvarinf = "Healthcare_access",
         lat = "x", long = "y", offset = "ln_total", method = "fixed_g",
-        model = "zip", distancekm = TRUE, h=733.70)
+        model = "zip", distancekm = TRUE, h=733.70, force=TRUE)
 endTime <- Sys.time()
 endTime-startTime
 #6 segs
@@ -39,7 +41,7 @@ gwzinbr(data = korea_base_artigo,
         formula = n_covid1~Morbidity+high_sch_p+Healthcare_access+
           diff_sd+Crowding+Migration+Health_behavior,
         lat = "x", long = "y", offset = "ln_total", method = "fixed_g",
-        model = "negbin", distancekm = TRUE, h=189.74)
+        model = "negbin", distancekm = TRUE, h=189.74, force=TRUE)
 endTime <- Sys.time()
 endTime-startTime
 #5 segs
@@ -50,12 +52,59 @@ gwzinbr(data = korea_base_artigo,
         formula = n_covid1~Morbidity+high_sch_p+Healthcare_access+
           diff_sd+Crowding+Migration+Health_behavior,
         lat = "x", long = "y", offset = "ln_total", method = "fixed_g",
-        model = "poisson", distancekm = TRUE, h=733.70)
+        model = "poisson", distancekm = TRUE, h=733.70, force=TRUE)
 endTime <- Sys.time()
 endTime-startTime
 #5 segs
 
-#fazer alterações do pibic
+## ADAPTIVE ##
+
+#Teste 5
+startTime <- Sys.time()
+gwzinbr(data = korea_base_artigo, 
+        formula = n_covid1~Morbidity+high_sch_p+Healthcare_access+
+          diff_sd+Crowding+Migration+Health_behavior,
+        xvarinf = "Healthcare_access",
+        lat = "x", long = "y", offset = "ln_total", method = "adaptive_bsq",
+        model = "zinb", distancekm = TRUE, h=230, force=TRUE)
+endTime <- Sys.time()
+endTime-startTime
+#1.1 min
+
+#Teste 6
+startTime <- Sys.time()
+gwzinbr(data = korea_base_artigo, 
+        formula = n_covid1~Morbidity+high_sch_p+Healthcare_access+
+          diff_sd+Crowding+Migration+Health_behavior,
+        xvarinf = "Healthcare_access",
+        lat = "x", long = "y", offset = "ln_total", method = "adaptive_bsq",
+        model = "zip", distancekm = TRUE, h=230, force=TRUE)
+endTime <- Sys.time()
+endTime-startTime
+#7 segs
+
+#Teste 7
+startTime <- Sys.time()
+gwzinbr(data = korea_base_artigo, 
+        formula = n_covid1~Morbidity+high_sch_p+Healthcare_access+
+          diff_sd+Crowding+Migration+Health_behavior,
+        lat = "x", long = "y", offset = "ln_total", method = "adaptive_bsq",
+        model = "negbin", distancekm = TRUE, h=230, force=TRUE)
+endTime <- Sys.time()
+endTime-startTime
+#2 segs
+
+#Teste 8
+startTime <- Sys.time()
+gwzinbr(data = korea_base_artigo, 
+        formula = n_covid1~Morbidity+high_sch_p+Healthcare_access+
+          diff_sd+Crowding+Migration+Health_behavior,
+        lat = "x", long = "y", offset = "ln_total", method = "adaptive_bsq",
+        model = "poisson", distancekm = TRUE, h=48, force=TRUE)
+endTime <- Sys.time()
+endTime-startTime
+#1 seg
+
 #decidir teste do relatório
 #rodar e comparar certinho
 #subir para o CRAN
