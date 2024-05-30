@@ -55,10 +55,11 @@ endTime <- Sys.time()
 endTime-startTime
 #5 segs
 
-#arrumar saídas
 #fazer alterações do pibic
 #decidir teste do relatório
 #rodar e comparar certinho
 #subir para o CRAN
 #relatório!!!
 
+#antes de subir para o cran, (1) tirar views e transformar em outputs e (2) trocar return por invisible
+#estamos deixando assim por enquanto para rodar os testes e tirar os prints
