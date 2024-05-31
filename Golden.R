@@ -397,13 +397,13 @@ Golden <- function(data, formula, xvarinf, weight,
     # }
     for (i in 1:N){
       #for (j in 1:N){
-        #seqi <- matrix(i, N, 1)
-        seqi <- rep(i, N)
-        dx <- sp::spDistsN1(COORD,COORD[i,])
-        distan <- cbind(seqi, sequ, dx)
-        if (distancekm){
-          distan[,3] <- distan[,3]*111
-        }
+      #seqi <- matrix(i, N, 1)
+      seqi <- rep(i, N)
+      dx <- sp::spDistsN1(COORD,COORD[i,])
+      distan <- cbind(seqi, sequ, dx)
+      if (distancekm){
+        distan[,3] <- distan[,3]*111
+      }
       #}
       u <- nrow(distan)
       #w <- matrix(0, u, 1)
@@ -565,16 +565,27 @@ Golden <- function(data, formula, xvarinf, weight,
         #errado
         uj <- exp(nj)
         contador5 <- 0
+        #if (i==21 & contador4==1){print(sum(uj))}
         while (abs(ddev)>0.000001 & aux1<100){
           contador5 <- contador5+1
+          #if (i==21 & contador4==1 & contador5==3){print(sum(uj))}
           uj <- ifelse(uj>E^100,E^100,uj)
+          if (i==21 & contador4==1 & contador5==4){
+            #print(sum(zk)) #ok
+            #print(sum(uj)) #errado
+            #print(sum(alpha)) #ok
+          }
           Ai <- as.vector((1-zk)*((uj/(1+alpha*uj)+(y-uj)*(alpha*uj/(1+2*alpha*uj+alpha^2*uj^2)))))
+          #if (i==21 & contador4==1 & contador5==4){print(sum(Ai))}
           Ai <- ifelse(Ai<=0,E^-5,Ai)
           uj <- ifelse(uj<E^-150,E^-150,uj)
           denz <- (((uj/(1+alpha*uj)+(y-uj)*(alpha*uj/(1+2*alpha*uj+alpha^2*uj^2))))*(1+alpha*uj))
           denz <- ifelse(denz==0,E^-5,denz)
           zj <- (nj+(y-uj)/denz)-Offset
-          if (det(t(x)%*%(w*Ai*x*wt))==0){
+          # if (i==21 & contador4==1 & contador5==4){
+          #   print(det(t(x)%*%(w*Ai*x*wt)))
+          # }
+          if (det(t(x)%*%(w*Ai*x*wt))<E^-60){ #flag
             #b <- matrix(0, nvar, 1)
             b <- rep(0, nvar)
           }
@@ -582,38 +593,48 @@ Golden <- function(data, formula, xvarinf, weight,
             b <- solve(t(x)%*%(w*Ai*x*wt), tol=E^-60)%*%t(x)%*%(w*Ai*wt*zj)
             #b <- MASS::ginv(t(x)%*%(w*Ai*x*wt))%*%t(x)%*%(w*Ai*wt*zj)
           }
+          #if (i==21 & contador4==1 & contador5==4){print(b)}
           nj <- x%*%b+Offset
+          #if (i==21 & contador4==1 & contador5==4){print(sum(nj))}
           nj <- ifelse(nj>700, 700, nj)
           nj <- ifelse(nj<(-700), -700, nj)
-          #if (i==152 & contador4==1 & contador5==1){print(sum(nj))} ok
+          #if (i==21 & contador4==1 & contador5==4){print(sum(nj))}
           #paramos aqui!!! investigar nj na iteração 152
           uj <- exp(nj)
           olddev <- dev
+          #if (i==21 & contador4==1 & contador5==4){print(sum(uj))}
+          #if (i==21){print(c(contador4, contador5))}
           uj <- ifelse(uj>E^10, E^10, uj)
           uj <- ifelse(uj==0, E^-10, uj)
+          temp <- (uj/(uj+par)) #flag
+          temp <- ifelse(temp<(E^-307), 0, temp) #flag
           if (par==E^6){
             #gamma1=/*(gamma(par+y)/(gamma(y+1)#gamma(par)))#*/(uj/(uj+par))##y#exp(-uj)
-            #if (i==128 & contador4==1 & contador5==6){print(as.vector((uj/(uj+par))))}
-            #temp <- (uj/(uj+par)) #flag teste 25
-            #temp <- ifelse(temp<E^-310, 0, temp) #flag teste 25
-            #gamma1 <- temp^y*exp(-uj) #flag teste 25
-            gamma1 <- (uj/(uj+par))^y*exp(-uj)
-            #gamma1 <- ifelse(temp==0 & y==0, 0, gamma1) #flag teste 25
+            # if (i==152 & contador4==1 & contador5==5){
+            #   print((uj/(uj+par)))
+            # }
+            #gamma1 <- (uj/(uj+par))^y*exp(-uj)
+            gamma1 <- temp^y*exp(-uj) #flag
+            gamma1 <- ifelse(temp==0 & y==0, NA, gamma1) #flag
           }
           else{
             #gamma1=/*(gamma(par+y)/(gamma(y+1)#gamma(par)))#*/(uj/(uj+par))##y#(par/(uj+par))##par
-            gamma1 <- (uj/(uj+par))^y*(par/(uj+par))^par
+            #gamma1 <- (uj/(uj+par))^y*(par/(uj+par))^par
+            gamma1 <- temp^y*(par/(uj+par))^par #flag
+            gamma1 <- ifelse(temp==0 & y==0, NA, gamma1) #flag
           }
-          #if (i==128 & contador4==1 & contador5==6){print(as.vector(gamma1))} erro
-          gamma1 <- ifelse(gamma1<=0, E^-10, gamma1)
-          if (i==128 & contador4==1 & contador5==6){
+          #if (i==152 & contador4==1 & contador5==5){print(as.vector(gamma1))}
+          #gamma1 <- ifelse(gamma1<=0, E^-10, gamma1)
+          gamma1 <- ifelse(gamma1<=0 | is.na(gamma1), E^-10, gamma1) #flag
+          if (i==152 & contador4==1 & contador5==5){
+            #print(dev) #errado
             #print(zk) ok
-            #print(as.vector(gamma1)) erro
+            #print(as.vector(gamma1)) #errado
           }
           dev <- sum((1-zk)*(log(gamma1)))
-          if (i==128 & contador4==1 & contador5==6){
-            #print(olddev) erro
-            #print(dev) erro
+          if (i==152 & contador4==1 & contador5==6){
+            # print(olddev) #errado
+            # print(dev) #ok
           }
           ddev <- dev-olddev
           # if (i==244){
@@ -624,8 +645,8 @@ Golden <- function(data, formula, xvarinf, weight,
           aux1 <- aux1+1
           #if (i==128){print(c("loop interno", contador5))}
           #na primeira iter do loop externo, esse loop tem 6 iterações no sas e 8 no R
-          if (i==128 & contador4==1 & contador5==6){
-            #print(ddev) erro
+          if (i==152 & contador4==1 & contador5==6){
+            #print(ddev) errado
             #print(aux1) ok
           }
         }
@@ -722,7 +743,7 @@ Golden <- function(data, formula, xvarinf, weight,
         j <- j+1
         #if (i==128){print(c("loop externo", contador4))}
       }
-      #if (i==152){print(uj[i])}
+      #if (i==21){print(uj[i])}
       yhat[i] <- uj[i]
       pihat[i] <- njl[i]
       #alphai[i] <<-  alpha
@@ -756,7 +777,7 @@ Golden <- function(data, formula, xvarinf, weight,
       # }
       # max_dist <<- max(max_dist,max(dx))
     }
-    #print(yhat)
+    #print(yhat) #elemento 21 errado
     #errado
     #print(wt) sempre ok (vetor de 1s)
     CV <- t((y-yhat)*wt)%*%(y-yhat)
@@ -879,10 +900,10 @@ Golden <- function(data, formula, xvarinf, weight,
       h_values <- rbind(h_values, c(h0, h1, h2, h3))
     }
     ################################
-    print("chama cv")
+    #print("chama cv")
     res1 <- cv(h1)
     CV1 <- res1[1]
-    print("chama cv")
+    #print("chama cv")
     res2 <- cv(h2)
     CV2 <- res2[1]
     if (GMY==1){
@@ -898,7 +919,7 @@ Golden <- function(data, formula, xvarinf, weight,
         h1 <- h3-r*(h3-h0)
         h2 <- h0+r*(h3-h0)
         CV1 <- CV2
-        print("chama cv")
+        #print("chama cv")
         res2 <- cv(h2)
         CV2 <- res2[1]
       }
@@ -907,7 +928,7 @@ Golden <- function(data, formula, xvarinf, weight,
         h1 <- h3-r*(h3-h0)
         h2 <- h0+r*(h3-h0)
         CV2 <- CV1
-        print("chama cv")
+        #print("chama cv")
         res1 <- cv(h1)
         CV1 <- res1[1]
       }

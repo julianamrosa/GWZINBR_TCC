@@ -106,7 +106,8 @@ endTime-startTime
 #1 seg
 
 #decidir teste do relatório
-#rodar e comparar certinho
+#mandar dúvidas pro Alan
+#rodar teste escolhido, comparar e tirar prints
 #subir para o CRAN
 #relatório!!!
 
