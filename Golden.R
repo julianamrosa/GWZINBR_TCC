@@ -1,6 +1,6 @@
-Golden <- function(data, formula, xvarinf, weight,
+Golden <- function(data, formula, xvarinf=NULL, weight=NULL,
                    lat, long, globalmin=TRUE,
-                   method, model="zinb", bandwidth="cv", offset, 
+                   method, model="zinb", bandwidth="cv", offset=NULL, 
                    force=FALSE, maxg=100, distancekm=FALSE){
   output <- list()
   E <- 10
@@ -572,7 +572,7 @@ Golden <- function(data, formula, xvarinf, weight,
           Si[i] <- 0
         }
         else{
-          Si[i] <- (G[i,]%*%solve(t(G)%*%(w*Aii*G*wt))%*%t(G*w*Aii*wt))[i]
+          Si[i] <- (G[i,]%*%solve(t(G)%*%(w*Aii*G*wt), tol=E^-60)%*%t(G*w*Aii*wt))[i]
           if (any(lambda)==0){
             Si[i] <- 0
           }

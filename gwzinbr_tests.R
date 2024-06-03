@@ -6,8 +6,8 @@ korea_base_artigo <- read_csv("C:/Users/jehhv/OneDrive/Documentos/UnB/2024/TCC2/
 korea_base_artigo <- read_csv("D:/Users/jessica.abreu/Documents/UnB/tcc/korea_base_artigo.csv")
 
 #paths Ju
-korea_base_artigo <- read_csv("C:/Users/Juliana Rosa/OneDrive/Documents/TCC2/GWZINBR-main/korea_base_artigo.csv")
-korea_base_artigo <- read_csv("C:/Juliana/TCC/GWZINBR-main/korea_base_artigo.csv")
+korea_base_artigo <- read_csv("C:/Users/Juliana Rosa/OneDrive/Documents/TCC2/GWZINBR_TCC-main/korea_base_artigo.csv")
+korea_base_artigo <- read_csv("C:/Juliana/TCC/GWZINBR_TCC-main/korea_base_artigo.csv")
 
 ## FIXED ##
 
