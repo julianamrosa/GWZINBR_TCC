@@ -72,7 +72,7 @@ Golden <- function(data, formula, xvarinf=NULL, weight=NULL,
         hess <- sum(trigamma(parg+y)-trigamma(parg)+1/parg-2/(parg+uj)+(y+parg)/(parg+uj)^2)
         hess <- ifelse(hess==0, E^-23, hess)
         par0 <- parg
-        parg <- par0-as.vector(solve(hess))*gf
+        parg <- par0-as.vector(solve(hess, tol=E^-60))*gf
         if (parg>E^5){
           dpar <- 0.0001
           cont3 <- cont3+1
@@ -104,11 +104,11 @@ Golden <- function(data, formula, xvarinf=NULL, weight=NULL,
       Ai <- (uj/(1+alphag*uj))+(y-uj)*(alphag*uj/(1+2*alphag*uj+alphag^2*uj*uj))
       Ai <- ifelse(Ai<=0,E^-5,Ai)
       zj <- nj+(y-uj)/(Ai*(1+alphag*uj))-Offset
-      if (det(t(x)%*%(Ai*x))==0) {
+      if (det(t(x)%*%(Ai*x))<E^-60){
         bg <- rep(0,ncol(x))
       } 
       else{
-        bg <- solve(t(x)%*%(Ai*x))%*%t(x)%*%(Ai*zj)
+        bg <- solve(t(x)%*%(Ai*x), tol=E^-60)%*%t(x)%*%(Ai*zj)
       }
       nj <- as.vector(x%*%bg+Offset)
       nj <- ifelse(nj>700,700,nj)
@@ -141,7 +141,7 @@ Golden <- function(data, formula, xvarinf=NULL, weight=NULL,
     }
     pargg <- parg
     ujg <- uj
-    if (length(pos0)==0 | !any(lambdag)){ 
+    if (length(pos0)==0 | !any(lambdag)){
       if (length(pos0)==0){
         pos0 <- pos1
         if (model=="zinb" | model=="zip"){
@@ -196,7 +196,7 @@ Golden <- function(data, formula, xvarinf=NULL, weight=NULL,
           hess <- sum((1-zkg)*(trigamma(parg+y)-trigamma(parg)+1/parg-2/(parg+uj)+(y+parg)/(parg+uj)^2))
           hess <- ifelse(hess==0, E^-23, hess)
           par0 <- parg
-          parg <- as.vector(par0-solve(hess)%*%gf)
+          parg <- as.vector(par0-solve(hess, tol=E^-60)%*%gf)
           if (aux2>50 & parg>E^5){
             dpar <- 0.0001
             cont3 <- cont3+1
@@ -231,11 +231,11 @@ Golden <- function(data, formula, xvarinf=NULL, weight=NULL,
         Ai <- ifelse(Ai<=0, E^-5, Ai)
         uj <- ifelse(uj<E^-150, E^-150, uj)
         zj <- (nj+(y-uj)/(((uj/(1+alphag*uj)+(y-uj)*(alphag*uj/(1+2*alphag*uj+alphag^2*uj^2))))*(1+alphag*uj)))-Offset
-        if (det(t(x)%*%(Ai*x))==0){
+        if (det(t(x)%*%(Ai*x))<E^-60){
           bg <- rep(0, nvar)
         }
         else{
-          bg <- solve(t(x)%*%(Ai*x))%*%t(x)%*%(Ai*zj)
+          bg <- solve(t(x)%*%(Ai*x), tol=E^-60)%*%t(x)%*%(Ai*zj)
         }
         nj <- x%*%bg+Offset
         nj <- ifelse(nj>700, 700, nj)
@@ -264,11 +264,11 @@ Golden <- function(data, formula, xvarinf=NULL, weight=NULL,
         Ai <- as.vector(pig*(1-pig))
         Ai <- ifelse(Ai<=0, E^-5, Ai)
         zj <- njl+(zkg-pig)*1/Ai
-        if (det(t(G*Ai)%*%G)==0){
+        if (det(t(G*Ai)%*%G)<E^-60){
           lambdag <- matrix(0, ncol(G), 1)
         }  
         else{
-          lambdag <- solve(t(G*Ai)%*%G)%*%t(G*Ai)%*%zj
+          lambdag <- solve(t(G*Ai)%*%G, tol=E^-60)%*%t(G*Ai)%*%zj
         }
         njl <- G%*%lambdag
         njl <- ifelse(njl > maxg, maxg, njl)
@@ -403,7 +403,7 @@ Golden <- function(data, formula, xvarinf=NULL, weight=NULL,
             hess <- sum(w*wt*(1-zk)*(trigamma(par+y)-trigamma(par)+1/par-2/(par+uj)+(y+par)/(par+uj)^2))
             hess <- ifelse(hess==0, E^-23, hess)
             par0 <- par
-            par <- as.vector(par0-solve(hess)%*%gf)
+            par <- as.vector(par0-solve(hess, tol=E^-60)%*%gf)
             dpar <- par-par0
             if (par>=E^6){
               par <- E^6
@@ -520,7 +520,7 @@ Golden <- function(data, formula, xvarinf=NULL, weight=NULL,
               Aii <- as.vector(pi*(1-pi))
               Aii <- ifelse(Aii<=0, E^-5, Aii)	
               zj <- njl+(zk-pi)/Aii
-              if (det(t(G*Aii*w*wt)%*%G)==0){
+              if (det(t(G*Aii*w*wt)%*%G)<E^-60){
                 lambda <- matrix(0, ncol(G), 1)
               }
               else{
@@ -559,16 +559,16 @@ Golden <- function(data, formula, xvarinf=NULL, weight=NULL,
       alphai_[i] <- alpha
       assign("alphai", alphai_, envir=parent.frame())
       alphai[i] <-  alpha
-      if (det(t(x)%*%(w*Ai*x*wt))==0){
+      if (det(t(x)%*%(w*Ai*x*wt))<E^-60){
         S[i] <- 0
       }
-      else {
+      else{
         S[i] <- (x[i,]%*%solve(t(x)%*%(w*Ai*x*wt), tol=E^-60)%*%t(x*w*Ai*wt))[i]
       }
       if (model=="zip" | model=="zinb"){
         yhat[i] <- (uj*(1-exp(njl)/(1+exp(njl))))[i]
         yhat2[i] <- uj[i]
-        if (det(t(G)%*%(w*Aii*G*wt))==0){
+        if (det(t(G)%*%(w*Aii*G*wt))<E^-60){
           Si[i] <- 0
         }
         else{

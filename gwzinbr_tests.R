@@ -9,6 +9,18 @@ korea_base_artigo <- read_csv("D:/Users/jessica.abreu/Documents/UnB/tcc/korea_ba
 korea_base_artigo <- read_csv("C:/Users/Juliana Rosa/OneDrive/Documents/TCC2/GWZINBR_TCC-main/korea_base_artigo.csv")
 korea_base_artigo <- read_csv("C:/Juliana/TCC/GWZINBR_TCC-main/korea_base_artigo.csv")
 
+## TESTE ARTIGO ##
+
+startTime <- Sys.time()
+gwzinbr(data = korea_base_artigo, 
+        formula = n_covid1~Morbidity+high_sch_p+Healthcare_access+
+                diff_sd+Crowding+Migration+Health_behavior,
+        xvarinf = c("Healthcare_access", "Crowding"),
+        lat = "y", long = "x", offset = "ln_total", method = "adaptive_bsq",
+        model = "zinb", distancekm = TRUE, h=82, force=TRUE)
+endTime <- Sys.time()
+endTime-startTime
+
 ## FIXED ##
 
 #Teste 1 do relatório

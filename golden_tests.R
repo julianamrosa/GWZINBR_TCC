@@ -1,7 +1,7 @@
 library(readr)
 #korea_base_artigo <- read_csv("UnB/2024/TCC2/korea_base_artigo.csv")
-korea_base_artigo <- read_csv("C:/Users/Juliana Rosa/OneDrive/Documents/TCC2/GWZINBR_TCC-main/korea_base_artigo.csv")
-#korea_base_artigo <- read_csv("C:/Juliana/TCC/GWZINBR_TCC-main/korea_base_artigo.csv")
+#korea_base_artigo <- read_csv("C:/Users/Juliana Rosa/OneDrive/Documents/TCC2/GWZINBR_TCC-main/korea_base_artigo.csv")
+korea_base_artigo <- read_csv("C:/Juliana/TCC/GWZINBR_TCC-main/korea_base_artigo.csv")
 
 if(!require(sp)){
   install.packages("sp")
@@ -19,6 +19,13 @@ Golden(data = korea_base_artigo,formula = n_covid1~Morbidity+high_sch_p+Healthca
 endTime <- Sys.time()
 endTime-startTime
 #19 mins
+
+startTime <- Sys.time()
+Golden(data = korea_base_artigo,formula = n_covid1~Morbidity+high_sch_p+Healthcare_access+
+         diff_sd+Crowding+Migration+Health_behavior, xvarinf = c("Healthcare_access", "Crowding"), lat = "x", long = "y", offset = "ln_total",
+       model = "zip", method = "adaptive_bsq", bandwidth = "aic", globalmin = FALSE, distancekm = TRUE, force=TRUE)
+endTime <- Sys.time()
+endTime-startTime
 
 ## ZINB ##
 
@@ -182,7 +189,7 @@ endTime-startTime
 
 startTime <- Sys.time()
 Golden(data = korea_base_artigo,formula = n_covid1~Morbidity+high_sch_p+Healthcare_access+
-         diff_sd+Crowding+Migration+Health_behavior, xvarinf = NULL, weight = NULL, lat = "x", long = "y", offset = "ln_total",
+         diff_sd+Crowding+Migration+Health_behavior, xvarinf = NULL, weight = NULL, lat = "y", long = "x", offset = "ln_total",
        model = "poisson", method = "fixed_g", bandwidth = "aic", globalmin = FALSE, distancekm = TRUE, force=TRUE)
 endTime <- Sys.time()
 endTime-startTime

@@ -322,14 +322,14 @@ gwzinbr <- function(data, formula, xvarinf=NULL, weight=NULL,
   names(output)[length(output)] <- "bandwidth"
   long <- unlist(data[, long])
   lat <- unlist(data[, lat])
-  COORD <- matrix(c(lat, long), ncol=2)
+  COORD <- matrix(c(long, lat), ncol=2)
   if (is.null(grid)){
-    POINTS <- matrix(c(lat, long), ncol=2)
+    POINTS <- matrix(c(long, lat), ncol=2)
   }
   else{
     long2 <- unlist(grid[, long])
     lat2 <- unlist(grid[, lat])
-    POINTS <- matrix(c(lat2, long2), ncol=2)
+    POINTS <- matrix(c(long2, lat2), ncol=2)
   }
   mm <- nrow(COORD)
   bi <- matrix(0, ncol(x)*mm, 4)
