@@ -1,7 +1,7 @@
 library(readr)
 #korea_base_artigo <- read_csv("UnB/2024/TCC2/korea_base_artigo.csv")
-#korea_base_artigo <- read_csv("C:/Users/Juliana Rosa/OneDrive/Documents/TCC2/GWZINBR_TCC-main/korea_base_artigo.csv")
-korea_base_artigo <- read_csv("C:/Juliana/TCC/GWZINBR_TCC-main/korea_base_artigo.csv")
+korea_base_artigo <- read_csv("C:/Users/Juliana Rosa/OneDrive/Documents/TCC2/GWZINBR_TCC-main/korea_base_artigo.csv")
+#korea_base_artigo <- read_csv("C:/Juliana/TCC/GWZINBR_TCC-main/korea_base_artigo.csv")
 
 if(!require(sp)){
   install.packages("sp")
@@ -15,17 +15,10 @@ if(!require(sp)){
 startTime <- Sys.time()
 Golden(data = korea_base_artigo,formula = n_covid1~Morbidity+high_sch_p+Healthcare_access+
          diff_sd+Crowding+Migration+Health_behavior, xvarinf = c("Healthcare_access", "Crowding"), lat = "x", long = "y", offset = "ln_total",
-       model = "zinb", method = "adaptive_bsq", bandwidth = "aic", globalmin = TRUE, distancekm = TRUE, force=TRUE)
+       model = "zinb", method = "adaptive_bsq", bandwidth = "aic", globalmin = FALSE, distancekm = TRUE, force=TRUE)
 endTime <- Sys.time()
 endTime-startTime
-#Error in exp(-njl) * (parg/(parg + uj))^parg : non-conformable arrays
-
-startTime <- Sys.time()
-Golden(data = korea_base_artigo,formula = n_covid1~Morbidity+high_sch_p+Healthcare_access+
-         diff_sd+Crowding+Migration+Health_behavior, xvarinf = "Healthcare_access", lat = "x", long = "y", offset = "ln_total",
-       model = "zinb", method = "adaptive_bsq", bandwidth = "aic", globalmin = TRUE, distancekm = TRUE, force=TRUE)
-endTime-startTime
-#13 mins
+#19 mins
 
 ## ZINB ##
 

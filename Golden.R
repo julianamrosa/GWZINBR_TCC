@@ -1,7 +1,7 @@
 Golden <- function(data, formula, xvarinf=NULL, weight=NULL,
                    lat, long, globalmin=TRUE,
                    method, model="zinb", bandwidth="cv", offset=NULL, 
-                   force=FALSE, maxg=100, distancekm=FALSE){
+                   force=FALSE, maxg=100, distancekm=FALSE){ #flag -> nulls
   output <- list()
   E <- 10
   mf <- match.call(expand.dots = FALSE)
@@ -20,7 +20,7 @@ Golden <- function(data, formula, xvarinf=NULL, weight=NULL,
     lambdag <- matrix(0, ncol(G), 1)
   }
   else{
-    G <- unlist(data[, xvarinf])
+    G <- as.matrix(data[, xvarinf])
     G <- cbind(rep(1, N), G)
   }
   wt <- rep(1, N)
@@ -132,12 +132,12 @@ Golden <- function(data, formula, xvarinf=NULL, weight=NULL,
   }
   if (!is.null(xvarinf)){
     lambda0 <- (length(pos0)-sum((parg/(uj+parg))^parg))/N
-    if (lambda0 <= 0) {
+    if (lambda0<=0){
       lambdag <- rep(0, ncol(G))
     }
-    else {
+    else{
       lambda0 <- log(lambda0/(1-lambda0))
-      lambdag <- rbind(lambda0, rep(0,ncol(G)-1))
+      lambdag <- c(lambda0, rep(0, ncol(G)-1)) #flag
     }
     pargg <- parg
     ujg <- uj
@@ -352,7 +352,7 @@ Golden <- function(data, formula, xvarinf=NULL, weight=NULL,
         lambda0 <- (length(pos0)-sum((parg/(uj+parg))^parg))/N
         if (lambda0>0){
           lambda0 <- log(lambda0/(1-lambda0))
-          lambda <- rbind(lambda0, rep(0, ncol(G)-1))
+          lambda <- c(lambda0, rep(0, ncol(G)-1)) #flag
           njl <- G%*%lambda
         }
         zk <- 1/(1+exp(-njl)*(par/(par+uj))^par)
