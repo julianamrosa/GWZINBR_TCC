@@ -20,6 +20,7 @@ gwzinbr(data = korea_base_artigo,
         model = "zinb", distancekm = TRUE, h=82, force=TRUE)
 endTime <- Sys.time()
 endTime-startTime
+#1.4 min
 
 ## FIXED ##
 

@@ -72,7 +72,7 @@ gwzinbr <- function(data, formula, xvarinf=NULL, weight=NULL,
         hessg <- sum(trigamma(parg+y)-trigamma(parg)+1/parg-2/(parg+uj)+(y+parg)/(parg+uj)^2)
         hessg <- ifelse(hessg==0, E^-23, hessg)
         par0 <- parg
-        parg <- par0-as.vector(solve(hessg))*gf
+        parg <- par0-as.vector(solve(hessg, tol=E^-60))*gf
         if (parg>E^5){
           dpar <- 0.0001
           cont3 <- cont3+1
@@ -104,11 +104,11 @@ gwzinbr <- function(data, formula, xvarinf=NULL, weight=NULL,
       Ai <- (uj/(1+alphag*uj))+(y-uj)*(alphag*uj/(1+2*alphag*uj+alphag^2*uj*uj))
       Ai <- ifelse(Ai<=0,E^-5,Ai)
       zj <- nj+(y-uj)/(Ai*(1+alphag*uj))-Offset
-      if (det(t(x)%*%(Ai*x))==0) {
+      if (det(t(x)%*%(Ai*x))<E^-60) {
         bg <- rep(0,ncol(x))
       } 
       else{
-        bg <- solve(t(x)%*%(Ai*x))%*%t(x)%*%(Ai*zj)
+        bg <- solve(t(x)%*%(Ai*x), tol=E^-60)%*%t(x)%*%(Ai*zj)
       }
       nj <- as.vector(x%*%bg+Offset)
       nj <- ifelse(nj>700,700,nj)
@@ -139,7 +139,7 @@ gwzinbr <- function(data, formula, xvarinf=NULL, weight=NULL,
     }
     else{
       message("NOTE: Expected number of zeros (", round(sum((parg/(uj+parg))^parg), 2), 
-          ") < number of zeros (", length(pos0), "). Zero Model Used.")
+              ") < number of zeros (", length(pos0), "). Zero Model Used.")
       lambda0 <- log(lambda0/(1-lambda0))
       lambdag <- rbind(lambda0, rep(0, ncol(G)-1))
     }
@@ -193,7 +193,7 @@ gwzinbr <- function(data, formula, xvarinf=NULL, weight=NULL,
           hessg <- sum((1-zkg)*(trigamma(parg+y)-trigamma(parg)+1/parg-2/(parg+uj)+(y+parg)/(parg+uj)^2))
           hessg <- ifelse(hessg==0, E^-23, hessg)
           par0 <- parg
-          parg <- as.vector(par0-solve(hessg)%*%gf)
+          parg <- as.vector(par0-solve(hessg, tol=E^-60)%*%gf)
           if ( aux2 > 50 |parg > E^5) {
             dpar <- 0.0001
             cont3 <- cont3+1
@@ -230,11 +230,11 @@ gwzinbr <- function(data, formula, xvarinf=NULL, weight=NULL,
         Ai <- ifelse(Ai<=0, E^-5, Ai)
         uj <- ifelse(uj<E^-150, E^-150, uj)
         zj <- (nj+(y-uj)/(((uj/(1+alphag*uj)+(y-uj)*(alphag*uj/(1+2*alphag*uj+alphag^2*uj^2))))*(1+alphag*uj)))-Offset
-        if (det(t(x)%*%(Ai*x))==0){
+        if (det(t(x)%*%(Ai*x))<E-60){
           bg <- rep(0, nvar)
         }
         else{
-          bg <- solve(t(x)%*%(Ai*x))%*%t(x)%*%(Ai*zj)
+          bg <- solve(t(x)%*%(Ai*x), tol=E^-60)%*%t(x)%*%(Ai*zj)
         }
         nj <- x%*%bg+Offset
         nj <- ifelse(nj>700, 700, nj)
@@ -261,11 +261,11 @@ gwzinbr <- function(data, formula, xvarinf=NULL, weight=NULL,
         Ai <- as.vector(pig*(1-pig))
         Ai <- ifelse(Ai<=0, E^-5, Ai)
         zj <- njl+(zkg-pig)*1/Ai
-        if(det(t(G)%*%(Ai*G))==0){ 
+        if(det(t(G)%*%(Ai*G))<E^-60){ 
           lambdag <- matrix(0, ncol(G), 1)
         }  
         else {
-          lambdag <- solve(t(G)%*%(Ai*G))%*%t(G)%*%(Ai*zj)
+          lambdag <- solve(t(G)%*%(Ai*G), tol=E^-60)%*%t(G)%*%(Ai*zj)
         }
         njl <- G%*%lambdag
         njl <- ifelse(njl > maxg, maxg, njl)
@@ -314,9 +314,9 @@ gwzinbr <- function(data, formula, xvarinf=NULL, weight=NULL,
   else if(any(lambdag)== 0 & alphag==E^-6){
     II <- II[2:(ncol(x)+1), 2:(ncol(x)+1)]
   }
-  varabetalambdag <- diag(solve(II))
+  varabetalambdag <- diag(solve(II, tol=E^-60))
   stdabetalambdag <- sqrt(abs(varabetalambdag))
-  varcovg <- solve(II)
+  varcovg <- solve(II, tol=E^-60)
   ##################
   output <- append(output, list(h))
   names(output)[length(output)] <- "bandwidth"
@@ -349,12 +349,12 @@ gwzinbr <- function(data, formula, xvarinf=NULL, weight=NULL,
   #### calculating distance ####
   sequ <- 1:N
   for (i in 1:mm){
-      seqi <- rep(i, N)
-      dx <- sp::spDistsN1(COORD, COORD[i,])
-      distan <- cbind(seqi, sequ, dx)
-      if (distancekm){
-        distan[,3] <- distan[,3]*111
-      }
+    seqi <- rep(i, N)
+    dx <- sp::spDistsN1(COORD, COORD[i,])
+    distan <- cbind(seqi, sequ, dx)
+    if (distancekm){
+      distan[,3] <- distan[,3]*111
+    }
     u <- nrow(distan)
     w <- rep(0, u)
     for(jj in 1:u){
@@ -442,7 +442,7 @@ gwzinbr <- function(data, formula, xvarinf=NULL, weight=NULL,
           hess <- sum(w*wt*(1-zk)*(trigamma(par+y)-trigamma(par)+1/par-2/(par+uj)+(y+par)/(par+uj)^2))
           hess <- ifelse(hess == 0, E^-23, hess)
           par0 <- par
-          par <- as.vector(par0 - solve(hess)%*%gf)
+          par <- as.vector(par0 - solve(hess, tol=E^-60)%*%gf)
           dpar <- par - par0
           if (par >= E^6){
             par <- E^6
@@ -492,7 +492,7 @@ gwzinbr <- function(data, formula, xvarinf=NULL, weight=NULL,
         denz <- (((uj/(1+alpha*uj)+(y-uj)*(alpha*uj/(1+2*alpha*uj+alpha^2*uj^2))))*(1+alpha*uj))
         denz <- ifelse(denz == 0, E^-5, denz)
         zj <- (nj+(y-uj)/denz)-Offset
-        if(det(t(x) %*% (w*Ai*x*wt)) == 0){
+        if(det(t(x) %*% (w*Ai*x*wt))<E^-60){
           b <- matrix(0, nvar, 1)
         } 
         else {
@@ -551,12 +551,14 @@ gwzinbr <- function(data, formula, xvarinf=NULL, weight=NULL,
             Aii <- as.vector(pi*(1-pi))
             Aii <- ifelse(Aii<=0, E^-5, Aii)
             zj <- njl+(zk-pi)/Aii
-            if (det(t(G*Aii*w*wt)%*%G)==0){
+            if(i==1 & aux3==1){print(lambda)}
+            if (det(t(G*Aii*w*wt)%*%G)<E^-60){
               lambda <- matrix(0, ncol(G), 1)
             }
             else{
               lambda <- solve(t(G*Aii*w*wt)%*%G, tol=E^-60)%*%t(G*Aii*w*wt)%*%zj
             }
+            if(i==1 & aux3==1){print(lambda)}
             njl <- G%*%lambda
             njl <- ifelse(njl>maxg, maxg, njl)
             njl <- ifelse(njl<(-maxg), -maxg, njl)
@@ -585,15 +587,15 @@ gwzinbr <- function(data, formula, xvarinf=NULL, weight=NULL,
       j <- j+1
     }
     #### computing variance of beta and lambda ####
-    if (det(t(x)%*%(w*Ai*x*wt))==0){
-      C <- matrix(0, ncol(x),nrow(x)) 
+    if (det(t(x)%*%(w*Ai*x*wt))<E^-60){ #esse e o anterior mudaram os valores para pior
+      C <- matrix(0, ncol(x),nrow(x))
     }
     else{
       C <- t(t(solve(t(x)%*%(w*Ai*x*wt), tol=E^-60)%*%t(x))*(w*Ai*wt))
     }
     Ci <- matrix(0, ncol(G), 1)
     if (model == "zip" || model == "zinb"){
-      if (det(t(G)%*%(w*Aii*G*wt))==0){
+      if (det(t(G)%*%(w*Aii*G*wt))<E^-60){
         Ci <- matrix(0, ncol(G), nrow(G))
       }
       else{
@@ -608,9 +610,9 @@ gwzinbr <- function(data, formula, xvarinf=NULL, weight=NULL,
     hgx <- exp(njl)+g1x^par
     hgx <- ifelse(hgx > E^10, E^10, hgx)
     daa <- as.vector(w*wt*(zk*((g1x^par*(log(g1x)+g2x))^2*(1-1/hgx)/hgx+g1x^par*(g2x^2/par)/hgx)+
-                   (1-zk)*(trigamma(par+y)-trigamma(par)-2/(uj+par)+1/par+(y+par)/(uj+par)^2)))
+                             (1-zk)*(trigamma(par+y)-trigamma(par)-2/(uj+par)+1/par+(y+par)/(uj+par)^2)))
     dab <- as.vector(w*wt*(zk*(g1x^(2*par + 1)*uj*(log(g1x) + g2x) / hgx^2 - g1x^par * (-g2x^2+par*g2x*(log(g1x) + g2x)) / hgx) + 
-                   (1-zk) * (g2x*(y-uj) / (uj+par))))
+                             (1-zk) * (g2x*(y-uj) / (uj+par))))
     dal <- as.vector(-w*wt*zk*(exp(njl)*g1x^par*(log(g1x)+g2x) / hgx^2))
     daa <- daa*par^4
     dab <- dab*par^2
@@ -621,7 +623,7 @@ gwzinbr <- function(data, formula, xvarinf=NULL, weight=NULL,
     exphx <- ifelse(exphx>E^90, E^90, exphx) 
     dll <- as.vector(w*wt*(Iy*(exp(njl)*g1x^par/hgx^2)-exp(njl)/(exphx)^2))
     dbb <- as.vector(sqrt(w)*wt*(Iy*(-(par*g1x^par*g2x/hgx)^2+par^2*g1x^par*g2x^2*(1 - 1/uj)/hgx) - 
-                         (1 - Iy)*(par*g2x*(1 + (y-uj)/(par+uj)))))
+                                   (1 - Iy)*(par*g2x*(1 + (y-uj)/(par+uj)))))
     dlb <- as.vector(w*wt*Iy*(par*exp(njl)*g1x^par*g2x/hgx^2))
     dll <- ifelse(is.na(dll), E^100, dll)
     daa <- ifelse(is.na(daa), E^100, daa)
@@ -635,7 +637,7 @@ gwzinbr <- function(data, formula, xvarinf=NULL, weight=NULL,
     }
     else if(any(lambda)==0){
       dbb <- as.vector(w*wt*(Iy*(-(par*g1x^par*g2x/hgx)^2 + par^2*g1x^par*g2x^2*(1 - 1/uj)/hgx)-(1 - Iy)*(par*g2x*(1 + (y-uj) / (par+uj)))))
-      if(det(t(x*dbb*dbb/Ai) %*% x)==0){
+      if(det(t(x*dbb*dbb/Ai) %*% x)<E^-60){
         II <- rbind(
           cbind(-(t(I1*daa))%*%I1, -(t(I1*dab))%*%x, -(t(I1*dal))%*%G),
           cbind(-t(x)%*%(dab*I1), -(t(x*dbb)%*%x), -t(x*dlb)%*%G),
@@ -645,7 +647,7 @@ gwzinbr <- function(data, formula, xvarinf=NULL, weight=NULL,
       else{
         II <- rbind(
           cbind(-t(I1*daa)%*%I1, -t(I1*dab)%*%x, -t(I1*dal)%*%G),
-          cbind(-t(x)%*%(dab*I1), -(t(x*dbb)%*%x)%*%solve(t(x*dbb*dbb/Ai)%*%x)%*%t(x*dbb)%*%x, -(t(x*dlb)%*%G)),
+          cbind(-t(x)%*%(dab*I1), -(t(x*dbb)%*%x)%*%solve(t(x*dbb*dbb/Ai)%*%x, tol=E^-60)%*%t(x*dbb)%*%x, -(t(x*dlb)%*%G)),
           cbind(-t(G)%*%(dal*I1), -t(G)%*%(x*dlb), -t(G*dll)%*%G)      
         )   
       }
@@ -666,26 +668,28 @@ gwzinbr <- function(data, formula, xvarinf=NULL, weight=NULL,
     else if (any(lambda) == 0 & alpha == E^-6){
       II <- II[2:(ncol(x)+1), 2:(ncol(x)+1)]
     }
-    if (det(II) == 0) {
-      if (all(lambda) > 0 & alpha == E^-6) {
+    if (det(II)<E^-60){
+      # print(lambda)
+      # print(alpha)
+      if (all(lambda) > 0 & alpha == E^-6){
         II <- II[1:ncol(x), 1:ncol(x)]
-        if (det(II) == 0) {
+        if (det(II) == 0){
           varabetalambda <- rbind(matrix(0, nrow(II), 1), matrix(0, ncol(G), 1))
         } 
-        else {
+        else{
           varabetalambda <- rbind(diag(solve(II, tol=E^-60)), matrix(0, ncol(G), 1))
         }
       } 
-      else if (any(lambda) == 0 & alpha == E^-6) {
+      else if (any(lambda) == 0 & alpha == E^-6){
         II <- II[1:ncol(x), 1:ncol(x)]
         if (det(II) == 0) {
           varabetalambda <- rbind(matrix(0, nrow(II), 1), matrix(0, ncol(G), 1))
         } 
-        else {
+        else{
           varabetalambda <- rbind(diag(solve(II,tol=E^-60)), matrix(0, ncol(G), 1))
         }
-      } 
-      else {
+      }
+      else{
         II <- II[1:(ncol(x)+1), 1:(ncol(x)+1)]
         if (det(II) == 0) {
           varabetalambda <- rbind(matrix(0, nrow(II), 1), matrix(0, ncol(G), 1))
@@ -766,7 +770,7 @@ gwzinbr <- function(data, formula, xvarinf=NULL, weight=NULL,
         BB[m1:m2, ] <- matrix(0, ncol(x), nrow(x))
       }
       else{
-        BB[m1:m2, ] <- t(t(solve(t(CCC[, 1:ncol(x)])%*%(CCC[, ncol(CCC)-1]*CCC[, 1:ncol(x)]*CCC[, ncol(CCC)]))%*%t(CCC[, 1:ncol(x)]))*(CCC[, ncol(CCC)-1]*CCC[, ncol(CCC)]))
+        BB[m1:m2, ] <- t(t(solve(t(CCC[, 1:ncol(x)])%*%(CCC[, ncol(CCC)-1]*CCC[, 1:ncol(x)]*CCC[, ncol(CCC)]), tol=E^-60)%*%t(CCC[, 1:ncol(x)]))*(CCC[, ncol(CCC)-1]*CCC[, ncol(CCC)]))
       }
       if (model == "zip" || model == "zinb"){
         CCCl <- cbind(G, w, wt)
@@ -777,7 +781,7 @@ gwzinbr <- function(data, formula, xvarinf=NULL, weight=NULL,
           BBl[m1:m2, ] <- matrix(0, ncol(G), nrow(G))
         }
         else{
-          BBl[m1:m2, ] <- t(t(solve(t(CCCl[, 1:ncol(G)])%*%(CCCl[, ncol(CCCl)-1] * CCCl[, 1:ncol(G)]*CCCl[, ncol(CCCl)]))%*%t(CCCl[, 1:ncol(G)]))*(CCCl[, ncol(CCCl)-1]*CCCl[, ncol(CCCl)]))
+          BBl[m1:m2, ] <- t(t(solve(t(CCCl[, 1:ncol(G)])%*%(CCCl[, ncol(CCCl)-1] * CCCl[, 1:ncol(G)]*CCCl[, ncol(CCCl)]), tol=E^-60)%*%t(CCCl[, 1:ncol(G)]))*(CCCl[, ncol(CCCl)-1]*CCCl[, ncol(CCCl)]))
         }
       }
     }
@@ -807,6 +811,8 @@ gwzinbr <- function(data, formula, xvarinf=NULL, weight=NULL,
     rsqr2 <- ym-sum((y*wt)^2)/sum(wt)
     rsqr <- 1-rsqr1/rsqr2
     rsqradj <- 1-((N-1)/(N-v1))*(1-rsqr)
+    # print(rsqr1)
+    # print(v1)
     sigma2 <- N*rsqr1/((N-v1)*sum(wt))
     root_mse <- sqrt(sigma2)
     measures <- c(sigma2, root_mse, v1, nparmodel, v2)
@@ -1176,7 +1182,7 @@ gwzinbr <- function(data, formula, xvarinf=NULL, weight=NULL,
     AIC <- 2*p-2*ll
     AICc <- AIC+2*(p*(p+1)/(N-p-1))
     llnull1 <- sum(-log(1+zkg[pos0])+log(zkg[pos0]+
-                                             (parg/(parg+y[pos0]))^parg))+
+                                           (parg/(parg+y[pos0]))^parg))+
       sum(-log(1+zkg[pos1])+lgamma(parg+y[pos1])-
             lgamma(y[pos1]+1)-lgamma(parg)+
             y[pos1]*log(y[pos1]/(parg+y[pos1]))+
@@ -1209,7 +1215,7 @@ gwzinbr <- function(data, formula, xvarinf=NULL, weight=NULL,
             lgamma(parg+y[pos1])-lgamma(y[pos1]+1)-
             lgamma(parg)+y[pos1]*log(exp(x[pos1, ]%*%bg+
                                            Offset[pos1])/(parg+exp(x[pos1, ]%*%bg+
-                                                                       Offset[pos1])))+
+                                                                     Offset[pos1])))+
             parg*log(parg/(parg+exp(x[pos1, ]%*%bg+Offset[pos1]))))
     llnull1 <- sum(-log(1+zkg)+log(zkg+pos0xl))+
       sum(-log(1+zkg)+lgamma(parg+y[pos1])-
