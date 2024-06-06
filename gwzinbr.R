@@ -17,7 +17,8 @@ gwzinbr <- function(data, formula, xvarinf=NULL, weight=NULL,
   x <- model.matrix(mt, mf)
   if (is.null(xvarinf)){
     G <- matrix(1, N, 1)
-    lambdag <- matrix(0, ncol(G), 1)
+    #lambdag <- matrix(0, ncol(G), 1)
+    lambdag <- rep(0, ncol(G)) #flag
   }
   else{
     G <- as.matrix(data[, xvarinf])
@@ -141,7 +142,8 @@ gwzinbr <- function(data, formula, xvarinf=NULL, weight=NULL,
       message("NOTE: Expected number of zeros (", round(sum((parg/(uj+parg))^parg), 2), 
               ") < number of zeros (", length(pos0), "). Zero Model Used.")
       lambda0 <- log(lambda0/(1-lambda0))
-      lambdag <- rbind(lambda0, rep(0, ncol(G)-1))
+      #lambdag <- rbind(lambda0, rep(0, ncol(G)-1))
+      lambdag <- c(lambda0, rep(0, ncol(G)-1)) #flag
     }
     pargg <- parg
     ujg <- uj
@@ -262,10 +264,11 @@ gwzinbr <- function(data, formula, xvarinf=NULL, weight=NULL,
         Ai <- ifelse(Ai<=0, E^-5, Ai)
         zj <- njl+(zkg-pig)*1/Ai
         if(det(t(G)%*%(Ai*G))<E^-60){ 
-          lambdag <- matrix(0, ncol(G), 1)
+          #lambdag <- matrix(0, ncol(G), 1)
+          lambdag <- rep(0, ncol(G)) #flag
         }  
-        else {
-          lambdag <- solve(t(G)%*%(Ai*G), tol=E^-60)%*%t(G)%*%(Ai*zj)
+        else{
+          lambdag <- as.vector(solve(t(G)%*%(Ai*G), tol=E^-60)%*%t(G)%*%(Ai*zj)) #flag
         }
         njl <- G%*%lambdag
         njl <- ifelse(njl > maxg, maxg, njl)
@@ -467,7 +470,7 @@ gwzinbr <- function(data, formula, xvarinf=NULL, weight=NULL,
           b <- bg
           uj <- exp(x%*%b+Offset)
           lambda <- lambdag
-          njl <- G %*% lambda
+          njl <- G%*%lambda
           njl <- ifelse(njl>maxg, maxg, njl)
           njl <- ifelse(njl<(-maxg),-maxg,njl)
           zk <- 1/(1+exp(-njl)*(parg/(parg+uj))^parg)
@@ -503,8 +506,8 @@ gwzinbr <- function(data, formula, xvarinf=NULL, weight=NULL,
         nj <- ifelse(nj<(-700), -700, nj)
         uj <- exp(nj)
         olddev <- dev
-        uj <- ifelse(uj > E^10, E^10, uj)
-        uj <- ifelse(uj == 0, E^10, uj)
+        uj <- ifelse(uj>E^10, E^10, uj)
+        uj <- ifelse(uj==0, E^10, uj)
         if (par == E^6){
           gamma1 <- (uj/(uj+par))^y*exp(-uj)
         } 
@@ -551,14 +554,12 @@ gwzinbr <- function(data, formula, xvarinf=NULL, weight=NULL,
             Aii <- as.vector(pi*(1-pi))
             Aii <- ifelse(Aii<=0, E^-5, Aii)
             zj <- njl+(zk-pi)/Aii
-            if(i==1 & aux3==1){print(lambda)}
             if (det(t(G*Aii*w*wt)%*%G)<E^-60){
               lambda <- matrix(0, ncol(G), 1)
             }
             else{
               lambda <- solve(t(G*Aii*w*wt)%*%G, tol=E^-60)%*%t(G*Aii*w*wt)%*%zj
             }
-            if(i==1 & aux3==1){print(lambda)}
             njl <- G%*%lambda
             njl <- ifelse(njl>maxg, maxg, njl)
             njl <- ifelse(njl<(-maxg), -maxg, njl)
@@ -669,33 +670,31 @@ gwzinbr <- function(data, formula, xvarinf=NULL, weight=NULL,
       II <- II[2:(ncol(x)+1), 2:(ncol(x)+1)]
     }
     if (det(II)<E^-60){
-      # print(lambda)
-      # print(alpha)
       if (all(lambda) > 0 & alpha == E^-6){
         II <- II[1:ncol(x), 1:ncol(x)]
-        if (det(II) == 0){
-          varabetalambda <- rbind(matrix(0, nrow(II), 1), matrix(0, ncol(G), 1))
+        if (det(II)<E^-60){
+          varabetalambda <- c(matrix(0, nrow(II), 1), matrix(0, ncol(G), 1))
         } 
         else{
-          varabetalambda <- rbind(diag(solve(II, tol=E^-60)), matrix(0, ncol(G), 1))
+          varabetalambda <- c(diag(solve(II, tol=E^-60)), matrix(0, ncol(G), 1))
         }
       } 
       else if (any(lambda) == 0 & alpha == E^-6){
         II <- II[1:ncol(x), 1:ncol(x)]
-        if (det(II) == 0) {
-          varabetalambda <- rbind(matrix(0, nrow(II), 1), matrix(0, ncol(G), 1))
+        if (det(II)<E^-60) {
+          varabetalambda <- c(matrix(0, nrow(II), 1), matrix(0, ncol(G), 1))
         } 
         else{
-          varabetalambda <- rbind(diag(solve(II,tol=E^-60)), matrix(0, ncol(G), 1))
+          varabetalambda <- c(diag(solve(II,tol=E^-60)), matrix(0, ncol(G), 1))
         }
       }
       else{
         II <- II[1:(ncol(x)+1), 1:(ncol(x)+1)]
-        if (det(II) == 0) {
-          varabetalambda <- rbind(matrix(0, nrow(II), 1), matrix(0, ncol(G), 1))
+        if (det(II)<E^-60) {
+          varabetalambda <- c(matrix(0, nrow(II), 1), matrix(0, ncol(G), 1))
         } 
         else {
-          varabetalambda <- rbind(diag(solve(II, tol=E^-60)), matrix(0, ncol(G), 1))
+          varabetalambda <- c(diag(solve(II, tol=E^-60)), matrix(0, ncol(G), 1))
         }
       }
     }
@@ -718,14 +717,16 @@ gwzinbr <- function(data, formula, xvarinf=NULL, weight=NULL,
     }
     else if (any(lambda) == 0 & alpha > E^-6) {
       varb <- varabetalambda[2:(ncol(x)+1)]
-      varl <- matrix(0, ncol(G), 1)
+      #varl <- matrix(0, ncol(G), 1)
+      varl <- rep(0, ncol(G))
       alphai[i, 1] <- i
       alphai[i, 2] <- alpha
       alphai[i, 3] <- sqrt(abs(varabetalambda[1]))
     }
     else if (any(lambda) == 0 & alpha == E^-6) {
       varb <- varabetalambda[1:ncol(x)]
-      varl <- matrix(0, ncol(G), 1)
+      #varl <- matrix(0, ncol(G), 1)
+      varl <- rep(0, ncol(G))
       alphai[i, 1] <- i
       alphai[i, 2] <- alpha
       alphai[i, 3] <- sqrt(1/abs(-(t(I1*daa))%*%I1))
@@ -759,6 +760,10 @@ gwzinbr <- function(data, formula, xvarinf=NULL, weight=NULL,
       ri <- G[i, ]%*%Ci
       Si[i] <- ri[i]
       yhat2[i] <- uj[i]
+      if (i==94){
+        print(uj)
+        print(njl)
+      }
       yhat[i] <- (uj*(1-exp(njl)/(1+exp(njl))))[i]
     }
     #### creating non-stationarity matrix ####
@@ -766,7 +771,7 @@ gwzinbr <- function(data, formula, xvarinf=NULL, weight=NULL,
       CCC <- cbind(x, w, wt)
       m1 <- (i-1)*ncol(x)+1
       m2 <- m1 + (ncol(x)-1)
-      if(det(t(CCC[, 1:ncol(x)])%*%(CCC[, ncol(CCC)-1]*CCC[, 1:ncol(x)]*CCC[, ncol(CCC)])) == 0){
+      if(det(t(CCC[, 1:ncol(x)])%*%(CCC[, ncol(CCC)-1]*CCC[, 1:ncol(x)]*CCC[, ncol(CCC)]))<E-60){
         BB[m1:m2, ] <- matrix(0, ncol(x), nrow(x))
       }
       else{
@@ -777,7 +782,7 @@ gwzinbr <- function(data, formula, xvarinf=NULL, weight=NULL,
         m1 <- (i-1)*ncol(G)+1
         m2 <- m1+(ncol(G)-1)
         
-        if (det(t(CCCl[, 1:ncol(G)])%*%(CCCl[, ncol(CCCl)-1]*CCCl[, 1:ncol(G)]*CCCl[, ncol(CCCl)])) == 0) {
+        if (det(t(CCCl[, 1:ncol(G)])%*%(CCCl[, ncol(CCCl)-1]*CCCl[, 1:ncol(G)]*CCCl[, ncol(CCCl)]))<E-60) {
           BBl[m1:m2, ] <- matrix(0, ncol(G), nrow(G))
         }
         else{
@@ -805,6 +810,7 @@ gwzinbr <- function(data, formula, xvarinf=NULL, weight=NULL,
     if (v11 < v2){
       v1 <- v11
     }
+    #print(yhat)
     res <- y-yhat
     rsqr1 <- t(res*wt)%*%res
     ym <- t(y*wt)%*%y
