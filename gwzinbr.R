@@ -571,7 +571,13 @@ gwzinbr <- function(data, formula, xvarinf=NULL, weight=NULL,
           }
         }
       }
+      # if (i==94 & j==13){
+      #   print(lambda)
+      # }
       njl <- G%*%lambda
+      if (i==94 & j==13){
+        print(sum(njl))
+      }
       njl <- ifelse(njl>maxg, maxg, njl)
       njl <- ifelse(njl<(-maxg), -maxg, njl)
       zk <- 1/(1+exp(-njl)*(par/(par+uj))^par)
@@ -760,10 +766,10 @@ gwzinbr <- function(data, formula, xvarinf=NULL, weight=NULL,
       ri <- G[i, ]%*%Ci
       Si[i] <- ri[i]
       yhat2[i] <- uj[i]
-      if (i==94){
-        print(uj)
-        print(njl)
-      }
+      # if (i==94){
+      #   print(uj)
+      #   print(njl)
+      # }
       yhat[i] <- (uj*(1-exp(njl)/(1+exp(njl))))[i]
     }
     #### creating non-stationarity matrix ####
