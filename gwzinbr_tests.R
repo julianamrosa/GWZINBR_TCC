@@ -30,7 +30,7 @@ gwzinbr(data = korea_base_artigo,
         formula = n_covid1~Morbidity+high_sch_p+Healthcare_access+
           diff_sd+Crowding+Migration+Health_behavior,
         xvarinf = "Healthcare_access",
-        lat = "x", long = "y", offset = "ln_total", method = "fixed_g",
+        lat = "y", long = "x", offset = "ln_total", method = "fixed_g",
         model = "zinb", distancekm = TRUE, h=226.73, force=TRUE)
 endTime <- Sys.time()
 endTime-startTime
@@ -72,17 +72,17 @@ endTime-startTime
 
 ## ADAPTIVE ##
 
-#Teste 5
+#Teste 5 - plano B
 startTime <- Sys.time()
 gwzinbr(data = korea_base_artigo, 
         formula = n_covid1~Morbidity+high_sch_p+Healthcare_access+
           diff_sd+Crowding+Migration+Health_behavior,
-        xvarinf = "Healthcare_access",
-        lat = "x", long = "y", offset = "ln_total", method = "adaptive_bsq",
-        model = "zinb", distancekm = TRUE, h=230, force=TRUE)
+        xvarinf = "Crowding",
+        lat = "y", long = "x", offset = "ln_total", method = "adaptive_bsq",
+        model = "zinb", distancekm = TRUE, h=79, force=TRUE)
 endTime <- Sys.time()
 endTime-startTime
-#1.1 min
+#2.4 mins
 
 #Teste 6
 startTime <- Sys.time()
