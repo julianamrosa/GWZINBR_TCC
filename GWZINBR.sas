@@ -562,26 +562,26 @@
 					uj=exp(nj);
 
 					contador5=0;
+					*if i=21 & contador4=1 then print (sum(uj));
 					do while (abs(ddev)>0.000001 & aux1<100);
 						contador5=contador5+1;
-						*if i=1 & contador5=1 & contador4=1 then print uj;
+						*if i=21 & contador4=1 & contador5=4 then print (sum(uj));
 						uj=choose(uj>1E100, 1E100, uj);
+						*if i=21 & contador4=1 & contador5=4 then print (sum(zk)) (sum(uj)) (sum(alpha));
 						Ai=(1-zk)#((uj/(1+alpha*uj)+(y-uj)#(alpha*uj/(1+2*alpha*uj+alpha**2*uj##2))));
+						*if i=21 & contador4=1 & contador5=4 then print (sum(Ai));
 						Ai=choose(Ai<=0, 1E-5, Ai);
 						uj=choose(uj<1E-150, 1E-150, uj);
-						*if i=1 & contador5=1 & contador4=1 then print alpha;
 						denz=(((uj/(1+alpha*uj)+(y-uj)#(alpha*uj/(1+2*alpha*uj+alpha**2*uj##2))))#(1+alpha*uj));
 						denz=choose(denz=0, 1E-5, denz);
-						*if i=1 & contador5=1 & contador4=1 then print denz;
 						zj=(nj+(y-uj)/denz)-offset;
-
+						*if i=21 & contador4=1 & contador5=4 then print (sum(x`*(w#Ai#x#wt)));
 						if det(x`*(w#Ai#x#wt))=0 then
 							b=j(nvar, 1, 0);
 						else do;
-							*if i=1 & contador5=1 & contador4=1 then print zj;
 							b=inv(x`*(w#Ai#x#wt))*x`*(w#Ai#wt#zj);
 						end;
-						*if i=128 & contador5=1 & contador4=1 then print b;
+						*if i=21 & contador5=1 & contador4=4 then print b;
 						nj=x*b+offset;
 						*if i=128 & contador5=1 & contador4=1 then print (sum(nj));
 						nj=choose(nj>700, 700, nj);
@@ -591,7 +591,7 @@
 						*if i=128 & contador5=1 & contador4=1 then print (sum(uj));
 						*if i=128 & contador4=1 then print (sum(uj));
 						olddev=dev;
-						*if i=152 & contador4=1 & contador5=1 then print nj;
+						*if i=21 & contador4=1 & contador5=1 then print (sum(uj));
 						uj=choose(uj>1E10, 1E10, uj);
 						uj=choose(uj=0, 1E-10, uj);
 						*if i=152 & contador4=1 & contador5=1 then print (sum(uj));
@@ -603,7 +603,7 @@
 							gamma1=/*(gamma(par+y)/(gamma(y+1)#gamma(par)))#*/(uj/(uj+par))##y#(par/(uj+par))##par;
 						*if i=128 & contador4=1 & contador5=6 then print gamma1;
 						gamma1=choose(gamma1<=0, 1E-10, gamma1);
-						*if i=128 & contador4=1 & contador5=6 then print zk gamma1;
+						*if i=152 & contador4=1 & contador5=5 then print dev gamma1;
 						dev=sum((1-zk)#(log(gamma1)));
 						*if i=128 & contador4=1 & contador5=6 then print olddev dev;
 						ddev=dev-olddev;
@@ -715,7 +715,7 @@ nrow(lambdatemp)>ncol(unique(lambdatemp))then
 					%IF %UPCASE(&METHOD)=FIXED_G or %UPCASE(&METHOD)=FIXED_BSQ or 
 						%UPCASE(&METHOD)=ADAPTIVE_BSQ %THEN
 							%DO;
-							*if i=152 then print (uj[i]);
+							*if i=21 then print (uj[i]);
 							yhat[i]=uj[i];
 							pihat[i]=njl[i];
 							alphai[i]=alpha;
@@ -789,6 +789,7 @@ y[pos1]#log(y[pos1]/(_par_[pos1]+y[pos1]))+_par_[pos1]#log(_par_[pos1]/(_par_[po
 											%DO;
 												AIC=2*(npar+npar/(ncol(x)+ncol(G)))-2*ll;
 												AICc=AIC+2*((npar+npar/(ncol(x)+ncol(G)))*((npar+npar/(ncol(x)+ncol(G)))+1)/(n-(npar+npar/(ncol(x)+ncol(G)))-1));
+												*print AIC AICc npar (ncol(G));
 											%END;
 								%END;
 							%END;
@@ -1147,6 +1148,7 @@ y[pos1]#log(y[pos1, ]/(_par_[pos1]+y[pos1,
 							end;
 							alphag=1/parg;
 						%END;
+						*print alphag;
 					devg=0;
 					ddev=1;
 					cont2=0;
@@ -1425,7 +1427,6 @@ y[pos1]#log(y[pos1, ]/(_par_[pos1]+y[pos1,
 							%END;
 					%END;
 				read all var{&LONG &LAT} into COORD;
-
 				%if &grid=%then
 					%do;
 						read all var{&LONG &LAT} into POINTS;
@@ -1643,8 +1644,9 @@ y[pos1]#log(y[pos1, ]/(_par_[pos1]+y[pos1,
 				dllike=1;
 				llike=0;
 				j=1;
-
+				*if i=1 then print par;
 				do while (abs(dllike)>0.00001 & j<=600);
+				*if i=1 then print dllike;
 					ddpar=1;
 					*do while (abs(ddpar)>0.000001);
 					dpar=1;
@@ -1684,10 +1686,14 @@ y[pos1]#log(y[pos1, ]/(_par_[pos1]+y[pos1,
 							do while (abs(dpar)>0.000001 & aux2<200);
 								par=choose(par<1E-10, 1E-10, par);
 								gf=sum(w#wt#(1-zk)#(digamma(par+y)-digamma(par)+log(par)+1-log(par+uj)-(par+y)/(par+uj)));
+								*if i=1 & j=1 & aux2=1 then print (sum(w)) (sum(zk)) (sum(uj));
 								hess=sum(w#wt#(1-zk)#(trigamma(par+y)-trigamma(par)+1/par-2/(par+uj)+(y+par)/(par+uj)##2));
+								*if i=1 & j=1 & aux2=1 then print hess;
 								hess=choose(hess=0, 1E-23, hess);
 								par0=par;
+								*if i=1 & j=1 & aux2=1 then print hess;
 								par=par0-inv(hess)*gf;
+								*if i=1 & j=1 & aux2=1 then print par;
 								dpar=par-par0;
 
 								if par>=1E6 then
@@ -1729,6 +1735,7 @@ y[pos1]#log(y[pos1, ]/(_par_[pos1]+y[pos1,
 							alpha=1/par;
 							*print i j b lambda par alpha aux2;
 						%END;
+					*if i=244 then print lambda;
 					dev=0;
 					ddev=1;
 					nj=x*b+offset;
@@ -1756,7 +1763,7 @@ y[pos1]#log(y[pos1, ]/(_par_[pos1]+y[pos1,
 						olddev=dev;
 						uj=choose(uj>1E10, 1E10, uj);
 						uj=choose(uj=0, 1E-10, uj);
-
+						*if i=1 & j=1 & aux1=1 then print (sum(uj)) par;
 						if par=1E6 then
 							gamma1=/*(gamma(par+y)/(gamma(y+1)#gamma(par)))#*/(uj/(uj+par))##y#exp(-uj);
 						else
@@ -1786,6 +1793,8 @@ y[pos1]#log(y[pos1, ]/(_par_[pos1]+y[pos1,
 							alphatemp=round(alphatemp, 0.0000001);
 							lambdatemp=round(lambdatemp, 0.0000001);
 							*print i j alphatemp (nrow(alphatemp)) (ncol(unique(alphatemp)));
+							*if i=244 & j=46 then print (nrow(alphatemp)) (ncol(unique(alphatemp)));
+							*if i=244 then print j;
 
 							%if %upcase(&MODEL)=ZINB %then
 								%do;
@@ -1812,19 +1821,25 @@ nrow(lambdatemp)>ncol(unique(lambdatemp))then
 											dev=0;
 											ddev=1;
 											njl=G*lambda;
+											*if i=94 & j=13 then print (sum(lambda));
 											njl=choose(njl>&MAXG, &MAXG, njl);
 											njl=choose(njl<-&MAXG, -&MAXG, njl);
 											pi=exp(njl)/(1+exp(njl));
-
+											*if i=94 & j=14 then print lambda;
 											do while (abs(ddev)>0.000001 & aux3<100);
+												*if i=26 & j=13 & aux3=12 then print pi;
 												Aii=pi#(1-pi);
 												Aii=choose(Aii<=0, 1E-5, Aii);
 												zj=njl+(zk-pi)/Aii;
-
+												*if i=26 then print j;
+												*if i=26 & j=12 then print aux3;
+												*if i=26 & j=13 & aux3=12 then print (sum(Aii)) (sum(w));
 												if det((G#Aii#w#wt)`*G)=0 then
 													lambda=j(ncol(G), 1, 0);
 												else
 													lambda=inv((G#Aii#w#wt)`*G)*(G#Aii#w#wt)`*zj;
+												*if i=94 & j=13 & aux3=21 then print (sum(Aii)) (sum(w)) (sum(zj));
+												*if i=94 & j=13 & aux3=23 then print (sum(lambda));
 												njl=G*lambda;
 												njl=choose(njl>&MAXG, &MAXG, njl);
 												njl=choose(njl<-&MAXG, -&MAXG, njl);
@@ -1834,10 +1849,16 @@ nrow(lambdatemp)>ncol(unique(lambdatemp))then
 												ddev=dev-olddev;
 												*print lambda aux3 dev olddev ddev;
 												aux3=aux3+1;
+												*if i=26 & j=12 & aux3=14 then print dev olddev;
 											end;
+											*if i=26 then print (sum(lambda));
 										end;
 								%end;
+							*if i=94 & j=13 then print (sum(lambda));
 							njl=G*lambda;
+							if i=94 & j=13 then do;
+								*print (sum(njl));
+							end;
 							njl=choose(njl>&MAXG, &MAXG, njl);
 							njl=choose(njl<-&MAXG, -&MAXG, njl);
 							zk=1/(1+exp(-njl)#(par/(par+uj))##par);
@@ -1852,9 +1873,13 @@ nrow(lambdatemp)>ncol(unique(lambdatemp))then
 								%end;
 							oldllike=llike;
 							llike=sum(zk#(njl)-log(1+exp(njl))+(1-zk)#(log(gamma1)));
+							*if i=1 & j=1 then print llike;
 							dllike=llike-oldllike;
 							*print i j b alpha lambda llike dllike;
 							j=j+1;
+							if i=94 & j=15 then do;
+								*print oldllike llike dllike;
+							end;
 						end;
 
 					/**** COMPUTING VARIANCE OF BETA AND LAMBDA ******/
@@ -1883,8 +1908,8 @@ nrow(lambdatemp)>ncol(unique(lambdatemp))then
 					dab=w#wt#(zk#(g1x##(2*par+1)#uj#(log(g1x)+g2x)/hgx##2-g1x##par#(-g2x##2+par#g2x#(log(g1x)+g2x))/hgx)+(1-zk)#(g2x#(y-uj)/(uj+par)));
 					dal=-w#wt#zk#(exp(njl)#g1x##par#(log(g1x)+g2x)/hgx##2);
 					daa=daa*par**4;
+					*if i=1 then print daa;
 					dab=dab*par**2;
-
 					if any(lambda)=0 then
 						Iy=j(nrow(y), 1, 0);
 					exphx=1+exp(njl);
@@ -1899,7 +1924,6 @@ nrow(lambdatemp)>ncol(unique(lambdatemp))then
 					dbb=choose(dbb=., 1E100, dbb);
 					dlb=choose(dlb=., 1E100, dlb);
 					I1=j(nrow(y), 1, 1);
-
 					if any(b)=0 & any(lambda)=0 then
 						do;
 							II=j(ncol(x)+ncol(G)+1, ncol(x)+ncol(G)+1, 0);
@@ -1915,16 +1939,17 @@ nrow(lambdatemp)>ncol(unique(lambdatemp))then
 						end;
 					else
 						II=-(I1#daa)`*I1||-(I1#dab)`*X||-(I1#dal)`*G//(-X`*(dab#I1)||-((X#dbb)`*X)||-(X#dlb)`*G)//(-G`*(dal#I1)||-G`*(X#dlb)||-(G#dll)`*G);
-
+					*if i=1 then print II;
 					if all(lambda)>0 & alpha=1E-6 then
 						II=II[2:nrow(II), 2:nrow(II)];
 					else if any(lambda)=0 & alpha>1E-6 then
 						II=II[1:ncol(x)+1, 1:ncol(x)+1];
 					else if any(lambda)=0 & alpha=1E-6 then
 						II=II[2:ncol(x)+1, 2:ncol(x)+1];
-
+					*if i=1 then print II;
 					if det(II)=0 then
 						do;
+						*print lambda alpha;
 
 							if all(lambda)>0 & alpha=1E-6 then
 								do;
@@ -1955,9 +1980,10 @@ nrow(lambdatemp)>ncol(unique(lambdatemp))then
 										varabetalambda=vecdiag(inv(II))//j(ncol(G), 1, 0);
 								end;
 						end;
-					else
+					else do;
 						varabetalambda=vecdiag(inv(II));
-
+					end;
+					*if i=1 then print lambda alpha;
 					if all(lambda)>0 & alpha>1E-6 then
 						do;
 							varb=varabetalambda[2:ncol(x)+1];
@@ -1990,7 +2016,7 @@ nrow(lambdatemp)>ncol(unique(lambdatemp))then
 							alphai[i, 2]=alpha;
 							alphai[i, 3]=sqrt(1/abs(-(I1#daa)`*I1));
 						end;
-
+					*if i=1 then print varb;
 					/*******************************/
 					m1=(i-1)*ncol(x)+1;
 					m2=m1+(ncol(x)-1);
@@ -2004,16 +2030,22 @@ nrow(lambdatemp)>ncol(unique(lambdatemp))then
 						%do;
 							m1=(i-1)*ncol(G)+1;
 							m2=m1+(ncol(G)-1);
+							*if i=1 then print lambda;
 							li[m1:m2, 1]=i;
 							li[m1:m2, 2]=lambda;
 							li[m1:m2, 3]=POINTS[i, 1];
 							li[m1:m2, 4]=POINTS[i, 2];
+							*if i=17 | i=18 then do;
+							*	print varabetalambda;
+							*	print varl;
+							*end;
 							varli[m1:m2, 1]=varl;
 						%end;
-
+					*if i=1 then print (sum(C));
 					%if &grid=%then
 						%do;
 							r=x[i, ]*C;
+							*if i=1 then print r;
 							S[i]=r[i];
 							S2[i]=r*r`;
 							yhat[i]=uj[i];
@@ -2022,8 +2054,13 @@ nrow(lambdatemp)>ncol(unique(lambdatemp))then
 							%if %upcase(&MODEL)=ZIP or %upcase(&MODEL)=ZINB %then
 								%do;
 									ri=G[i, ]*Ci;
+									*if i=1 then print ri;
 									Si[i]=ri[i];
 									yhat2[i]=uj[i];
+									if i=94 then do;
+									*print uj;
+									*print njl;
+									end;
 									yhat[i]=(uj#(1-exp(njl)/(1+exp(njl))))[i];
 								%end;
 
@@ -2038,10 +2075,13 @@ nrow(lambdatemp)>ncol(unique(lambdatemp))then
 									if det(CCC[, 1:ncol(x)]`*(CCC[, ncol(CCC)-1]#CCC[, 1:ncol(x)]#CCC[, 
 										ncol(CCC)]))=0 then
 											BB[m1:m2, ]=j(ncol(x), nrow(x), 0);
-									else
+									else do;
 										BB[m1:m2, ]=inv(CCC[, 1:ncol(x)]`*(CCC[, ncol(CCC)-1]#CCC[, 
 											1:ncol(x)]#CCC[, ncol(CCC)]))*CCC[, 1:ncol(x)]`#(CCC[, 
 											ncol(CCC)-1]#CCC[, ncol(CCC)])`;
+										*if i=1 then print (inv(CCC[, 1:ncol(x)]`*(CCC[, ncol(CCC)-1]#CCC[, 
+											1:ncol(x)]#CCC[, ncol(CCC)]))*CCC[, 1:ncol(x)]`);
+										end;
 
 									%if %upcase(&MODEL)=ZIP or %upcase(&MODEL)=ZINB %then
 										%do;
@@ -2076,22 +2116,25 @@ nrow(lambdatemp)>ncol(unique(lambdatemp))then
 				free w_f;
 
 				/***********************************************/
-
+				*print (sum(S)) (sum(Si));
 				%if &grid=%then
 					%do;
 						v1=sum(S)+sum(Si);
 						v11=sum(S)+sum(Si);
 						v2=sum(S2);
+						*print v1 v11 v2;
 						nparmodel=n-v11;
 
 						if v11<v2 then
 							v1=v11;
+						*print yhat;
 						res=(y-yhat);
 						rsqr1=(res#wt)`*res;
 						ym=(y#wt)`*y;
 						rsqr2=ym-((y#wt)[+]**2)/wt[+];
 						rsqr=1-rsqr1/rsqr2;
 						rsqradj=1-((n-1)/(n-v1))*(1-rsqr);
+						*print rsqr1 v1;
 						sigma2=n*rsqr1/((n-v1)*wt[+]);
 						root_mse=sqrt(sigma2);
 						print sigma2[label='Sigma2e'] root_mse[label='Root MSE'] 
@@ -2218,7 +2261,7 @@ y[pos1]#log(y[:]/(_par_[pos1]+y[:]))+_par_[pos1]#log(_par_[pos1]/(_par_[pos1]+y[
 							%END;
 						_beta_=shape(bi[, 1:2], n);
 						_beta2_=_beta_;
-
+						*print bi;
 						%IF %UPCASE(&MODEL)=NEGBIN or %UPCASE(&MODEL)=ZINB %THEN
 							%DO;
 								_alpha_=shape(alphai[, 1:2], n);
@@ -2226,6 +2269,7 @@ y[pos1]#log(y[:]/(_par_[pos1]+y[:]))+_par_[pos1]#log(_par_[pos1]/(_par_[pos1]+y[
 							%END;
 						i=do(2, ncol(_beta_), 2);
 						_beta_=_beta_[, i];
+						*print (sum(_beta_));
 						i=do(2, ncol(_beta2_), 2);
 						_beta2_=_beta2_[, i];
 						call qntl(qntl, _beta2_);
@@ -2244,7 +2288,8 @@ y[pos1]#log(y[:]/(_par_[pos1]+y[:]))+_par_[pos1]#log(_par_[pos1]/(_par_[pos1]+y[
 						}];
 						_stdbeta_=shape(stdbi, n);
 						_stdbeta2_=_stdbeta_;
-
+						*print stdbi;
+						*print _stdbeta_;
 						%IF %UPCASE(&MODEL)=NEGBIN or %UPCASE(&MODEL)=ZINB %THEN
 							%DO;
 								_stdalpha_=shape(alphai[, 3], n);
@@ -2342,12 +2387,20 @@ y[pos1]#log(y[:]/(_par_[pos1]+y[:]))+_par_[pos1]#log(_par_[pos1]/(_par_[pos1]+y[
 									do i=1 to n;
 										m1=(i-1)*ncol(x)+1;
 										m2=m1+(ncol(x)-1);
+										*if i=1 & k=1 then do;
+										*	print (sum(BB));
+										*end;
 										BBk[i, ]=ek`*BB[m1:m2, ];
 									end;
+									*if k=1 then print BBk;
 									Vk[k]=y`*(1/n)*BBk`*(I(n)-(1/n)*J(n, n, 1))*BBk*y;
+									*if k=1 then print (Vk[k]);
 									df1k[k]=trace((1/n)*BBk`*(I(n)-(1/n)*J(n, n, 1))*BBk);
 									df2k[k]=trace(((1/n)*BBk`*(I(n)-(1/n)*J(n, n, 1))*BBk)**2);
+									*if k=1 then print (((1/n)*BBk`*(I(n)-(1/n)*J(n, n, 1))*BBk)**2);
 								end;
+								*print (sum(df2k));
+								*print df2k;
 								Vk=choose(abs(Vk)<=1E-8, 0, Vk);
 								Fk=(Vk/df1k)/sigma2;
 								ndf=df1k##2/df2k;
