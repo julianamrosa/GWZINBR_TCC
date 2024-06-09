@@ -566,6 +566,7 @@ gwzinbr <- function(data, formula, xvarinf=NULL, weight=NULL,
           njl <- ifelse(njl<(-maxg), -maxg, njl)
           pi <- exp(njl)/(1+exp(njl))
           while (abs(ddev)>0.000001 & aux3<100){
+            #if (i==26 & j==13 & aux3==12){print(pi)}
             Aii <- as.vector(pi*(1-pi))
             Aii <- ifelse(Aii<=0, E^-5, Aii)
             zj <- njl+(zk-pi)/Aii
@@ -573,6 +574,12 @@ gwzinbr <- function(data, formula, xvarinf=NULL, weight=NULL,
             #   print(t(G*Aii*w*wt)%*%G)
             #   print(det(round(t(G*Aii*w*wt)%*%G, 7)))
             # }
+            #if (i==26){print(j)}
+            #para i=1, j vai até 64 (printei até j=4)
+            if (i==26 & j==13 & aux3==12){
+              #print(det(t(G*Aii*w*wt)%*%G))
+              #print(aux3)
+            }
             if (det(t(G*Aii*w*wt)%*%G)==0){
               lambda <- matrix(0, ncol(G), 1)
             }
@@ -588,7 +595,14 @@ gwzinbr <- function(data, formula, xvarinf=NULL, weight=NULL,
             ddev <- dev-olddev
             aux3 <- aux3+1
             #if (i==34 & j==18){print(sum(lambda))} erro em aux3=4
+            # if (i==26 & j==12 & aux3==14){
+            #   print(dev)
+            #   print(olddev)
+            # }
           }
+          # if (i==26){ #problema aqui, no j=13
+          #   print(sum(lambda))
+          # }
         }
       }
       # if (i==244 & j==46){
@@ -1489,7 +1503,7 @@ gwzinbr <- function(data, formula, xvarinf=NULL, weight=NULL,
     }
     # output <- append(output, list(parameters2))
     # names(output)[length(output)] <- "parameter_estimates"
-    #View(parameters2)
+    View(parameters2)
   }
   return(output)
 }

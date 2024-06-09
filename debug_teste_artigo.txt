@@ -1,0 +1,73 @@
+incrementar o i, para descobir em qual i temos o problema
+
+i=1, j=1 ok
+
+i=2, j=1 ok
+
+i=3, j=1 ok
+
+i=4, j=1 ok
+
+i=5, j=1 ok
+
+i=6, j=1 ok
+
+i=7, j=1 ok
+
+i=8, j=1 ok
+
+i=9, j=1 ok
+
+i=10, j=1 ok
+
+i=11, j=1 ok
+
+i=12, j=1 ok
+
+i=13, j=1 ok
+
+i=14, j=1 ok
+
+i=15, j=1 ok
+
+i=16, j=1 ok
+
+i=17, j=1 ok
+
+i=18, j=1 ok
+
+i=19, j=1 ok
+
+i=20, j=1 ok
+
+i=21, j=1 ok
+
+i=22, j=1 ok
+
+i=23, j=1 ok
+
+i=30, j=1 ok
+
+i=33, j=1 ok
+
+i=34, j=1 ok
+
+i=35, j=1 ok
+
+quando achar o i problemático, volta pro anterior e começa a incrementar o j
+
+
+
+NOVA ESTRATÉGIA
+
+olhar parameters2, inf_intercept, para achar a linha com problema
+quando achar o i com problema,
+ir printando a soma de lambda abaixo do loop para cada i fixo
+achou o j com problema?
+
+PROBLEMA NO i=26, j=13 --> ver det no loop aux3
+o det fica diferente no aux3=12 --> porque Aii tá diferente
+
+
+
+
