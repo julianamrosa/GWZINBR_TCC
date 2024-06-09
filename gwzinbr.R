@@ -352,6 +352,7 @@ gwzinbr <- function(data, formula, xvarinf=NULL, weight=NULL,
   
   #### calculating distance ####
   sequ <- 1:N
+  #print(sum(lambdag)) ok
   for (i in 1:mm){
     seqi <- rep(i, N)
     dx <- sp::spDistsN1(COORD, COORD[i,])
@@ -404,6 +405,7 @@ gwzinbr <- function(data, formula, xvarinf=NULL, weight=NULL,
       if (lambda0 > 0){
         lambda0 <- log(lambda0/(1-lambda0))
         lambda <- matrix(c(lambda0, rep(0, ncol(G)-1)), ncol=1)
+        #if (i==34){print(sum(lambda))} ok
         njl <- G%*%lambda
       }
       zk <- 1/(1+exp(-njl)*(par/(par+uj))^par)
@@ -413,6 +415,7 @@ gwzinbr <- function(data, formula, xvarinf=NULL, weight=NULL,
     llike <- 0
     j <- 1
     while (abs(dllike) > 0.00001 & j <= 600){
+      #if (i==34){print(j)}
       ddpar <- 1
       dpar <- 1
       parold <- par
@@ -431,6 +434,7 @@ gwzinbr <- function(data, formula, xvarinf=NULL, weight=NULL,
           b <- bg
           uj <- exp(x%*%b+Offset)
           lambda <- lambdag
+          if (i==34 & j==18){print(sum(lambda))}
           njl <- G%*%lambda
           njl <- ifelse(njl>maxg, maxg, njl)
           njl <- ifelse(njl<(-maxg),-maxg,njl)
@@ -455,6 +459,7 @@ gwzinbr <- function(data, formula, xvarinf=NULL, weight=NULL,
             b <- bg
             uj <- exp(x%*%b+Offset)
             lambda <- lambdag
+            #if (i==34 & j==1){print(sum(lambdag))} não entra aqui
             njl <- G%*%lambda
             njl <- ifelse(njl>maxg, maxg, njl)
             njl <- ifelse(njl<(-maxg),-maxg,njl)
@@ -465,12 +470,14 @@ gwzinbr <- function(data, formula, xvarinf=NULL, weight=NULL,
             }
           }
           aux2 <- aux2 + 1
+          #if (i==34 & j==18){print(sum(lambda))} ok
         }
         if (par <= E^-5){
           par <- E^6
           b <- bg
           uj <- exp(x%*%b+Offset)
           lambda <- lambdag
+          #if (i==34 & j==18){print(sum(lambda))} #não entra aqui
           njl <- G %*% lambda
           njl <- ifelse(njl>maxg, maxg, njl)
           njl <- ifelse(njl<(-maxg),-maxg,njl)
@@ -546,6 +553,7 @@ gwzinbr <- function(data, formula, xvarinf=NULL, weight=NULL,
         }
         if (condition){
           lambda <- rep(0, ncol(G))
+          #if (i==34 & j==18){print(sum(lambda))} não entra aqui
           njl <- G%*%lambda
           zk <- rep(0, N)
         }
@@ -561,6 +569,10 @@ gwzinbr <- function(data, formula, xvarinf=NULL, weight=NULL,
             Aii <- as.vector(pi*(1-pi))
             Aii <- ifelse(Aii<=0, E^-5, Aii)
             zj <- njl+(zk-pi)/Aii
+            # if (i==34 & j==18 & aux3==4){
+            #   print(t(G*Aii*w*wt)%*%G)
+            #   print(det(round(t(G*Aii*w*wt)%*%G, 7)))
+            # }
             if (det(t(G*Aii*w*wt)%*%G)==0){
               lambda <- matrix(0, ncol(G), 1)
             }
@@ -575,9 +587,13 @@ gwzinbr <- function(data, formula, xvarinf=NULL, weight=NULL,
             dev <- sum(zk*njl-log(1+exp(njl)))
             ddev <- dev-olddev
             aux3 <- aux3+1
+            #if (i==34 & j==18){print(sum(lambda))} erro em aux3=4
           }
         }
       }
+      # if (i==244 & j==46){
+      #   print(lambda)
+      # }
       njl <- G%*%lambda
       njl <- ifelse(njl>maxg, maxg, njl)
       njl <- ifelse(njl<(-maxg), -maxg, njl)
@@ -593,6 +609,7 @@ gwzinbr <- function(data, formula, xvarinf=NULL, weight=NULL,
       llike <- sum(zk*(njl)-log(1+exp(njl))+(1-zk)*(log(gamma1)))
       dllike <- llike-oldllike
       j <- j+1
+      #if (i==34){print(sum(lambda))} erro a partir de j=18
     }
     #### computing variance of beta and lambda ####
     if (det(t(x)%*%(w*Ai*x*wt))==0){
@@ -785,7 +802,7 @@ gwzinbr <- function(data, formula, xvarinf=NULL, weight=NULL,
       else{
         BB[m1:m2, ] <- t(t(solve(t(CCC[, 1:ncol(x)])%*%(CCC[, ncol(CCC)-1]*CCC[, 1:ncol(x)]*CCC[, ncol(CCC)]))%*%t(CCC[, 1:ncol(x)]))*(CCC[, ncol(CCC)-1]*CCC[, ncol(CCC)]))
       }
-      if (model == "zip" || model == "zinb"){
+      if (model == "zip" | model == "zinb"){
         CCCl <- cbind(G, w, wt)
         m1 <- (i-1)*ncol(G)+1
         m2 <- m1+(ncol(G)-1)
@@ -810,6 +827,7 @@ gwzinbr <- function(data, formula, xvarinf=NULL, weight=NULL,
       #View(W_f)
     }
   }
+  #print(li)
   if (is.null(grid)){
     v1 <- sum(S)+sum(Si)
     v11 <- sum(S)+sum(Si)
@@ -835,7 +853,7 @@ gwzinbr <- function(data, formula, xvarinf=NULL, weight=NULL,
     tstat <- bi[, 2]/stdbi
     probt <- 2*(1-pt(abs(tstat), df))
     malpha <- 0.05*(nvar/v1)
-    if (model == "zip" || model == "zinb"){
+    if (model == "zip" | model == "zinb"){
       stdli <- sqrt(abs(varli))
       tstati <- li[, 2]
       
@@ -853,7 +871,7 @@ gwzinbr <- function(data, formula, xvarinf=NULL, weight=NULL,
     t_critical <- abs(qt(malpha/2, df))
     par_ <- 1/alphai[, 2]
     
-    if (model == "zinb" || model == "zip") {
+    if (model == "zinb" | model == "zip") {
       if (any(lambda) == 0) {
         ll <- sum(-log(0+exp(pihat[pos0])) + log(0*exp(pihat[pos0]) + (par_[pos0]/(par_[pos0]+yhat2[pos0]))^par_[pos0])) +
           sum(-log(0+exp(pihat[pos1])) + lgamma(par_[pos1]+y[pos1]) - lgamma(y[pos1]+1) - lgamma(par_[pos1]) +
@@ -889,6 +907,8 @@ gwzinbr <- function(data, formula, xvarinf=NULL, weight=NULL,
         AIC <- 2*(v1+v1/(ncol(x)+ncol(G)))-2*ll
         AICc <- AIC + 2*((v1+v1/(ncol(x)+ncol(G)))*((v1+v1/(ncol(x)+ncol(G)))+1)/ (N-(v1+v1/(ncol(x)+ncol(G))) - 1))
         adjpctll <- 1 - (llnull1-ll+(v1+v1/(ncol(x) + ncol(G))) + 0.5) / (llnull1 - llnull2)
+        # print(AIC)
+        # print(adjpctll)
       }
     }
     if(model == "poisson" | model == "negbin"){
@@ -931,12 +951,16 @@ gwzinbr <- function(data, formula, xvarinf=NULL, weight=NULL,
                          "tot_variance", "deviance", "full_ll", "pct_ll", "adj_pct_ll", "AIC", "AICc")
     output <- append(output, list(measures))
     names(output)[length(output)] <- "measures"
+    #print(sum(bi))
     beta_ <- matrix(bi[, 2], nrow = N, byrow=T)
     beta2_ <- beta_
     if(model == "negbin" | model == "zinb"){
       alpha_= matrix(alphai[, 1:2], N)
       beta2_= cbind(beta_, alpha_[, 2])
+      # print (sum(alpha_))
+      # print(sum(beta2_))
     }
+    #print(sum(beta2_))
     qntl <- apply(beta2_, 2, quantile, c(0.25, 0.5, 0.75))
     IQR <- qntl[3, ]-qntl[1, ]
     qntl <- rbind(qntl, IQR)
@@ -984,6 +1008,7 @@ gwzinbr <- function(data, formula, xvarinf=NULL, weight=NULL,
     if (model=="zip" | model=="zinb"){
       lambda_ <- matrix(li[, 2], N, byrow=TRUE)
       lambda2_ <- lambda_
+      #print(sum(lambda2_))
       qntl <- apply(lambda2_, 2, quantile, c(0.25, 0.5, 0.75))
       IQR <- qntl[3, ]-qntl[1, ]
       qntl <- rbind(qntl, IQR)
