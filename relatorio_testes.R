@@ -46,7 +46,7 @@ Golden(data = korea_base_artigo,formula = n_covid1~Morbidity+high_sch_p+Healthca
        model = "zip", method = "adaptive_bsq", bandwidth = "cv", globalmin = FALSE, distancekm = TRUE, force=TRUE)
 endTime <- Sys.time()
 endTime-startTime
-#
+#1.4 min
 
 ## fixed
 
@@ -57,7 +57,7 @@ Golden(data = korea_base_artigo,formula = n_covid1~Morbidity+high_sch_p+Healthca
        model = "zinb", method = "fixed_g", bandwidth = "aic", globalmin = FALSE, distancekm = TRUE, force=TRUE)
 endTime <- Sys.time()
 endTime-startTime
-#36 mins
+#12 mins
 
 #zip, fixed, aic
 startTime <- Sys.time()
@@ -66,7 +66,7 @@ Golden(data = korea_base_artigo,formula = n_covid1~Morbidity+high_sch_p+Healthca
        model = "zip", method = "fixed_g", bandwidth = "aic", globalmin = FALSE, distancekm = TRUE, force=TRUE)
 endTime <- Sys.time()
 endTime-startTime
-#
+#10 mins - diferente do sas
 
 #zinb, fixed, cv
 startTime <- Sys.time()
@@ -75,7 +75,7 @@ Golden(data = korea_base_artigo,formula = n_covid1~Morbidity+high_sch_p+Healthca
        model = "zinb", method = "fixed_g", bandwidth = "cv", globalmin = FALSE, distancekm = TRUE, force=TRUE)
 endTime <- Sys.time()
 endTime-startTime
-#
+#14 mins
 
 #zip, fixed, cv
 startTime <- Sys.time()
@@ -84,4 +84,4 @@ Golden(data = korea_base_artigo,formula = n_covid1~Morbidity+high_sch_p+Healthca
        model = "zip", method = "fixed_g", bandwidth = "cv", globalmin = FALSE, distancekm = TRUE, force=TRUE)
 endTime <- Sys.time()
 endTime-startTime
-#
+#1.1 min
