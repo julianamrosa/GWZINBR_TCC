@@ -98,7 +98,6 @@ gwzinbr <- function(data, formula, xvarinf=NULL, weight=NULL,
       }
       alphag <- 1/parg
     }
-    #print(alphag)
     devg <- 0
     ddev <- 1
     cont2 <- 0
@@ -352,7 +351,6 @@ gwzinbr <- function(data, formula, xvarinf=NULL, weight=NULL,
   
   #### calculating distance ####
   sequ <- 1:N
-  #print(sum(lambdag)) ok
   for (i in 1:mm){
     seqi <- rep(i, N)
     dx <- sp::spDistsN1(COORD, COORD[i,])
@@ -405,7 +403,6 @@ gwzinbr <- function(data, formula, xvarinf=NULL, weight=NULL,
       if (lambda0 > 0){
         lambda0 <- log(lambda0/(1-lambda0))
         lambda <- matrix(c(lambda0, rep(0, ncol(G)-1)), ncol=1)
-        #if (i==34){print(sum(lambda))} ok
         njl <- G%*%lambda
       }
       zk <- 1/(1+exp(-njl)*(par/(par+uj))^par)
@@ -415,7 +412,6 @@ gwzinbr <- function(data, formula, xvarinf=NULL, weight=NULL,
     llike <- 0
     j <- 1
     while (abs(dllike) > 0.00001 & j <= 600){
-      #if (i==34){print(j)}
       ddpar <- 1
       dpar <- 1
       parold <- par
@@ -434,7 +430,6 @@ gwzinbr <- function(data, formula, xvarinf=NULL, weight=NULL,
           b <- bg
           uj <- exp(x%*%b+Offset)
           lambda <- lambdag
-          if (i==34 & j==18){print(sum(lambda))}
           njl <- G%*%lambda
           njl <- ifelse(njl>maxg, maxg, njl)
           njl <- ifelse(njl<(-maxg),-maxg,njl)
@@ -459,7 +454,6 @@ gwzinbr <- function(data, formula, xvarinf=NULL, weight=NULL,
             b <- bg
             uj <- exp(x%*%b+Offset)
             lambda <- lambdag
-            #if (i==34 & j==1){print(sum(lambdag))} não entra aqui
             njl <- G%*%lambda
             njl <- ifelse(njl>maxg, maxg, njl)
             njl <- ifelse(njl<(-maxg),-maxg,njl)
@@ -470,14 +464,12 @@ gwzinbr <- function(data, formula, xvarinf=NULL, weight=NULL,
             }
           }
           aux2 <- aux2 + 1
-          #if (i==34 & j==18){print(sum(lambda))} ok
         }
         if (par <= E^-5){
           par <- E^6
           b <- bg
           uj <- exp(x%*%b+Offset)
           lambda <- lambdag
-          #if (i==34 & j==18){print(sum(lambda))} #não entra aqui
           njl <- G %*% lambda
           njl <- ifelse(njl>maxg, maxg, njl)
           njl <- ifelse(njl<(-maxg),-maxg,njl)
@@ -489,7 +481,6 @@ gwzinbr <- function(data, formula, xvarinf=NULL, weight=NULL,
         }
         alpha <- 1/par
       }
-      #if (i==244){print(lambda)}
       dev <- 0
       ddev <- 1
       nj <- x%*%b+Offset
@@ -540,11 +531,6 @@ gwzinbr <- function(data, formula, xvarinf=NULL, weight=NULL,
         }
         alphatemp <- round(alphatemp, 7)
         lambdatemp <- round(lambdatemp, 7)
-        # if (i==244 & j==46){
-        #   print(length(alphatemp))
-        #   print(length(unique(alphatemp)))
-        # }
-        #if (i==244){print(j)}
         if (model=="zinb"){
           condition <- (j>300 & length(alphatemp)>length(unique(alphatemp)) & length(lambdatemp)>length(unique(lambdatemp)))
         }
@@ -553,7 +539,6 @@ gwzinbr <- function(data, formula, xvarinf=NULL, weight=NULL,
         }
         if (condition){
           lambda <- rep(0, ncol(G))
-          #if (i==34 & j==18){print(sum(lambda))} não entra aqui
           njl <- G%*%lambda
           zk <- rep(0, N)
         }
@@ -566,20 +551,9 @@ gwzinbr <- function(data, formula, xvarinf=NULL, weight=NULL,
           njl <- ifelse(njl<(-maxg), -maxg, njl)
           pi <- exp(njl)/(1+exp(njl))
           while (abs(ddev)>0.000001 & aux3<100){
-            #if (i==26 & j==13 & aux3==12){print(pi)}
             Aii <- as.vector(pi*(1-pi))
             Aii <- ifelse(Aii<=0, E^-5, Aii)
             zj <- njl+(zk-pi)/Aii
-            # if (i==34 & j==18 & aux3==4){
-            #   print(t(G*Aii*w*wt)%*%G)
-            #   print(det(round(t(G*Aii*w*wt)%*%G, 7)))
-            # }
-            #if (i==26){print(j)}
-            #para i=1, j vai até 64 (printei até j=4)
-            if (i==26 & j==13 & aux3==12){
-              #print(det(t(G*Aii*w*wt)%*%G))
-              #print(aux3)
-            }
             if (det(t(G*Aii*w*wt)%*%G)==0){
               lambda <- matrix(0, ncol(G), 1)
             }
@@ -594,20 +568,9 @@ gwzinbr <- function(data, formula, xvarinf=NULL, weight=NULL,
             dev <- sum(zk*njl-log(1+exp(njl)))
             ddev <- dev-olddev
             aux3 <- aux3+1
-            #if (i==34 & j==18){print(sum(lambda))} erro em aux3=4
-            # if (i==26 & j==12 & aux3==14){
-            #   print(dev)
-            #   print(olddev)
-            # }
           }
-          # if (i==26){ #problema aqui, no j=13
-          #   print(sum(lambda))
-          # }
         }
       }
-      # if (i==244 & j==46){
-      #   print(lambda)
-      # }
       njl <- G%*%lambda
       njl <- ifelse(njl>maxg, maxg, njl)
       njl <- ifelse(njl<(-maxg), -maxg, njl)
@@ -623,7 +586,6 @@ gwzinbr <- function(data, formula, xvarinf=NULL, weight=NULL,
       llike <- sum(zk*(njl)-log(1+exp(njl))+(1-zk)*(log(gamma1)))
       dllike <- llike-oldllike
       j <- j+1
-      #if (i==34){print(sum(lambda))} erro a partir de j=18
     }
     #### computing variance of beta and lambda ####
     if (det(t(x)%*%(w*Ai*x*wt))==0){
@@ -841,7 +803,6 @@ gwzinbr <- function(data, formula, xvarinf=NULL, weight=NULL,
       #View(W_f)
     }
   }
-  #print(li)
   if (is.null(grid)){
     v1 <- sum(S)+sum(Si)
     v11 <- sum(S)+sum(Si)
@@ -921,8 +882,6 @@ gwzinbr <- function(data, formula, xvarinf=NULL, weight=NULL,
         AIC <- 2*(v1+v1/(ncol(x)+ncol(G)))-2*ll
         AICc <- AIC + 2*((v1+v1/(ncol(x)+ncol(G)))*((v1+v1/(ncol(x)+ncol(G)))+1)/ (N-(v1+v1/(ncol(x)+ncol(G))) - 1))
         adjpctll <- 1 - (llnull1-ll+(v1+v1/(ncol(x) + ncol(G))) + 0.5) / (llnull1 - llnull2)
-        # print(AIC)
-        # print(adjpctll)
       }
     }
     if(model == "poisson" | model == "negbin"){
@@ -965,16 +924,12 @@ gwzinbr <- function(data, formula, xvarinf=NULL, weight=NULL,
                          "tot_variance", "deviance", "full_ll", "pct_ll", "adj_pct_ll", "AIC", "AICc")
     output <- append(output, list(measures))
     names(output)[length(output)] <- "measures"
-    #print(sum(bi))
     beta_ <- matrix(bi[, 2], nrow = N, byrow=T)
     beta2_ <- beta_
     if(model == "negbin" | model == "zinb"){
       alpha_= matrix(alphai[, 1:2], N)
       beta2_= cbind(beta_, alpha_[, 2])
-      # print (sum(alpha_))
-      # print(sum(beta2_))
     }
-    #print(sum(beta2_))
     qntl <- apply(beta2_, 2, quantile, c(0.25, 0.5, 0.75))
     IQR <- qntl[3, ]-qntl[1, ]
     qntl <- rbind(qntl, IQR)
@@ -1022,7 +977,6 @@ gwzinbr <- function(data, formula, xvarinf=NULL, weight=NULL,
     if (model=="zip" | model=="zinb"){
       lambda_ <- matrix(li[, 2], N, byrow=TRUE)
       lambda2_ <- lambda_
-      #print(sum(lambda2_))
       qntl <- apply(lambda2_, 2, quantile, c(0.25, 0.5, 0.75))
       IQR <- qntl[3, ]-qntl[1, ]
       qntl <- rbind(qntl, IQR)
@@ -1317,8 +1271,8 @@ gwzinbr <- function(data, formula, xvarinf=NULL, weight=NULL,
     pihat <- exp(pihat)/(1+exp(pihat))
     res_ <- cbind(wt, y, yhat, res, resstd, influence, CooksD, sumwi, pihat)
     colnames(res_) <- c("wt", "y", "yhat", "res", "resstd", "influence", "cooksD", "sumwi", "pihat")
-    # output <- append(output, list(res_))
-    # names(output)[length(output)] <- "residuals"
+    output <- append(output, list(res_))
+    names(output)[length(output)] <- "residuals"
     #View(res_)
     beta_out <- bi
     colnames(beta_out) <- c("id", "B", "x", "y")
@@ -1486,8 +1440,8 @@ gwzinbr <- function(data, formula, xvarinf=NULL, weight=NULL,
     colname <- c(c("x", "y"), colname1, paste0(label_, rep(colname1, 2)))
     parameters_grid_ <- bistdt_
     colnames(parameters_grid_) <- colname
-    # output <- append(output, list(parameters_grid_))
-    # names(output)[length(output)] <- "param_estimates_grid"
+    output <- append(output, list(parameters_grid_))
+    names(output)[length(output)] <- "param_estimates_grid"
     #View(parameters_grid_)
   }
   if (is.null(grid)){
@@ -1497,13 +1451,13 @@ gwzinbr <- function(data, formula, xvarinf=NULL, weight=NULL,
     }
     if (model=="negbin" | model=="zinb"){
       alpha_ <- cbind(alpha_, sig_alpha_)
-      # output <- append(output, list(alpha_))
-      # names(output)[length(output)] <- "alpha_estimates"
+      output <- append(output, list(alpha_))
+      names(output)[length(output)] <- "alpha_estimates"
       #View(alpha_)
     }
-    # output <- append(output, list(parameters2))
-    # names(output)[length(output)] <- "parameter_estimates"
-    View(parameters2)
+    output <- append(output, list(parameters2))
+    names(output)[length(output)] <- "parameter_estimates"
+    #View(parameters2)
   }
-  return(output)
+  invisible(output)
 }
