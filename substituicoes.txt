@@ -1,8 +1,0 @@
-substituições:
-
-- m por mm
-- _dist_ por dist_
-- _w_ por w_
-- _malpha_ por malpha
-- _par_ por par_
-- _dist_ por distance
