@@ -1,14 +1,28 @@
-##### CARREGANDO PACOTES E DADOS #####
+---
+title: "Mapas - RBNIZGP"
+author: "Juliana Rosa e Jéssica Vasconcelos"
+date: "21/06/2024"
+output: html_document
+---
 
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Pacotes e Dados
+
+```{r}
 library(leaflet)
 library(readr)
 library(dplyr)
+library(gwzinbr)
 korea_df <- read_csv("C:/Users/Juliana Rosa/OneDrive/Documents/TCC2/GWZINBR_TCC-main/korea_base_artigo.csv")
 #korea_df <- read_csv("C:/Users/jehhv/OneDrive/Documentos/UnB/2024/TCC2/GWZINBR_TCC-main/GWZINBR_TCC-main/korea_base_artigo.csv")
+```
 
+# 1- Mapa da Variável Resposta
 
-##### 1- MAPA VAR RESPOSTA #####
-
+```{r}
 #Criando escala de cores
 
 korea_df <- korea_df %>% mutate(n_covid1_col=case_when(
@@ -22,13 +36,18 @@ korea_df <- korea_df %>% mutate(n_covid1_col=case_when(
   n_covid1 >= 20 ~ "#006C9E"     
 ))
 
+```
+
+```{r}
 #Criando popup do mapa
 
 state_popup <- paste0("<strong>Local: </strong>", 
                       korea_df$IDNAME, 
                       "<br><strong>Casos: </strong>", 
                       korea_df$n_covid1)
+```
 
+```{r}
 #Mapa
 
 mapa_resposta <- korea_df %>%
@@ -53,10 +72,11 @@ mapa_resposta <- korea_df %>%
   )
 
 mapa_resposta
+```
 
+# Mapa da Covariável Crowding
 
-##### 2- MAPA VAR EXPLICATIVA - Crowding #####
-
+```{r}
 #Definindo classes
 
 k <- floor(1+3.3*log10(nrow(korea_df))) #número de classes
@@ -65,7 +85,9 @@ maximum <- max(korea_df$Crowding)
 h <- round((maximum - minimum)/k, 1) #amplitude das classes
 min_trunc <- trunc(minimum*10)/10
 seq(min_trunc, min_trunc+8*h, h) #classes
+```
 
+```{r}
 #Criando escala de cores
 
 korea_df <- korea_df %>% mutate(crowding_col=case_when(
@@ -78,14 +100,18 @@ korea_df <- korea_df %>% mutate(crowding_col=case_when(
   Crowding >= 19.5 & Crowding < 21.1 ~ "#1381B2",
   Crowding >= 21.1 & Crowding < 22.7 ~ "#006C9E"     
 ))
+```
 
+```{r}
 #Criando popup do mapa
 
 state_popup <- paste0("<strong>Local: </strong>", 
                       korea_df$IDNAME, 
                       "<br><strong>Nível de Aglomeração: </strong>", 
                       round(korea_df$Crowding, 3))
+```
 
+```{r}
 #Mapa
 
 #sugestão: usar razão de chances para trazer infos mais interessantes 
@@ -112,82 +138,13 @@ mapa_explicativa <- korea_df %>%
   )
 
 mapa_explicativa
+```
 
-##### 3- MAPA BETA - Crowding #####
+# Mapa do Parâmetro Beta para Crowding
 
-# #Pegando as estimativas
-# 
-# #obs.: rodar definição da função gwzinbr antes
-# mod <- gwzinbr(data = korea_df, 
-#         formula = n_covid1~Morbidity+high_sch_p+Healthcare_access+
-#           diff_sd+Crowding+Migration+Health_behavior,
-#         xvarinf = c("Healthcare_access", "Crowding"),
-#         lat = "y", long = "x", offset = "ln_total", method = "adaptive_bsq",
-#         model = "zinb", distancekm = TRUE, h=82, force=TRUE)
-# 
-# korea_df$Crowding_est <- round(as.numeric((mod$parameter_estimates)[,"Crowding"]), 3)
-# 
-# #Definindo classes
-# 
-# minimum <- min(korea_df$Crowding_est)
-# maximum <- max(korea_df$Crowding_est)
-# h <- round((maximum - minimum)/k, 3) #amplitude das classes
-# min_trunc <- trunc(minimum*1000)/1000
-# seq(min_trunc, min_trunc+k*h, h) #classes
-# 
-# #Criando escala de cores
-# 
-# korea_df <- korea_df %>% mutate(crowding_est_col=case_when(
-#   Crowding_est >= (-0.744) & Crowding_est < (-0.577) ~ "#F0F0F0",     
-#   Crowding_est >= (-0.577) & Crowding_est < (-0.410) ~ "#D7EAF3",     
-#   Crowding_est >= (-0.410) & Crowding_est < (-0.243) ~ "#B0D5E6",     
-#   Crowding_est >= (-0.243) & Crowding_est < (-0.076) ~ "#89C0D9", 
-#   Crowding_est >= (-0.076) & Crowding_est < 0.091 ~ "#62ABCC",     
-#   Crowding_est >= 0.091 & Crowding_est < 0.258 ~ "#3A96BF", 
-#   Crowding_est >= 0.258 & Crowding_est < 0.425 ~ "#1381B2",
-#   Crowding_est >= 0.425 & Crowding_est < 0.592 ~ "#006C9E"     
-# ))
-# 
-# #Criando popup do mapa
-# 
-# state_popup <- paste0("<strong>Local: </strong>", 
-#                       korea_df$IDNAME, 
-#                       "<br><strong>Estimativa para Crowding: </strong>", 
-#                       korea_df$Crowding_est)
-# 
-# #Mapa
-# 
-# #mudar escala de cores para incluir o aspecto negativo->positivo
-# mapa_beta <- korea_df %>%
-#   leaflet() %>%
-#   addProviderTiles(providers$Esri.WorldImagery) %>%  
-#   addCircleMarkers(
-#     color = ~crowding_est_col,
-#     fillColor = ~crowding_est_col,
-#     fillOpacity = 0.8,
-#     weight = 1,
-#     radius = 7,
-#     stroke = TRUE,
-#     popup = state_popup,
-#     lat = ~y,
-#     lng = ~x
-#   ) %>%
-#   addLegend(
-#     labels = c("-0.744 |- -0.577", "-0.577 |- -0.410", "-0.410 |- -0.243",
-#                "-0.243 |- -0.076", "-0.076 |- 0.091", "0.091 |- 0.258",
-#                "0.258 |- 0.425", "0.425 |- 0.592"),
-#     colors = c("#F0F0F0", "#D7EAF3", "#B0D5E6", "#89C0D9", "#62ABCC",
-#                "#3A96BF", "#1381B2", "#006C9E"),
-#     title = "Estimativa para Parâmetro Crowding"
-#   )
-# 
-# mapa_beta
-
-##### 3.1- MAPA BETA - Crowding #####
-
+```{r warning=FALSE}
 #Pegando as estimativas
 
-#obs.: rodar definição da função gwzinbr antes
 mod <- gwzinbr(data = korea_df, 
                formula = n_covid1~Morbidity+high_sch_p+Healthcare_access+
                  diff_sd+Crowding+Migration+Health_behavior,
@@ -196,14 +153,18 @@ mod <- gwzinbr(data = korea_df,
                model = "zinb", distancekm = TRUE, h=82, force=TRUE)
 
 korea_df$Crowding_est <- round(as.numeric((mod$parameter_estimates)[,"Crowding"]), 3)
+```
 
+```{r}
 #Definindo classes
 
 minimum <- min(korea_df$Crowding_est)
 maximum <- max(korea_df$Crowding_est)
 minimum
 maximum
+```
 
+```{r}
 #Criando escala de cores
 
 korea_df <- korea_df %>% mutate(crowding_est_col=case_when(
@@ -214,14 +175,18 @@ korea_df <- korea_df %>% mutate(crowding_est_col=case_when(
   Crowding_est > 0.4 & Crowding_est <= 0.8 ~ "#4292c6"
 ))
 #scale_color <- c("#ef746f", "#fdd0a2", "#ffffff", "#9ecae1", "#4292c6")
+```
 
+```{r}
 #Criando popup do mapa
 
 state_popup <- paste0("<strong>Local: </strong>", 
                       korea_df$IDNAME, 
                       "<br><strong>Estimativa para Crowding: </strong>", 
                       korea_df$Crowding_est)
+```
 
+```{r}
 #Mapa
 
 #mudar escala de cores para incluir o aspecto negativo->positivo
@@ -246,13 +211,17 @@ mapa_beta <- korea_df %>%
   )
 
 mapa_beta
+```
 
-##### 4- MAPA ALPHA #####
+# Mapa do Parâmetro Alpha
 
+```{r}
 #Pegando as estimativas
 
 korea_df$alpha <- round(as.numeric((mod$alpha_estimates)[,"alpha"]), 3)
+```
 
+```{r}
 #Definindo classes
 
 minimum <- min(korea_df$alpha)
@@ -260,7 +229,9 @@ maximum <- max(korea_df$alpha)
 h <- ceiling(1000*(maximum - minimum)/k)/1000 #amplitude das classes
 min_trunc <- trunc(minimum*1000)/1000
 seq(min_trunc, min_trunc+k*h, h) #classes
+```
 
+```{r}
 #Criando escala de cores
 
 korea_df <- korea_df %>% mutate(alpha_col=case_when(
@@ -273,7 +244,9 @@ korea_df <- korea_df %>% mutate(alpha_col=case_when(
   alpha >= 3.054 & alpha < 3.563 ~ "#1381B2",
   alpha >= 3.563 & alpha < 4.072 ~ "#006C9E"     
 ))
+```
 
+```{r}
 #Criando popup do mapa
 
 state_popup <- paste0("<strong>Local: </strong>", 
@@ -308,87 +281,26 @@ mapa_alpha <- korea_df %>%
   )
 
 mapa_alpha
+```
 
-##### 5- MAPA LAMBDA #####
+# Mapa do Parâmeto Lambda para Crowding
 
-# #Pegando as estimativas
-# 
-# korea_df$lambda <- round(as.numeric((mod$parameter_estimates)[,"Inf_Crowding"]), 1)
-# 
-# #Definindo classes
-# 
-# minimum <- min(korea_df$lambda)
-# maximum <- max(korea_df$lambda)
-# h <- ceiling(10*(maximum - minimum)/k)/10 #amplitude das classes
-# min_trunc <- trunc(minimum*10)/10
-# seq(min_trunc, min_trunc+k*h, h) #classes
-# 
-# #Criando escala de cores
-# 
-# korea_df <- korea_df %>% mutate(lambda_col=case_when(
-#   lambda >= (-296.5) & lambda < (-232.6) ~ "#F0F0F0",     
-#   lambda >= (-232.6) & lambda < (-168.7) ~ "#D7EAF3",     
-#   lambda >= (-168.7) & lambda < (-104.8) ~ "#B0D5E6",     
-#   lambda >= (-104.8) & lambda < (-40.9) ~ "#89C0D9", 
-#   lambda >= (-40.9) & lambda < 23.0 ~ "#62ABCC",     
-#   lambda >= 23.0 & lambda < 86.9 ~ "#3A96BF", 
-#   lambda >= 86.9 & lambda < 150.8 ~ "#1381B2",
-#   lambda >= 150.8 & lambda < 214.7 ~ "#006C9E"     
-# ))
-# 
-# #Criando popup do mapa
-# 
-# state_popup <- paste0("<strong>Local: </strong>", 
-#                       korea_df$IDNAME, 
-#                       "<br><strong>Estimativa para Crowding (IZ): </strong>", 
-#                       korea_df$lambda)
-# 
-# #Mapa
-# 
-# #mudar escala de cores para incluir o aspecto negativo->positivo
-# mapa_lambda <- korea_df %>%
-#   leaflet() %>%
-#   addProviderTiles(providers$Esri.WorldImagery) %>%  
-#   addCircleMarkers(
-#     color = ~lambda_col,
-#     fillColor = ~lambda_col,
-#     fillOpacity = 0.8,
-#     weight = 1,
-#     radius = 7,
-#     stroke = TRUE,
-#     popup = state_popup,
-#     lat = ~y,
-#     lng = ~x
-#   ) %>%
-#   addLegend(
-#     labels = c("-296.5 |- -232.6",     
-#                  "-232.6 |- -168.7",     
-#                  "-168.7 |- -104.8",     
-#                  "-104.8 |- -40.9", 
-#                  "-40.9 |- 23.0",     
-#                  "23.0 |- 86.9", 
-#                  "86.9 |- 150.8",
-#                  "150.8 |- 214.7"),
-#     colors = c("#F0F0F0", "#D7EAF3", "#B0D5E6", "#89C0D9", "#62ABCC",
-#                "#3A96BF", "#1381B2", "#006C9E"),
-#     title = "Estimativa para Parâmetro Crowding IZ"
-#   )
-# 
-# mapa_lambda
-
-##### 5.1- MAPA LAMBDA #####
-
+```{r}
 #Pegando as estimativas
 
 korea_df$lambda <- round(as.numeric((mod$parameter_estimates)[,"Inf_Crowding"]), 1)
+```
 
+```{r}
 #Definindo classes
 
 minimum <- min(korea_df$lambda)
 maximum <- max(korea_df$lambda)
 minimum
 maximum
+```
 
+```{r}
 #Criando escala de cores
 
 korea_df <- korea_df %>% mutate(lambda_col=case_when(
@@ -399,14 +311,18 @@ korea_df <- korea_df %>% mutate(lambda_col=case_when(
   lambda > 150 & lambda <= 300 ~ "#4292c6"
 ))
 #scale_color <- c("#ef746f", "#fdd0a2", "#ffffff", "#9ecae1", "#4292c6")
+```
 
+```{r}
 #Criando popup do mapa
 
 state_popup <- paste0("<strong>Local: </strong>", 
                       korea_df$IDNAME, 
                       "<br><strong>Estimativa para Crowding (IZ): </strong>", 
                       korea_df$lambda)
+```
 
+```{r}
 #Mapa
 
 #mudar escala de cores para incluir o aspecto negativo->positivo
@@ -431,3 +347,6 @@ mapa_lambda <- korea_df %>%
   )
 
 mapa_lambda
+
+```
+
