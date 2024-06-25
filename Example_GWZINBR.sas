@@ -23,10 +23,15 @@ Healthcare_access diff_sd crowding Migration Health_behavior, XVARINF=Healthcare
 OFFSET=ln_total,MODEL=zinb,METHOD=ADAPTIVE_BSQ,DISTANCEKM=YES, H=82);
 *36 segs;
 
-*PLANO B;
+*ZIP - golden;
+%Golden(DATA=Korea_base,YVAR=n_covid1,XVAR=Morbidity high_sch_p
+Healthcare_access diff_sd crowding Migration Health_behavior, XVARINF=Healthcare_access Crowding,LONG=x,LAT=y,OUTPUT=band,
+OFFSET=ln_total,MODEL=ZIP,METHOD=ADAPTIVE_BSQ,BANDWIDTH=aic, GLOBALMIN = no,DISTANCEKM=YES);
+
+*ZIP - gwzinbr;
 %GWZINBR(DATA=Korea_base,YVAR=n_covid1,XVAR=Morbidity high_sch_p
-Healthcare_access diff_sd crowding Migration Health_behavior, XVARINF=Healthcare_access,LONG=x,LAT=y,
-OFFSET=ln_total,MODEL=ZINB,METHOD=ADAPTIVE_BSQ,DISTANCEKM=YES, H=79);
+Healthcare_access diff_sd crowding Migration Health_behavior, XVARINF=Healthcare_access Crowding,LONG=x,LAT=y,
+OFFSET=ln_total,MODEL=zip,METHOD=ADAPTIVE_BSQ,DISTANCEKM=YES, H=82);
 
 /** ZINB **/
 
