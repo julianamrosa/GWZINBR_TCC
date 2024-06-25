@@ -17,8 +17,8 @@ gwzinbr <- function(data, formula, xvarinf=NULL, weight=NULL,
   x <- model.matrix(mt, mf)
   if (is.null(xvarinf)){
     G <- matrix(1, N, 1)
-    #lambdag <- matrix(0, ncol(G), 1)
-    lambdag <- rep(0, ncol(G)) #flag
+    lambdag <- matrix(0, ncol(G), 1)
+    #lambdag <- rep(0, ncol(G))
   }
   else{
     G <- as.matrix(data[, xvarinf])
@@ -134,7 +134,7 @@ gwzinbr <- function(data, formula, xvarinf=NULL, weight=NULL,
   if (!is.null(xvarinf)){
     lambda0 <- (length(pos0)-sum((parg/(uj+parg))^parg))/N
     if (lambda0 <= 0) {
-      lambdag <- rep(0, ncol(G))
+      lambdag <- matrix(0, ncol(G), 1)
       message("NOTE: Expected number of zeros (", round(sum((parg/(uj+parg))^parg), 2),
               ") >= number of zeros (", length(pos0), "). No Need for Zero Model.")
     }
@@ -143,7 +143,8 @@ gwzinbr <- function(data, formula, xvarinf=NULL, weight=NULL,
               ") < number of zeros (", length(pos0), "). Zero Model Used.")
       lambda0 <- log(lambda0/(1-lambda0))
       #lambdag <- rbind(lambda0, rep(0, ncol(G)-1))
-      lambdag <- c(lambda0, rep(0, ncol(G)-1)) #flag
+      #lambdag <- c(lambda0, matrix(0, ncol(G)-1, 1))
+      lambdag <- rbind(lambda0, matrix(0, ncol(G)-1, 1))
     }
     pargg <- parg
     ujg <- uj
@@ -264,8 +265,8 @@ gwzinbr <- function(data, formula, xvarinf=NULL, weight=NULL,
         Ai <- ifelse(Ai<=0, E^-5, Ai)
         zj <- njl+(zkg-pig)*1/Ai
         if(det(t(G)%*%(Ai*G))==0){
-          #lambdag <- matrix(0, ncol(G), 1)
-          lambdag <- rep(0, ncol(G)) #flag
+          lambdag <- matrix(0, ncol(G), 1)
+          #lambdag <- rep(0, ncol(G)) #flag
         }
         else {
           lambdag <- solve(t(G)%*%(Ai*G))%*%t(G)%*%(Ai*zj)
@@ -1459,5 +1460,5 @@ gwzinbr <- function(data, formula, xvarinf=NULL, weight=NULL,
     names(output)[length(output)] <- "parameter_estimates"
     #View(parameters2)
   }
-  invisible(output)
+  return(output)
 }
