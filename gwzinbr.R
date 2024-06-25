@@ -968,7 +968,7 @@ gwzinbr <- function(data, formula, xvarinf=NULL, weight=NULL,
       colnames(descripts) <- c('Intercept', XVAR)
     }
     t_test_gwr_param_estimates <- c(malpha, t_critical, df)
-    names(t_test_gwr_param_estimates) <- c("p_value", "t_critical", "df")
+    names(t_test_gwr_param_estimates) <- c("alpha_level_5_pct", "t_critical", "df")
     output <- append(output, list(t_test_gwr_param_estimates))
     names(output)[length(output)] <- "t_test_gwr_param_estimates"
     output <- append(output, list(qntls))
@@ -1011,7 +1011,7 @@ gwzinbr <- function(data, formula, xvarinf=NULL, weight=NULL,
         colnames(descriptls) <- c(xvarinf)
       }
       t_test_gwr_zero_infl_param_estimates <- c(malpha, t_critical, df)
-      names(t_test_gwr_zero_infl_param_estimates) <- c("p_value", "t_critical", "df")
+      names(t_test_gwr_zero_infl_param_estimates) <- c("alpha_level_5_pct", "t_critical", "df")
       output <- append(output, list(t_test_gwr_zero_infl_param_estimates))
       names(output)[length(output)] <- "t_test_gwr_zero_infl_param_estimates"
       #####
