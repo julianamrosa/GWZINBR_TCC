@@ -300,11 +300,11 @@ Além disso, na formulação original dos autores dessa teoria, a distribuição
 \section{Família Exponencial}
 Dizemos que a distribuição de uma variável aleatória $Y$ pertence à família exponencial multiparamétrica (e que, por sua vez, é uma generalização da família exponencial uniparamétrica) se sua função (densidade) de probabilidade puder ser expressa da seguinte forma: 
 \begin{equation}
-    f(\boldsymbol{y};\boldsymbol{\theta}) = h(\boldsymbol{y}) \exp \left\{ \sum_{i=1}^k\eta_{i}(\boldsymbol{\theta})t_{i}(\boldsymbol{y})-b(\boldsymbol{\theta}) \right\}
+    f(y;\boldsymbol{\theta}) = h(y) \exp \left\{ \sum_{i=1}^k\eta_{i}(\boldsymbol{\theta})t_{i}(y)-b(\boldsymbol{\theta}) \right\}
 \end{equation}
-em que $\boldsymbol{\theta}$ é um vetor de $k$ parâmetros; $h(\boldsymbol{y})$ e $t(\boldsymbol{y})=(t_{1}(\boldsymbol{y}),...,t_{k}(\boldsymbol{y}))^\top$ são funções com valores reais $\boldsymbol{y}$ observados para $Y$ e que não dependem de $\boldsymbol{\theta}$; e $b(\boldsymbol{\theta})$ e $\eta(\boldsymbol{\theta})=(\eta_{1}(\boldsymbol{\theta}),...,\eta_{k}(\boldsymbol{\theta}))^\top$ são funções com valores reais dos parâmetros, possivelmente definidos pelo vetor $\boldsymbol{\theta}$.
+em que $\boldsymbol{\theta}$ é um vetor de $k$ parâmetros; $h(y)$ e $t(y)=(t_{1}(y),...,t_{k}(y))^\top$ são funções com valores reais $y$ observados para $Y$ e que não dependem de $\boldsymbol{\theta}$; e $b(\boldsymbol{\theta})$ e $\eta(\boldsymbol{\theta})=(\eta_{1}(\boldsymbol{\theta}),...,\eta_{k}(\boldsymbol{\theta}))^\top$ são funções com valores reais dos parâmetros, possivelmente definidos pelo vetor $\boldsymbol{\theta}$.
 
-A partir dessa expressão, pode-se definir a forma canônica da família exponencial para um caso particular, quando $\eta(\boldsymbol{\theta})$ e $t(\boldsymbol{y})$ são funções do tipo identidade, retornando o mesmo valor usado como argumento. Logo: 
+A partir dessa expressão, pode-se definir a forma canônica da família exponencial para um caso particular, quando $\eta(\theta)$ e $t(y)$ são funções do tipo identidade, retornando o mesmo valor usado como argumento. Logo: 
 \begin{equation}
     f(y;\theta) = h(y) \exp \left\{\theta y - b(\theta) \right\}
 \end{equation}
@@ -346,7 +346,7 @@ com $0<\pi<1$ e $m \in \mathbb{N^*}$. Sob este modelo, $Y$ possui média $E(Y)=m
 Nesse caso, o logaritmo da função de verossimilhança sob este modelo é dado por:
 
 \begin{equation}\label{ll_binom}
-\mathcal{L}(\boldsymbol{\beta},\boldsymbol{y}) = \sum\limits_{i=1}^{n}\left\{ y_i (\boldsymbol{x_i^\top \beta}) - \log{(1 + e^{\boldsymbol{x_i^\top \beta}})+\log\binom{m}{y}} \right\}
+\mathcal{L}(\boldsymbol{\beta},\boldsymbol{y}) = \sum\limits_{i=1}^{n}\left\{ y_i (\boldsymbol{x_i^\top \beta}) - \log{(1 + e^{\boldsymbol{x_i^\top \beta}})+\log\binom{m}{y_i}} \right\}
 \end{equation}
 
 em que $n$ é o tamanho da amostra.
@@ -415,7 +415,7 @@ Assim, a matriz $\boldsymbol{A}$ é representada da seguinte forma:
 
 Já a segunda derivada do logaritmo da função de verossimilhança, a qual pode ser usada para o cálculo da variância de $\alpha$, é:
 \begin{equation}\label{ll_derivada2_bn}
-H= \sum \limits_{i=1}^{n} \biggl( \psi'(k+y_i) - \psi'(k) +\frac{1}{k}-\frac{2}{(k+\boldsymbol{\mu})}+\frac{(y_i+k)}{[(k+\boldsymbol{\mu})(k+\boldsymbol{\mu})]} \biggl)
+H= \sum \limits_{i=1}^{n} \biggl( \psi'(k+y_i) - \psi'(k) +\frac{1}{k}-\frac{2}{(k+\mu_i)}+\frac{(y_i+k)}{[(k+\mu_i)(k+\mu_i)]} \biggl)
 \end{equation}
 onde $ \psi (z)=\frac{\partial \log \Gamma(z)}{\partial z}$ é a função digama e $\psi'(z)=\frac{\partial \psi(z)}{\partial z}=\frac{\partial^2 \log \Gamma (z)}{\partial z^2}$ a função trigama.
 
@@ -828,22 +828,17 @@ A função desvio para a binomial negativa inflacionada de zeros é dada por \ci
     D = 2\sum_{i=1}^n[\mathcal{L}(\hat{z},\textbf{y},\hat{k};\textbf{y}) - \mathcal{L}(\hat{\pi},\hat{\mu},\hat{k};\textbf{y})]
 \end{equation}
 onde $\boldsymbol{\hat{\pi}}=\frac{e^{\boldsymbol{G\hat{\gamma}}}}{1+e^{\boldsymbol{G\hat{\gamma}}}}$, $\boldsymbol{\hat{\mu}}=e^{\boldsymbol{X\hat{\beta}}}$ e $\boldsymbol{G}$ é a matriz de covariáveis que representam o excesso de zeros, vindas da distribuição binomial. Além disso:
-\begin{equation}
-    \begin{aligned}
-\mathcal{L}(\hat{\boldsymbol{\pi}}, \hat{\boldsymbol{\mu}}, \hat{k} ; \boldsymbol{y})= & -\sum_{i=1}^n \log \left(1+e^{\boldsymbol{G}_{\boldsymbol{i}} \hat{\boldsymbol{\gamma}}}\right)+\sum_{y_i>0}\left[k \log \left(\frac{k}{k+\hat{\mu}_i}\right)+y_i \log \left(\frac{\hat{\mu}_i}{k+\hat{\mu}_i}\right)\right]+ \\
-& \sum_{y_i=0} \log \left[e^{\boldsymbol{G}_i \hat{\boldsymbol{\gamma}}}+\left(\frac{k}{k+\hat{\mu}_i}\right)^k\right]+ \\
+\begin{align}
+\mathcal{L}(\hat{\boldsymbol{\pi}}, \hat{\boldsymbol{\mu}}, \hat{k} ; \boldsymbol{y})= & -\sum_{i=1}^n \log \left(1+e^{\boldsymbol{G}_{\boldsymbol{i}} \hat{\boldsymbol{\gamma}}}\right)+\sum_{y_i>0}\left[k \log \left(\frac{k}{k+\hat{\mu}_i}\right)+y_i \log \left(\frac{\hat{\mu}_i}{k+\hat{\mu}_i}\right)\right]+ \nonumber\\
+& \sum_{y_i=0} \log \left[e^{\boldsymbol{G}_i \hat{\boldsymbol{\gamma}}}+\left(\frac{k}{k+\hat{\mu}_i}\right)^k\right]+ \nonumber \\
 & \sum_{y_i>0}\left[-\log \Gamma\left(y_i+1\right)-\log \Gamma(k)+\log \Gamma\left(y_i+k\right)\right]
-\end{aligned}
-\end{equation}
-
+\end{align}
 e
-\begin{equation}
-    \begin{aligned}
-\mathcal{L}(\hat{\boldsymbol{z}}, \boldsymbol{y}, \hat{k} ; \boldsymbol{y})= & -\sum_{i=1}^n \log \left(1+z_i\right)+\sum_{y_i>0}\left[k \log \left(\frac{k}{k+y_i}\right)+y_i \log \left(\frac{y_i}{k+y_i}\right)\right]+ \\
+\begin{align}
+\mathcal{L}(\hat{\boldsymbol{z}}, \boldsymbol{y}, \hat{k} ; \boldsymbol{y})= & -\sum_{i=1}^n \log \left(1+z_i\right)+\sum_{y_i>0}\left[k \log \left(\frac{k}{k+y_i}\right)+y_i \log \left(\frac{y_i}{k+y_i}\right)\right]+ \nonumber \\
 & \sum_{y_i=0} \log \left[z_i+\left(\frac{k}{k+y_i}\right)^k\right]+ \\
-& \sum_{y_i>0}\left[-\log \Gamma\left(y_i+1\right)-\log \Gamma(k)+\log \Gamma\left(y_i+k\right)\right]
-\end{aligned}
-\end{equation}
+& \sum_{y_i>0}\left[-\log \Gamma\left(y_i+1\right)-\log \Gamma(k)+\log \Gamma\left(y_i+k\right)\right] \nonumber
+\end{align}
 
 A expressão da medida $R^2$ é dada por \citep{martin2016}:
 
@@ -1141,7 +1136,7 @@ Vale mencionar que, no pacote oficial \texttt{gwzinbr} publicado no CRAN, as sa�
 
 %Conforme explicado no Capítulo \ref{capitulo_3}, o algoritmo da RBNIZGP é capaz de se ajustar aos modelos Poisson, binomial negativo, Poisson inflacionado de zeros e binomial negativo inflacionado de zeros apenas atribuindo valores zero para alguns parâmetros (Tabela \ref{tab:parModels}).
 
-Ao longo deste trabalho, diversas combinações de argumentos foram testadas nas funções \texttt{Golden} e \texttt{gwzinbr} a fim de que o código em \texttt{R} fosse capaz de reproduzir resultados corretos para quaisquer situações. Os tempos de processamento em SAS e \texttt{R} para alguns desses testes (com \texttt{bandwidth = "aic"} e \texttt{method = "adaptive\_bsq"}) podem ser conferidos nas Tabelas \ref{tab:tempo_golden} e \ref{tab:tempo_gwzinbr}. O código para os demais testes pode ser encontrado no \href{https://github.com/julianamrosa/GWZINBR_TCC}{GitHub}, juntamente com outros arquivos auxiliares que foram utilizados ao longo da implementação computacional desenvolvida.
+Ao longo deste trabalho, diversas combinações de argumentos foram testadas nas funções \texttt{Golden} e \texttt{gwzinbr} a fim de que o código em \texttt{R} fosse capaz de reproduzir resultados corretos para quaisquer situações. Os tempos de processamento em SAS e \texttt{R}, realizados na mesma máquina, para alguns desses testes (com \texttt{bandwidth = "aic"} e \texttt{method = "adaptive\_bsq"}) podem ser conferidos nas Tabelas \ref{tab:tempo_golden} e \ref{tab:tempo_gwzinbr}. O código para os demais testes pode ser encontrado no \href{https://github.com/julianamrosa/GWZINBR_TCC}{GitHub}, juntamente com outros arquivos auxiliares que foram utilizados ao longo da implementação computacional desenvolvida.
 
 %No total, foram realizados 14 testes para a \texttt{Golden} e 11 testes para a \texttt{gwzinbr}.O resumo desses resultados pode ser conferido no Apêndice deste relatório.
 
